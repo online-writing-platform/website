@@ -1,19 +1,10 @@
 const express = require("express");
 
+const { register } = require("../controllers/auth.controller");
+const { validateRegisterRequest } = require("../validators/auth.validator");
+
 const router = express.Router();
 
-router.post("/register", (req, res) => {
-    const { email, password, username, displayName } = req.body;
-
-    res.json({
-        message: "Register request recieved",
-        recievedData: {
-            email: email,
-            password: password,
-            username: username,
-            displayName: displayName,
-        },
-    });
-});
+router.post("/register", validateRegisterRequest, register);
 
 module.exports = router;
