@@ -1,10 +1,14 @@
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
 function App() {
-    return (
-        <main>
-            <h1>Online Writing Platform</h1>
-            <p>Initial project setup is ready.</p>
-        </main>
-    );
+  return (
+    <div>
+      <Header />
+      <Home />
+      <Footer />
+    </div>
+  );
 }
 
 export default App;

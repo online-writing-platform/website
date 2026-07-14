@@ -1,0 +1,89 @@
+.home {
+  width: 90%;
+  margin: auto;
+  padding: 40px 0;
+}
+
+/* Search */
+
+.search-section {
+  margin-bottom: 60px;
+}
+
+.search-section h2 {
+  margin-bottom: 20px;
+}
+
+.search-box {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 15px;
+  font-size: 16px;
+
+  border: none;
+  border-radius: 8px;
+}
+
+.search-box button {
+  padding: 15px 30px;
+
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+}
+
+.filters {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filters select {
+  padding: 12px 20px;
+
+  border: none;
+  border-radius: 8px;
+}
+
+/* Story Sections */
+
+.story-section {
+  margin-bottom: 50px;
+}
+
+.story-section h2 {
+  margin-bottom: 20px;
+}
+
+.story-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.story-card {
+  width: 180px;
+  height: 250px;
+
+  background: #31323b;
+
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.story-card:hover {
+  transform: translateY(-5px);
+}
