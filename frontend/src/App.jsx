@@ -1,11 +1,11 @@
 import Header from "./components/Header";
+import Profile from "./pages/Profile";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
 function App() {
   return (
     <div>
       <Header />
-      <Home />
+      <Profile />
       <Footer />
     </div>
   );
