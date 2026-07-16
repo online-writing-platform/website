@@ -1,0 +1,26 @@
+services:
+    database:
+        image: postgres:17-alpine
+        container_name: writing_platform_database
+        restart: unless-stopped
+
+        environment:
+            POSTGRES_USER: writing_user
+            POSTGRES_PASSWORD: writing_password
+            POSTGRES_DB: writing_platform
+
+        ports:
+            - "5432:5432"
+
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+        healthcheck:
+            test:
+                ["CMD-SHELL", "pg_isready -U writing_user -d writing_platform"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    postgres_data:
