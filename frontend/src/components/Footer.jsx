@@ -1,12 +1,13 @@
 import "./Footer.css";
+import { Link } from "react-router-dom";
 
 function Footer() {
   return (
     <footer className="footer">
       <div className="footer-links">
-        <a href="/about">درباره ما</a>
-        <a href="/contact">ارتباط با ما</a>
-        <a href="/rights">حقوق محفوظ</a>
+        <Link to="/about">درباره ما</Link>
+        <Link to="/contact">ارتباط با ما</Link>
+        <Link to="/rights">حقوق محفوظ</Link>
       </div>
 
       <div className="copyright">
