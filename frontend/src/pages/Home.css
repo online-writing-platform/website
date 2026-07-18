@@ -62,9 +62,9 @@
 }
 
 .story-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 20px;
-  flex-wrap: wrap;
 }
 
 .story-card {
