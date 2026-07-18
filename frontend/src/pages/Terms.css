@@ -1,0 +1,23 @@
+.terms {
+  width: 80%;
+  max-width: 900px;
+  margin: 60px auto;
+  line-height: 2;
+}
+
+.terms h1 {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.terms section {
+  margin-bottom: 30px;
+}
+
+.terms h2 {
+  margin-bottom: 10px;
+}
+
+.terms p {
+  text-align: justify;
+}

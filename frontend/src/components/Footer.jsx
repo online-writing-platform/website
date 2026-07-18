@@ -7,7 +7,7 @@ function Footer() {
       <div className="footer-links">
         <Link to="/about">درباره ما</Link>
         <Link to="/contact">ارتباط با ما</Link>
-        <Link to="/rights">حقوق محفوظ</Link>
+        <Link to="/Terms">قوانین و شرایط استفاده</Link>
       </div>
 
       <div className="copyright">
