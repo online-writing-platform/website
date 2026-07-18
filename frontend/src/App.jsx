@@ -6,6 +6,9 @@ import Profile from "./pages/Profile";
 import Error from "./pages/Error";
 import About from "./pages/About";
 import Terms from "./pages/Terms";
+import Register from "./pages/Register";
+import Dashboard from "./pages/dashboard";
+import Search from "./pages/Search";
 function App() {
   return (
     <div>
@@ -16,6 +19,9 @@ function App() {
           <Route path="/Profile" element={<Profile />} />
           <Route path="/About" element={<About />} />
           <Route path="/Terms" element={<Terms />} />
+          <Route path="/Register" element={<Register />} />
+          <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/Search" element={<Search />} />
           <Route path="*" element={<Error />} />
         </Routes>
         <Footer />

@@ -11,7 +11,7 @@ function Header() {
         <Link to="/profile">پروفایل</Link>
         <Link to="/dashboard">داشبورد</Link>
         <Link to="/search">جستجو</Link>
-        <Link to="/login">ورود / خروج</Link>
+        <Link to="/Register">ورود / خروج</Link>
       </nav>
     </header>
   );
