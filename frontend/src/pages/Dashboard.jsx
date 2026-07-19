@@ -1,4 +1,5 @@
 import "./Dashboard.css";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
   return (
@@ -25,7 +26,7 @@ function Dashboard() {
       <section className="dashboard-actions">
         <button>داستان جدید</button>
         <button>مدیریت نوشته‌ها</button>
-        <button>ویرایش پروفایل</button>
+        <Link to="/profile">ویرایش پروفایل</Link>
       </section>
 
       <section className="recent-stories">
