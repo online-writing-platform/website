@@ -46,14 +46,13 @@
   flex-wrap: wrap;
 }
 
-.dashboard-actions button {
+.dashboard-actions a {
+  display: inline-block;
   padding: 12px 24px;
-
-  border: none;
+  text-decoration: none;
+  background: #4a90e2;
+  color: white;
   border-radius: 8px;
-
-  cursor: pointer;
-  font-size: 15px;
 }
 
 /* آخرین نوشته‌ها */

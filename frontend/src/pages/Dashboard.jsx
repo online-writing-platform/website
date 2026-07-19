@@ -24,8 +24,8 @@ function Dashboard() {
       </section>
 
       <section className="dashboard-actions">
-        <button>داستان جدید</button>
-        <button>مدیریت نوشته‌ها</button>
+        <Link>داستان جدید</Link>
+        <Link>مدیریت نوشته‌ها</Link>
         <Link to="/profile">ویرایش پروفایل</Link>
       </section>
 
