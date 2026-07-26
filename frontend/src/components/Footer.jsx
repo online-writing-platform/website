@@ -1,17 +1,34 @@
 import "./Footer.css";
-import { Link } from "react-router-dom";
 
 function Footer() {
   return (
     <footer className="footer">
-      <div className="footer-links">
-        <Link to="/about">درباره ما</Link>
-        <Link to="/contact">ارتباط با ما</Link>
-        <Link to="/Terms">قوانین و شرایط استفاده</Link>
-      </div>
+      <div className="footer-container">
+        <span className="footer-copy">
+          © 2026{" "}
+          <a href="/" className="footer-logo">
+            Online Writing Platform
+          </a>
+          . All Rights Reserved.
+        </span>
 
-      <div className="copyright">
-        © 2026 Online Writing Platform. All Rights Reserved.
+        <ul className="footer-links">
+          <li>
+            <a href="/about">درباره ما</a>
+          </li>
+
+          <li>
+            <a href="/terms">قوانین و مقررات</a>
+          </li>
+
+          <li>
+            <a href="/privacy">حریم خصوصی</a>
+          </li>
+
+          <li>
+            <a href="/contact">ارتباط با ما</a>
+          </li>
+        </ul>
       </div>
     </footer>
   );
