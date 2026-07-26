@@ -1,4 +1,5 @@
 import "./Home.css";
+import Filter from "../components/Filter";
 
 function Home() {
   return (
@@ -11,25 +12,8 @@ function Home() {
 
           <button>جستجو</button>
         </div>
-
-        <div className="filters">
-          <select>
-            <option>ژانر</option>
-          </select>
-
-          <select>
-            <option>سال</option>
-          </select>
-
-          <select>
-            <option>زبان</option>
-          </select>
-
-          <select>
-            <option>وضعیت</option>
-          </select>
-        </div>
       </section>
+      <Filter />
 
       <section className="story-section">
         <h2>تازه‌ها</h2>

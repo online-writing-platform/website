@@ -1,5 +1,6 @@
 import "./Header.css";
 import { Link } from "react-router-dom";
+import ThemeButton from "./ThemeButton";
 
 function Header() {
   return (
@@ -7,6 +8,7 @@ function Header() {
       <div className="logo">LOGO</div>
 
       <nav className="nav">
+        <ThemeButton />
         <Link to="/">خانه</Link>
         <Link to="/profile">پروفایل</Link>
         <Link to="/dashboard">داشبورد</Link>
