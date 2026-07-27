@@ -1,4 +1,4 @@
-import Filter from "../components/Filter";
+import Filter from "../components/Filters/Filter";
 import SearchBar from "../components/SearchBar";
 import StoryCard from "../components/StoryCard";
 import "./Search.css";

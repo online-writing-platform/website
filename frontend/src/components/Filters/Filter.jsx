@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./Filter.css";
 
 import FilterDropdown from "./FilterDropdown";
-import { filterData } from "../data/filters";
+import { filterData } from "../../data/filters";
 
 function Filter() {
   const [selectedGenres, setSelectedGenres] = useState([]);

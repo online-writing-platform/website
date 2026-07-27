@@ -1,5 +1,5 @@
 import "./Home.css";
-import Filter from "../components/Filter";
+import Filter from "../components/Filters/Filter";
 import StoryCard from "../components/StoryCard";
 import SearchBar from "../components/SearchBar";
 
