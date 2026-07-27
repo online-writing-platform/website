@@ -62,9 +62,13 @@
 
 html {
   scroll-behavior: smooth;
+
+  background: var(--background);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
-html,
 body {
   background: var(--background);
   color: var(--text);
@@ -79,4 +83,10 @@ body {
 #root {
   background: var(--background);
   min-height: 100vh;
+}
+html,
+body,
+#root {
+  min-height: 100%;
+  height: 100%;
 }
