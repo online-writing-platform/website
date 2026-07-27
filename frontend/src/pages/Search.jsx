@@ -1,3 +1,6 @@
+import Filter from "../components/Filter";
+import SearchBar from "../components/SearchBar";
+import StoryCard from "../components/StoryCard";
 import "./Search.css";
 
 function Search() {
@@ -5,62 +8,18 @@ function Search() {
     <main className="search-page">
       <h1>جستجوی داستان</h1>
 
-      <section className="search-panel">
-        <input type="text" placeholder="نام داستان، نویسنده یا ژانر..." />
+      <SearchBar />
 
-        <div className="filters">
-          <select>
-            <option>ژانر</option>
-          </select>
-
-          <select>
-            <option>سال</option>
-          </select>
-
-          <select>
-            <option>زبان</option>
-          </select>
-
-          <select>
-            <option>وضعیت</option>
-          </select>
-
-          <button>جستجو</button>
-        </div>
-      </section>
+      <Filter />
 
       <section className="search-results">
         <h2>نتایج</h2>
 
-        <div className="result-card">
-          <div className="cover">Cover</div>
+        <StoryCard />
 
-          <div className="result-info">
-            <h3>عنوان داستان</h3>
+        <StoryCard />
 
-            <p>توضیح کوتاهی درباره داستان...</p>
-          </div>
-        </div>
-
-        <div className="result-card">
-          <div className="cover">Cover</div>
-
-          <div className="result-info">
-            <h3>عنوان داستان</h3>
-
-            <p>توضیح کوتاهی درباره داستان...</p>
-          </div>
-        </div>
-
-        <div className="result-card">
-          <div className="cover">Cover</div>
-
-          <div className="result-info">
-            <h3>عنوان داستان</h3>
-
-            <p>توضیح کوتاهی درباره داستان...</p>
-          </div>
-        </div>
+        <StoryCard />
       </section>
     </main>
   );
