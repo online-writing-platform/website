@@ -1,99 +1,38 @@
+import { useState } from "react";
 import "./Filter.css";
 
+import FilterDropdown from "./FilterDropdown";
+import { filterData } from "../data/filters";
+
 function Filter() {
+  const [selectedGenres, setSelectedGenres] = useState([]);
+
+  const [selectedStatus, setSelectedStatus] = useState([]);
+
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+
   return (
     <div className="filter-container">
-      <details className="filter-dropdown">
-        <summary>
-          <span>ژانر</span>
-          <span className="arrow">▼</span>
-        </summary>
+      <FilterDropdown
+        title="ژانر"
+        options={filterData.genres}
+        selectedItems={selectedGenres}
+        setSelectedItems={setSelectedGenres}
+      />
 
-        <div className="dropdown-content">
-          <div className="dropdown-header">
-            <span>0 Selected</span>
-            <button type="button">Reset</button>
-          </div>
+      <FilterDropdown
+        title="وضعیت"
+        options={filterData.status}
+        selectedItems={selectedStatus}
+        setSelectedItems={setSelectedStatus}
+      />
 
-          <div className="checkbox-group">
-            <label>
-              <input type="checkbox" />
-              <span>Option 1</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 2</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 3</span>
-            </label>
-          </div>
-        </div>
-      </details>
-
-      <details className="filter-dropdown">
-        <summary>
-          <span>وضعیت</span>
-          <span className="arrow">▼</span>
-        </summary>
-
-        <div className="dropdown-content">
-          <div className="dropdown-header">
-            <span>0 Selected</span>
-            <button type="button">Reset</button>
-          </div>
-
-          <div className="checkbox-group">
-            <label>
-              <input type="checkbox" />
-              <span>Option 1</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 2</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 3</span>
-            </label>
-          </div>
-        </div>
-      </details>
-      <details className="filter-dropdown">
-        <summary>
-          <span>زبان</span>
-          <span className="arrow">▼</span>
-        </summary>
-
-        <div className="dropdown-content">
-          <div className="dropdown-header">
-            <span>0 Selected</span>
-            <button type="button">Reset</button>
-          </div>
-
-          <div className="checkbox-group">
-            <label>
-              <input type="checkbox" />
-              <span>Option 1</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 2</span>
-            </label>
-
-            <label>
-              <input type="checkbox" />
-              <span>Option 3</span>
-            </label>
-          </div>
-        </div>
-      </details>
+      <FilterDropdown
+        title="زبان"
+        options={filterData.languages}
+        selectedItems={selectedLanguages}
+        setSelectedItems={setSelectedLanguages}
+      />
     </div>
   );
 }
