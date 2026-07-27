@@ -6,62 +6,6 @@
   color: var(--text);
 }
 
-/* Search */
-
-.search-section {
-  margin-bottom: 60px;
-}
-
-.search-section h2 {
-  margin-bottom: 20px;
-  color: var(--text);
-}
-
-.search-box {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.search-box input {
-  flex: 1;
-  padding: 15px;
-  font-size: 16px;
-
-  background: var(--surface);
-  color: var(--text);
-
-  border: 1px solid var(--border);
-  border-radius: 8px;
-
-  outline: none;
-}
-
-.search-box input::placeholder {
-  color: var(--text-secondary);
-}
-
-.search-box input:focus {
-  border-color: var(--primary);
-}
-
-.search-box button {
-  padding: 15px 30px;
-
-  background: var(--primary);
-  color: white;
-
-  border: none;
-  border-radius: 8px;
-
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.search-box button:hover {
-  opacity: 0.9;
-}
-
 /* Story Sections */
 
 .story-section {
@@ -77,29 +21,4 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 20px;
-}
-
-.story-card {
-  width: 180px;
-  height: 250px;
-
-  background: var(--surface);
-  color: var(--text);
-
-  border: 1px solid var(--border);
-  border-radius: 10px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  cursor: pointer;
-
-  transition: all 0.2s ease;
-}
-
-.story-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--primary);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }

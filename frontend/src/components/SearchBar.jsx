@@ -4,10 +4,6 @@ import { FaSearch } from "react-icons/fa";
 function SearchBar() {
   return (
     <form className="search-form">
-      <label htmlFor="search" className="sr-only">
-        Search
-      </label>
-
       <div className="search-box" dir="rtl">
         <FaSearch className="search-icon" />
 

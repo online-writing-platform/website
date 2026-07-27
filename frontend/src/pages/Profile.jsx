@@ -1,5 +1,5 @@
 import "./Profile.css";
-
+import StoryCard from "../components/StoryCard";
 function Profile() {
   return (
     <main className="profile-page">
@@ -17,40 +17,33 @@ function Profile() {
       </aside>
 
       {/*stories*/}
-      <section className="stories-section">
-        <h2>نوشته‌ها</h2>
+      <section>
+        <h2 className="stories">نوشته‌ها</h2>
+        <section className="stories-section">
+          <StoryCard
+            image="https://picsum.photos/300/200"
+            category="فانتزی"
+            title="افسانه آخر"
+            description="داستانی درباره سفر یک قهرمان..."
+            link="/story/1"
+          />
 
-        <div className="stories">
-          <div className="story-card">
-            <div className="story-cover">Cover</div>
+          <StoryCard
+            image="https://picsum.photos/300/200"
+            category="فانتزی"
+            title="افسانه آخر"
+            description="داستانی درباره سفر یک قهرمان..."
+            link="/story/1"
+          />
 
-            <div className="story-info">
-              <h3>عنوان داستان</h3>
-
-              <p>توضیح کوتاهی درباره داستان در این قسمت نمایش داده می‌شود.</p>
-            </div>
-          </div>
-
-          <div className="story-card">
-            <div className="story-cover">Cover</div>
-
-            <div className="story-info">
-              <h3>عنوان داستان</h3>
-
-              <p>توضیح کوتاهی درباره داستان در این قسمت نمایش داده می‌شود.</p>
-            </div>
-          </div>
-
-          <div className="story-card">
-            <div className="story-cover">Cover</div>
-
-            <div className="story-info">
-              <h3>عنوان داستان</h3>
-
-              <p>توضیح کوتاهی درباره داستان در این قسمت نمایش داده می‌شود.</p>
-            </div>
-          </div>
-        </div>
+          <StoryCard
+            image="https://picsum.photos/300/200"
+            category="فانتزی"
+            title="افسانه آخر"
+            description="داستانی درباره سفر یک قهرمان..."
+            link="/story/1"
+          />
+        </section>
       </section>
     </main>
   );

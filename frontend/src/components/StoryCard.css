@@ -1,18 +1,18 @@
 .story-card {
   width: 280px;
 
+  display: flex;
+  flex-direction: column;
+
   background: var(--surface);
-
   border: 1px solid var(--border);
-
   border-radius: 12px;
 
   overflow: hidden;
 
-  transition: 0.25s;
+  transition: all 0.25s ease;
 
-  display: flex;
-  flex-direction: column;
+  box-shadow: var(--shadow);
 }
 
 .story-card:hover {
@@ -20,7 +20,11 @@
 
   border-color: var(--primary);
 
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow);
+}
+
+.story-image-link {
+  display: block;
 }
 
 .story-card-image {
@@ -33,6 +37,8 @@
 }
 
 .story-card-body {
+  flex: 1;
+
   padding: 18px;
 
   display: flex;
@@ -46,7 +52,7 @@
 
   padding: 4px 10px;
 
-  border-radius: 20px;
+  border-radius: 999px;
 
   font-size: 12px;
   font-weight: 600;
@@ -64,10 +70,9 @@
   color: var(--text);
 
   font-size: 20px;
-
   font-weight: 700;
 
-  transition: 0.2s;
+  transition: color 0.2s;
 }
 
 .story-title:hover {
@@ -77,12 +82,53 @@
 .story-description {
   color: var(--text-secondary);
 
-  line-height: 1.6;
+  line-height: 1.7;
 
   font-size: 15px;
+
+  flex: 1;
+}
+
+.story-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding-top: 10px;
+
+  border-top: 1px solid var(--border);
+}
+
+.story-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.story-stats span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  font-size: 14px;
+
+  color: var(--text-secondary);
+}
+
+.story-stats svg {
+  font-size: 17px;
+}
+
+.story-status {
+  font-size: 13px;
+  font-weight: 600;
+
+  color: var(--success);
 }
 
 .story-button {
+  margin-top: auto;
+
   align-self: flex-start;
 
   padding: 10px 16px;
@@ -95,9 +141,9 @@
 
   text-decoration: none;
 
-  transition: 0.2s;
+  transition: background-color 0.2s;
 }
 
 .story-button:hover {
-  opacity: 0.9;
+  background: var(--primary-hover);
 }

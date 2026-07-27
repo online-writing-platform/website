@@ -11,15 +11,30 @@ function Search() {
       <SearchBar />
 
       <Filter />
-
+      <h2>نتایج</h2>
       <section className="search-results">
-        <h2>نتایج</h2>
+        <StoryCard
+          image="https://picsum.photos/300/200"
+          category="فانتزی"
+          title="افسانه آخر"
+          description="داستانی درباره سفر یک قهرمان..."
+          link="/story/1"
+        />
+        <StoryCard
+          image="https://picsum.photos/300/200"
+          category="فانتزی"
+          title="افسانه آخر"
+          description="داستانی درباره سفر یک قهرمان..."
+          link="/story/1"
+        />
 
-        <StoryCard />
-
-        <StoryCard />
-
-        <StoryCard />
+        <StoryCard
+          image="https://picsum.photos/300/200"
+          category="فانتزی"
+          title="افسانه آخر"
+          description="داستانی درباره سفر یک قهرمان..."
+          link="/story/1"
+        />
       </section>
     </main>
   );
