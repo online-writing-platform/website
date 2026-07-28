@@ -7,9 +7,6 @@
         "rootDir": "src",
         "outDir": "dist",
 
-        "allowJs": true,
-        "checkJs": false,
-
         "strict": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
@@ -17,6 +14,6 @@
 
         "sourceMap": true
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*.ts"],
     "exclude": ["node_modules", "dist"]
 }
