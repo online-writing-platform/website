@@ -4,8 +4,7 @@ import "dotenv/config";
 
 import app from "./app";
 import env from "./config/env";
-
-const { checkDatabaseConnection, closeDatabaseConnection } = require("./db");
+import { checkDatabaseConnection, closeDatabaseConnection } from "./db";
 
 let server: Server | undefined;
 let isShuttingDown = false;
