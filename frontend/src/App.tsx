@@ -8,31 +8,33 @@ import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import ErrorPage from "./pages/Error";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import Search from "./pages/Search";
 import Terms from "./pages/Terms";
 
 function App() {
-    return (
-        <BrowserRouter>
-            <Header />
+  return (
+    <BrowserRouter>
+      <Header />
 
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="*" element={<ErrorPage />} />
-            </Routes>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<ErrorPage />} />
+      </Routes>
 
-            <Footer />
-        </BrowserRouter>
-    );
+      <Footer />
+    </BrowserRouter>
+  );
 }
 
 export default App;
