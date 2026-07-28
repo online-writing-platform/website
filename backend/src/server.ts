@@ -1,8 +1,9 @@
 import type { Server } from "node:http";
 
-require("dotenv").config();
+import "dotenv/config";
 
-const app = require("./app");
+import app from "./app";
+
 const env = require("./config/env");
 
 const { checkDatabaseConnection, closeDatabaseConnection } = require("./db");
@@ -50,9 +51,11 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
     console.log(`${signal} received. Shutting down gracefully...`);
 
     try {
-        if (server) {
+        const activeServer = server;
+
+        if (activeServer) {
             await new Promise<void>((resolve, reject) => {
-                server?.close((error) => {
+                activeServer.close((error) => {
                     if (error) {
                         reject(error);
                         return;
