@@ -1,3 +1,5 @@
+import type { Server } from "node:http";
+
 require("dotenv").config();
 
 const app = require("./app");
@@ -5,10 +7,10 @@ const env = require("./config/env");
 
 const { checkDatabaseConnection, closeDatabaseConnection } = require("./db");
 
-let server;
+let server: Server | undefined;
 let isShuttingDown = false;
 
-async function startServer() {
+async function startServer(): Promise<void> {
     try {
         const databaseTime = await checkDatabaseConnection();
 
@@ -24,7 +26,11 @@ async function startServer() {
 
         if (error instanceof AggregateError) {
             for (const innerError of error.errors) {
-                console.error(`- ${innerError.message}`);
+                if (innerError instanceof Error) {
+                    console.error(`- ${innerError.message}`);
+                } else {
+                    console.error("-", innerError);
+                }
             }
         } else {
             console.error(error);
@@ -34,7 +40,7 @@ async function startServer() {
     }
 }
 
-async function shutdown(signal) {
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
     if (isShuttingDown) {
         return;
     }
@@ -45,8 +51,8 @@ async function shutdown(signal) {
 
     try {
         if (server) {
-            await new Promise((resolve, reject) => {
-                server.close((error) => {
+            await new Promise<void>((resolve, reject) => {
+                server?.close((error) => {
                     if (error) {
                         reject(error);
                         return;
@@ -67,7 +73,12 @@ async function shutdown(signal) {
     }
 }
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => {
+    void shutdown("SIGINT");
+});
 
-startServer();
+process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
+});
+
+void startServer();
