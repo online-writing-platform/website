@@ -11,9 +11,7 @@ export interface RegisteredUser {
     displayName?: string;
 }
 
-export async function registerUser(
-    registerData: RegisterData,
-): Promise<RegisteredUser> {
+export function registerUser(registerData: RegisterData): RegisteredUser {
     const { email, username, displayName } = registerData;
 
     // TODO: Replace this fake user with database logic
