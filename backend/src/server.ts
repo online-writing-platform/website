@@ -3,8 +3,7 @@ import type { Server } from "node:http";
 import "dotenv/config";
 
 import app from "./app";
-
-const env = require("./config/env");
+import env from "./config/env";
 
 const { checkDatabaseConnection, closeDatabaseConnection } = require("./db");
 
