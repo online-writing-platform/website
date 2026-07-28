@@ -17,10 +17,46 @@ services:
 
         healthcheck:
             test:
-                ["CMD-SHELL", "pg_isready -U writing_user -d writing_platform"]
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U writing_user -d writing_platform",
+                ]
             interval: 5s
             timeout: 5s
             retries: 5
+
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+
+        container_name: writing_platform_backend
+        restart: unless-stopped
+
+        environment:
+            NODE_ENV: production
+            PORT: 5000
+            DATABASE_URL: postgres://writing_user:writing_password@database:5432/writing_platform
+
+        ports:
+            - "5000:5000"
+
+        depends_on:
+            database:
+                condition: service_healthy
+
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://localhost:5000/health').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
 
 volumes:
     postgres_data:
