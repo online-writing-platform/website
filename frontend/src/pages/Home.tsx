@@ -1,77 +1,64 @@
 import "./Home.css";
+
+import Filter from "../components/Filters/Filter";
+import SearchBar from "../components/SearchBar";
+import StoryCard from "../components/StoryCard";
+
+interface Story {
+  id: number;
+  image: string;
+  category: string;
+  title: string;
+  description: string;
+  link: string;
+}
+
+const stories: Story[] = Array.from({ length: 5 }, (_, index) => ({
+  id: index + 1,
+  image: "https://picsum.photos/300/200",
+  category: "فانتزی",
+  title: "افسانه آخر",
+  description: "داستانی درباره سفر یک قهرمان...",
+  link: "/story/1",
+}));
+
+interface StorySectionProps {
+  title: string;
+}
+
+function StorySection({ title }: StorySectionProps) {
+  return (
+    <section className="story-section">
+      <h2>{title}</h2>
+
+      <div className="story-row">
+        {stories.map((story) => (
+          <StoryCard
+            key={`${title}-${story.id}`}
+            image={story.image}
+            category={story.category}
+            title={story.title}
+            description={story.description}
+            link={story.link}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Home() {
   return (
     <main className="home">
-      <section className="search-section">
-        <h2>جستجوی داستان</h2>
+      <SearchBar />
 
-        <div className="search-box">
-          <input type="text" placeholder="نام داستان، نویسنده یا ژانر..." />
-          <button type="button">جستجو</button>
-        </div>
+      <Filter />
 
-        <div className="filters">
-          <select defaultValue="">
-            <option value="" disabled>
-              ژانر
-            </option>
-          </select>
+      <StorySection title="تازه‌ها" />
 
-          <select defaultValue="">
-            <option value="" disabled>
-              سال
-            </option>
-          </select>
+      <StorySection title="محبوب‌ها" />
 
-          <select defaultValue="">
-            <option value="" disabled>
-              زبان
-            </option>
-          </select>
-
-          <select defaultValue="">
-            <option value="" disabled>
-              وضعیت
-            </option>
-          </select>
-        </div>
-      </section>
-
-      <section className="story-section">
-        <h2>تازه‌ها</h2>
-
-        <div className="story-row">
-          <div className="story-card">داستان ۱</div>
-          <div className="story-card">داستان ۲</div>
-          <div className="story-card">داستان ۳</div>
-          <div className="story-card">داستان ۴</div>
-          <div className="story-card">داستان ۵</div>
-        </div>
-      </section>
-
-      <section className="story-section">
-        <h2>محبوب‌ها</h2>
-
-        <div className="story-row">
-          <div className="story-card">داستان ۱</div>
-          <div className="story-card">داستان ۲</div>
-          <div className="story-card">داستان ۳</div>
-          <div className="story-card">داستان ۴</div>
-          <div className="story-card">داستان ۵</div>
-        </div>
-      </section>
-
-      <section className="story-section">
-        <h2>مطابق با سلیقه شما</h2>
-
-        <div className="story-row">
-          <div className="story-card">داستان ۱</div>
-          <div className="story-card">داستان ۲</div>
-          <div className="story-card">داستان ۳</div>
-          <div className="story-card">داستان ۴</div>
-          <div className="story-card">داستان ۵</div>
-        </div>
-      </section>
+      <StorySection title="مطابق با سلیقه شما" />
     </main>
   );
 }
