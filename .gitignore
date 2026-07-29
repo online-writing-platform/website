@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # TypeScript output
 dist
+
+# Prisma generated client
+backend/src/generated/prisma/

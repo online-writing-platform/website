@@ -1,0 +1,85 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StoryStatus {
+  DRAFT
+  ONGOING
+  COMPLETED
+  HIATUS
+}
+
+enum StoryVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+enum ChapterStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(320)
+  username     String   @unique @db.VarChar(30)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  displayName  String   @map("display_name") @db.VarChar(80)
+  bio          String?  @db.Text
+  avatarUrl    String?  @map("avatar_url") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  stories Story[]
+
+  @@map("users")
+}
+
+model Story {
+  id          String          @id @default(uuid()) @db.Uuid
+  authorId    String          @map("author_id") @db.Uuid
+  title       String          @db.VarChar(200)
+  slug        String          @unique @db.VarChar(220)
+  description String          @db.Text
+  coverUrl    String?         @map("cover_url") @db.Text
+  language    String          @default("fa") @db.VarChar(10)
+  status      StoryStatus     @default(DRAFT)
+  visibility  StoryVisibility @default(PRIVATE)
+  isMature    Boolean         @default(false) @map("is_mature")
+  publishedAt DateTime?       @map("published_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+
+  @@index([authorId])
+  @@index([status, visibility])
+  @@map("stories")
+}
+
+model Chapter {
+  id          String        @id @default(uuid()) @db.Uuid
+  storyId     String        @map("story_id") @db.Uuid
+  title       String        @db.VarChar(200)
+  position    Int
+  content     String        @db.Text
+  status      ChapterStatus @default(DRAFT)
+  wordCount   Int           @default(0) @map("word_count")
+  publishedAt DateTime?     @map("published_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, position])
+  @@index([storyId, status])
+  @@map("chapters")
+}
