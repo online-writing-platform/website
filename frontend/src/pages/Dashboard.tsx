@@ -23,7 +23,7 @@ function Dashboard() {
       </section>
 
       <section className="dashboard-actions">
-        <Link to="/dashboard">داستان جدید</Link>
+        <Link to="/writestory">داستان جدید</Link>
         <Link to="/dashboard">مدیریت نوشته‌ها</Link>
         <Link to="/profile">ویرایش پروفایل</Link>
       </section>
