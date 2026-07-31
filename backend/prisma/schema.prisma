@@ -1,31 +1,3 @@
-generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "esm"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
-enum StoryStatus {
-  DRAFT
-  ONGOING
-  COMPLETED
-  HIATUS
-}
-
-enum StoryVisibility {
-  PRIVATE
-  UNLISTED
-  PUBLIC
-}
-
-enum ChapterStatus {
-  DRAFT
-  PUBLISHED
-}
-
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique @db.VarChar(320)
@@ -37,7 +9,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  stories Story[]
+  stories  Story[]
+  comments Comment[]
 
   @@map("users")
 }
@@ -77,9 +50,26 @@ model Chapter {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  story    Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  comments Comment[]
 
   @@unique([storyId, position])
   @@index([storyId, status])
   @@map("chapters")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  chapterId String   @map("chapter_id") @db.Uuid
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([chapterId])
+  @@map("comments")
 }
