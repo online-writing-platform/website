@@ -1,3 +1,31 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StoryStatus {
+  DRAFT
+  ONGOING
+  COMPLETED
+  HIATUS
+}
+
+enum StoryVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+enum ChapterStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique @db.VarChar(320)
@@ -32,6 +60,7 @@ model Story {
 
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   chapters Chapter[]
+  genres   Genre[]
 
   @@index([authorId])
   @@index([status, visibility])
@@ -72,4 +101,14 @@ model Comment {
   @@index([userId])
   @@index([chapterId])
   @@map("comments")
+}
+
+model Genre {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique @db.VarChar(50)
+  slug String @unique @db.VarChar(60)
+
+  stories Story[]
+
+  @@map("genres")
 }
