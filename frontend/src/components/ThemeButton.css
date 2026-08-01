@@ -1,0 +1,34 @@
+.theme-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 22px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.theme-button:hover {
+  background-color: var(--surface-hover);
+  transform: rotate(15deg) scale(1.05);
+}
+
+.theme-button svg {
+  transition: all 0.3s ease;
+}
+
+/* ماه */
+.theme-button .moon {
+  color: #6366f1;
+}
+
+/* خورشید */
+.theme-button .sun {
+  color: #f59e0b;
+}
