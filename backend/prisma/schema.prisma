@@ -37,7 +37,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  stories Story[]
+  stories  Story[]
+  comments Comment[]
 
   @@map("users")
 }
@@ -59,6 +60,7 @@ model Story {
 
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   chapters Chapter[]
+  genres   Genre[]
 
   @@index([authorId])
   @@index([status, visibility])
@@ -77,9 +79,36 @@ model Chapter {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  story    Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  comments Comment[]
 
   @@unique([storyId, position])
   @@index([storyId, status])
   @@map("chapters")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  chapterId String   @map("chapter_id") @db.Uuid
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([chapterId])
+  @@map("comments")
+}
+
+model Genre {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique @db.VarChar(50)
+  slug String @unique @db.VarChar(60)
+
+  stories Story[]
+
+  @@map("genres")
 }
