@@ -1,0 +1,74 @@
+interface AppErrorOptions {
+    code?: string;
+    details?: unknown;
+    cause?: unknown;
+}
+
+export default class AppError extends Error {
+    public readonly statusCode: number;
+    public readonly code: string;
+    public readonly details?: unknown;
+    public readonly isOperational: boolean;
+
+    public constructor(
+        statusCode: number,
+        message: string,
+        options: AppErrorOptions = {},
+    ) {
+        super(message, {
+            cause: options.cause,
+        });
+
+        this.name = "AppError";
+        this.statusCode = statusCode;
+        this.code = options.code ?? "APPLICATION_ERROR";
+        this.details = options.details;
+        this.isOperational = true;
+
+        Error.captureStackTrace(this, AppError);
+    }
+
+    public static badRequest(
+        message: string,
+        code = "BAD_REQUEST",
+        details?: unknown,
+    ): AppError {
+        return new AppError(400, message, {
+            code,
+            details,
+        });
+    }
+
+    public static unauthorized(
+        message = "Authentication is required.",
+        code = "UNAUTHORIZED",
+    ): AppError {
+        return new AppError(401, message, {
+            code,
+        });
+    }
+
+    public static forbidden(
+        message = "You do not have permission to perform this action.",
+        code = "FORBIDDEN",
+    ): AppError {
+        return new AppError(403, message, {
+            code,
+        });
+    }
+
+    public static notFound(
+        message = "The requested resource was not found.",
+        code = "NOT_FOUND",
+    ): AppError {
+        return new AppError(404, message, {
+            code,
+        });
+    }
+
+    public static conflict(message: string, code = "CONFLICT"): AppError {
+        return new AppError(409, message, {
+            code,
+        });
+    }
+}
