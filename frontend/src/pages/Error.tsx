@@ -9,7 +9,7 @@ function ErrorPage() {
 
         <p>Something went wrong.</p>
 
-        <Button>برگرد خونه</Button>
+        <Button to="/">برگرد خونه</Button>
       </div>
     </main>
   );
