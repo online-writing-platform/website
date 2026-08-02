@@ -1,7 +1,7 @@
 import { HiOutlineEye, HiOutlineHeart } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import "./StoryCard.css";
-import ButtonLink from "../components/ButtonLink";
+import ButtonLink from "./Button";
 
 interface StoryCardProps {
   image: string;

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ThemeButton from "./ThemeButton";
 
 import "./Header.css";
+import ButtonLink from "./Button";
 
 function Header() {
   return (
@@ -39,13 +40,9 @@ function Header() {
         <div className="header-actions">
           <ThemeButton />
 
-          <Link className="register-btn" to="/register">
-            ثبت نام
-          </Link>
+          <ButtonLink to="/register">ثبت نام</ButtonLink>
 
-          <Link className="register-btn" to="/login">
-            ورود
-          </Link>
+          <ButtonLink to="/login">ورود</ButtonLink>
         </div>
       </div>
     </header>
