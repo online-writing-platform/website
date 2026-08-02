@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import { pinoHttp, type Options as PinoHttpOptions } from "pino-http";
+import pinoHttp from "pino-http";
 
 import env from "./config/env.js";
 import logger from "./config/logger.js";
