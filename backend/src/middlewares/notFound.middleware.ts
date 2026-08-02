@@ -1,7 +1,16 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
-export default function notFoundHandler(_req: Request, res: Response): void {
-    res.status(404).json({
-        message: "Page Not Found",
-    });
+import AppError from "../errors/app-error.js";
+
+export default function notFoundHandler(
+    request: Request,
+    _response: Response,
+    next: NextFunction,
+): void {
+    next(
+        AppError.notFound(
+            `Route ${request.method} ${request.originalUrl} was not found.`,
+            "ROUTE_NOT_FOUND",
+        ),
+    );
 }

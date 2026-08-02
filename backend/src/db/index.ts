@@ -1,37 +1,41 @@
-import { Pool, type QueryResult, type QueryResultRow } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-import env from "../config/env";
+import env from "../config/env.js";
+import { PrismaClient } from "../generated/prisma/client.js";
 
-const pool = new Pool({
+const adapter = new PrismaPg({
     connectionString: env.databaseUrl,
-    max: 10,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
+    max: env.databasePoolMax,
+    connectionTimeoutMillis: env.databaseConnectionTimeoutMs,
+    idleTimeoutMillis: env.databaseIdleTimeoutMs,
 });
 
-pool.on("error", (error: Error) => {
-    console.error("Unexpected PostgreSQL pool error:", error);
+export const prisma = new PrismaClient({
+    adapter,
 });
 
-export async function query<Row extends QueryResultRow = QueryResultRow>(
-    text: string,
-    params?: unknown[],
-): Promise<QueryResult<Row>> {
-    return pool.query<Row>(text, params);
-}
-
-interface DatabaseTimeRow extends QueryResultRow {
-    current_time: Date;
+interface DatabaseTimeRow {
+    currentTime: Date;
 }
 
 export async function checkDatabaseConnection(): Promise<Date> {
-    const result = await pool.query<DatabaseTimeRow>(
-        "SELECT NOW() AS current_time",
-    );
+    const rows = await prisma.$queryRaw<DatabaseTimeRow[]>`
+        SELECT NOW() AS "currentTime"
+    `;
 
-    return result.rows[0].current_time;
+    const firstRow = rows.at(0);
+
+    if (firstRow === undefined || !(firstRow.currentTime instanceof Date)) {
+        throw new Error("Database health check returned an invalid value");
+    }
+
+    return firstRow.currentTime;
+}
+
+export async function connectDatabase(): Promise<void> {
+    await prisma.$connect();
 }
 
 export async function closeDatabaseConnection(): Promise<void> {
-    await pool.end();
+    await prisma.$disconnect();
 }
