@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { FaSearch } from "react-icons/fa";
 import "./SearchBar.css";
+import Button from "./Button";
 function SearchBar() {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -19,9 +20,7 @@ function SearchBar() {
           className="search-input"
         />
 
-        <button type="submit" className="search-button">
-          جستجو
-        </button>
+        <Button>جستجو</Button>
       </div>
     </form>
   );

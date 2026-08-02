@@ -1,7 +1,7 @@
 import { HiOutlineEye, HiOutlineHeart } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import "./StoryCard.css";
-import ButtonLink from "./Button";
+import Button from "./Button";
 
 interface StoryCardProps {
   image: string;
@@ -64,7 +64,7 @@ function StoryCard({
           </div>
         )}
 
-        <ButtonLink to={link}>مطالعه داستان</ButtonLink>
+        <Button to={link}>مطالعه داستان</Button>
       </div>
     </article>
   );

@@ -1,3 +1,4 @@
+import Button from "../components/Button";
 import "./Login.css";
 import { Link } from "react-router-dom";
 
@@ -30,9 +31,7 @@ function Login() {
             <span>مرا به خاطر بسپار</span>
           </label>
 
-          <button type="submit" className="form-button">
-            ورود
-          </button>
+          <Button>ورود</Button>
         </form>
 
         <p className="form-footer">

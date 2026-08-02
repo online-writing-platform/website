@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import "./Register.css";
 import "../styles/Form.css";
+import Button from "../components/Button";
 
 function Register() {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -67,9 +68,7 @@ function Register() {
             <span>قوانین سایت را مطالعه کرده‌ام و می‌پذیرم.</span>
           </label>
 
-          <button type="submit" className="form-button">
-            ثبت‌نام
-          </button>
+          <Button>ثبت نام</Button>
         </form>
 
         <p className="form-footer">
