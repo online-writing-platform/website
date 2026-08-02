@@ -1,6 +1,8 @@
 import { HiOutlineEye, HiOutlineHeart } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import "./StoryCard.css";
+import ButtonLink from "../components/ButtonLink";
+
 interface StoryCardProps {
   image: string;
   category: string;
@@ -62,9 +64,7 @@ function StoryCard({
           </div>
         )}
 
-        <Link to={link} className="story-button">
-          مطالعه داستان
-        </Link>
+        <ButtonLink to={link}>مطالعه داستان</ButtonLink>
       </div>
     </article>
   );
