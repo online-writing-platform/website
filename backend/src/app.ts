@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { pinoHttp, type Options as PinoHttpOptions } from "pino-http";
 
 import env from "./config/env.js";
@@ -108,6 +109,8 @@ app.use(
         exposedHeaders: ["X-Request-Id", "RateLimit", "RateLimit-Policy"],
     }),
 );
+
+app.use(cookieParser());
 
 app.use(
     express.json({
