@@ -123,34 +123,6 @@
 }
 
 /* ==========================
-   Button
-========================== */
-
-.form-button {
-  margin-top: 10px;
-
-  padding: 14px;
-
-  border: none;
-  border-radius: 10px;
-
-  background: var(--primary);
-
-  color: white;
-
-  font-size: 16px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.form-button:hover {
-  background: var(--primary-hover);
-}
-
-/* ==========================
    Footer
 ========================== */
 

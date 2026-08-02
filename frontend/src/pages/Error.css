@@ -39,16 +39,3 @@
 
   font-size: 16px;
 }
-.home-btn {
-  display: inline-block;
-  padding: 12px 30px;
-  background: #4a90e2;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: 0.2s;
-}
-
-.home-btn:hover {
-  background: #357abd;
-}

@@ -54,31 +54,6 @@
 
 /* ========================= */
 
-.contact-button {
-  margin-top: 10px;
-
-  width: 100%;
-
-  padding: 14px;
-
-  border: none;
-  border-radius: 10px;
-
-  background: var(--primary);
-
-  color: white;
-
-  font-size: 16px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.contact-button:hover {
-  background: var(--primary-hover);
-}
 .character-counter {
   margin-top: 0.4rem;
   text-align: left;

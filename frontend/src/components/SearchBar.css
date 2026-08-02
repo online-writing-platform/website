@@ -26,16 +26,3 @@
 
   font-size: 15px;
 }
-
-.search-button {
-  border: none;
-  border-radius: 8px;
-
-  padding: 9px 18px;
-
-  background: var(--primary);
-  color: white;
-
-  cursor: pointer;
-  flex-shrink: 0;
-}

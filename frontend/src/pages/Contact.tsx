@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import "./Contact.css";
 import "../styles/Form.css";
+import Button from "../components/Button";
 
 function Contact() {
   const MAX_MESSAGE_LENGTH = 1000;
@@ -63,9 +64,7 @@ function Contact() {
             </p>
           </div>
 
-          <button type="submit" className="contact-button">
-            ارسال پیام
-          </button>
+          <Button>ارسال پیام</Button>
         </form>
       </section>
     </main>

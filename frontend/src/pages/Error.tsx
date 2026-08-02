@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "./Error.css";
+import Button from "../components/Button";
 function ErrorPage() {
   return (
     <main className="error-page">
@@ -8,9 +9,7 @@ function ErrorPage() {
 
         <p>Something went wrong.</p>
 
-        <Link to="/" className="home-btn">
-          برگرد خونه
-        </Link>
+        <Button>برگرد خونه</Button>
       </div>
     </main>
   );
