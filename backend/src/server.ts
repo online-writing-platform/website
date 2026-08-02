@@ -1,85 +1,153 @@
 import type { Server } from "node:http";
 
-import "dotenv/config";
-
-import app from "./app";
-import env from "./config/env";
-import { checkDatabaseConnection, closeDatabaseConnection } from "./db";
+import app from "./app.js";
+import env from "./config/env.js";
+import logger from "./config/logger.js";
+import {
+    checkDatabaseConnection,
+    closeDatabaseConnection,
+    connectDatabase,
+} from "./db/index.js";
 
 let server: Server | undefined;
-let isShuttingDown = false;
+let shutdownPromise: Promise<void> | undefined;
 
 async function startServer(): Promise<void> {
-    try {
-        const databaseTime = await checkDatabaseConnection();
+    await connectDatabase();
 
-        console.log(
-            `Database connected successfully at ${databaseTime.toISOString()}`,
+    const databaseTime = await checkDatabaseConnection();
+
+    logger.info(
+        {
+            databaseTime: databaseTime.toISOString(),
+        },
+        "Database connection established",
+    );
+
+    server = app.listen(env.port, () => {
+        logger.info(
+            {
+                port: env.port,
+                environment: env.nodeEnv,
+            },
+            "HTTP server started",
+        );
+    });
+
+    server.on("error", (error) => {
+        logger.fatal(
+            {
+                error,
+            },
+            "HTTP server error",
         );
 
-        server = app.listen(env.port, () => {
-            console.log(`Server is running on port ${env.port}`);
-        });
-    } catch (error) {
-        console.error("Failed to start server");
-
-        if (error instanceof AggregateError) {
-            for (const innerError of error.errors) {
-                if (innerError instanceof Error) {
-                    console.error(`- ${innerError.message}`);
-                } else {
-                    console.error("-", innerError);
-                }
-            }
-        } else {
-            console.error(error);
-        }
-
-        process.exit(1);
-    }
+        void shutdown("SERVER_ERROR", 1);
+    });
 }
 
-async function shutdown(signal: NodeJS.Signals): Promise<void> {
-    if (isShuttingDown) {
-        return;
+function closeHttpServer(): Promise<void> {
+    if (!server) {
+        return Promise.resolve();
     }
 
-    isShuttingDown = true;
+    return new Promise<void>((resolve, reject) => {
+        server?.close((error) => {
+            if (error) {
+                reject(error);
+                return;
+            }
 
-    console.log(`${signal} received. Shutting down gracefully...`);
+            resolve();
+        });
+    });
+}
+
+async function performShutdown(
+    reason: string,
+    exitCode: number,
+): Promise<void> {
+    logger.info(
+        {
+            reason,
+        },
+        "Application shutdown started",
+    );
+
+    const forceShutdownTimer = setTimeout(() => {
+        logger.error("Graceful shutdown timed out; closing active connections");
+
+        server?.closeAllConnections();
+    }, 10_000);
+
+    forceShutdownTimer.unref();
 
     try {
-        const activeServer = server;
-
-        if (activeServer) {
-            await new Promise<void>((resolve, reject) => {
-                activeServer.close((error) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-
-                    resolve();
-                });
-            });
-        }
-
+        await closeHttpServer();
         await closeDatabaseConnection();
 
-        console.log("Server and database connections closed");
-        process.exit(0);
+        logger.info("HTTP server and database connections closed");
     } catch (error) {
-        console.error("Error during shutdown:", error);
-        process.exit(1);
+        logger.error(
+            {
+                error,
+            },
+            "Error during application shutdown",
+        );
+
+        process.exitCode = 1;
+    } finally {
+        clearTimeout(forceShutdownTimer);
+
+        if (process.exitCode === undefined) {
+            process.exitCode = exitCode;
+        }
     }
 }
 
-process.on("SIGINT", () => {
+function shutdown(reason: string, exitCode = 0): Promise<void> {
+    shutdownPromise ??= performShutdown(reason, exitCode);
+
+    return shutdownPromise;
+}
+
+process.once("SIGINT", () => {
     void shutdown("SIGINT");
 });
 
-process.on("SIGTERM", () => {
+process.once("SIGTERM", () => {
     void shutdown("SIGTERM");
 });
 
-void startServer();
+process.once("uncaughtException", (error) => {
+    logger.fatal(
+        {
+            error,
+        },
+        "Uncaught exception",
+    );
+
+    void shutdown("UNCAUGHT_EXCEPTION", 1);
+});
+
+process.once("unhandledRejection", (reason) => {
+    logger.fatal(
+        {
+            reason,
+        },
+        "Unhandled promise rejection",
+    );
+
+    void shutdown("UNHANDLED_REJECTION", 1);
+});
+
+startServer().catch((error: unknown) => {
+    logger.fatal(
+        {
+            error,
+        },
+        "Failed to start application",
+    );
+
+    void shutdown("STARTUP_FAILURE", 1);
+});
