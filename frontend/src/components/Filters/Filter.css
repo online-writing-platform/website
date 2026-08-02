@@ -53,13 +53,13 @@
 .dropdown-content {
   position: absolute;
   top: 35px;
-  left: 0;
+  right: 0;
   width: 260px;
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 5px 12px var(--shadow);
-  z-index: 100;
+  z-index: 1000;
 }
 
 .dropdown-header {
