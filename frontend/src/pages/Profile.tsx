@@ -1,3 +1,4 @@
+import Button from "../components/Button";
 import StoryCard from "../components/StoryCard";
 import "./Profile.css";
 function Profile() {
@@ -12,9 +13,7 @@ function Profile() {
 
         <p className="bio" />
 
-        <button type="button" className="edit-btn">
-          ویرایش پروفایل
-        </button>
+        <Button>ویرایش پروفایل</Button>
       </aside>
 
       <section>
