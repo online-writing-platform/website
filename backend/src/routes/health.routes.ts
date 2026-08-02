@@ -1,30 +1,42 @@
+import type { NextFunction, Request, Response } from "express";
 import { Router } from "express";
 
-import {
-    getMe,
-    getProfileByUsername,
-    updateMe,
-} from "../controllers/user.controller.js";
-import { authenticate } from "../middlewares/auth.middleware.js";
-import {
-    validateBody,
-    validateParams,
-} from "../middlewares/validate.middleware.js";
-import {
-    updateProfileSchema,
-    usernameParamsSchema,
-} from "../validators/user.validator.js";
+import { checkDatabaseConnection } from "../db/index.js";
 
 const router = Router();
 
-router.get("/me", authenticate, getMe);
-
-router.patch("/me", authenticate, validateBody(updateProfileSchema), updateMe);
+router.get("/live", (_request: Request, response: Response): void => {
+    response.status(200).json({
+        data: {
+            status: "ok",
+            service: "backend",
+            timestamp: new Date().toISOString(),
+        },
+    });
+});
 
 router.get(
-    "/:username",
-    validateParams(usernameParamsSchema),
-    getProfileByUsername,
+    "/ready",
+    async (
+        _request: Request,
+        response: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const databaseTime = await checkDatabaseConnection();
+
+            response.status(200).json({
+                data: {
+                    status: "ready",
+                    service: "backend",
+                    databaseTime: databaseTime.toISOString(),
+                    timestamp: new Date().toISOString(),
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
 );
 
 export default router;
