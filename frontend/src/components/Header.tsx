@@ -1,11 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
+import Button from "./Button";
 import ThemeButton from "./ThemeButton";
 
+import useAuth from "../hooks/useAuth";
+
 import "./Header.css";
-import Button from "./Button";
 
 function Header() {
+  const navigate = useNavigate();
+
+  const { user, status, logout } = useAuth();
+
+  async function handleLogout(): Promise<void> {
+    try {
+      await logout();
+    } finally {
+      navigate("/", {
+        replace: true,
+      });
+    }
+  }
+
   return (
     <header className="header">
       <div className="header-container">
@@ -23,13 +39,17 @@ function Header() {
               <Link to="/search">جستجو</Link>
             </li>
 
-            <li>
-              <Link to="/dashboard">داشبورد</Link>
-            </li>
+            {status === "authenticated" && (
+              <>
+                <li>
+                  <Link to="/dashboard">داشبورد</Link>
+                </li>
 
-            <li>
-              <Link to="/profile">پروفایل</Link>
-            </li>
+                <li>
+                  <Link to="/profile">پروفایل</Link>
+                </li>
+              </>
+            )}
 
             <li>
               <Link to="/contact">ارتباط با ما</Link>
@@ -40,9 +60,26 @@ function Header() {
         <div className="header-actions">
           <ThemeButton />
 
-          <Button to="/register">ثبت نام</Button>
+          {status === "authenticated" && user ? (
+            <>
+              <Button to="/profile">{user.displayName}</Button>
 
-          <Button to="/login">ورود</Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  void handleLogout();
+                }}
+              >
+                خروج
+              </Button>
+            </>
+          ) : status === "anonymous" ? (
+            <>
+              <Button to="/register">ثبت نام</Button>
+
+              <Button to="/login">ورود</Button>
+            </>
+          ) : null}
         </div>
       </div>
     </header>
