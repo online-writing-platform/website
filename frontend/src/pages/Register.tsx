@@ -1,13 +1,88 @@
-import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+
+import Button from "../components/Button";
+import useAuth from "../hooks/useAuth";
+import { getErrorMessage } from "../lib/error-message";
 
 import "./Register.css";
 import "../styles/Form.css";
-import Button from "../components/Button";
+
+interface RegisterForm {
+  displayName: string;
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  acceptTerms: boolean;
+}
+
+const initialForm: RegisterForm = {
+  displayName: "",
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  acceptTerms: false,
+};
 
 function Register() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  const navigate = useNavigate();
+
+  const { register, status } = useAuth();
+
+  const [form, setForm] = useState<RegisterForm>(initialForm);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (status === "authenticated") {
+    return <Navigate to="/profile" replace />;
+  }
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
+
+    setErrorMessage(null);
+
+    if (form.password !== form.confirmPassword) {
+      setErrorMessage("رمز عبور و تکرار آن یکسان نیستند.");
+
+      return;
+    }
+
+    if (!form.acceptTerms) {
+      setErrorMessage("برای ثبت‌نام باید قوانین سایت را بپذیرید.");
+
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await register({
+        displayName: form.displayName.trim(),
+
+        username: form.username.trim().toLowerCase(),
+
+        email: form.email.trim().toLowerCase(),
+
+        password: form.password,
+
+        acceptTerms: true,
+      });
+
+      navigate("/profile", {
+        replace: true,
+      });
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -17,7 +92,18 @@ function Register() {
 
         <p className="form-subtitle">به جامعه نویسندگان خوش آمدید.</p>
 
-        <form className="form" onSubmit={handleSubmit}>
+        <form
+          className="form"
+          onSubmit={(event) => {
+            void handleSubmit(event);
+          }}
+        >
+          {errorMessage && (
+            <p className="form-message form-message-error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+
           <div className="form-group">
             <label htmlFor="displayName">نام نمایشی</label>
 
@@ -25,7 +111,18 @@ function Register() {
               id="displayName"
               name="displayName"
               type="text"
+              value={form.displayName}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  displayName: event.target.value,
+                }));
+              }}
+              minLength={1}
+              maxLength={80}
+              autoComplete="name"
               placeholder="مثلاً چنگیز"
+              required
             />
           </div>
 
@@ -36,8 +133,24 @@ function Register() {
               id="username"
               name="username"
               type="text"
-              placeholder="@Changiz"
+              value={form.username}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  username: event.target.value,
+                }));
+              }}
+              minLength={3}
+              maxLength={30}
+              pattern="[A-Za-z0-9_]+"
+              autoComplete="username"
+              placeholder="changiz"
+              required
             />
+
+            <small className="form-help">
+              فقط حروف انگلیسی، عدد و underscore مجاز است.
+            </small>
           </div>
 
           <div className="form-group">
@@ -47,7 +160,16 @@ function Register() {
               id="email"
               name="email"
               type="email"
+              value={form.email}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  email: event.target.value,
+                }));
+              }}
+              autoComplete="email"
               placeholder="name@example.com"
+              required
             />
           </div>
 
@@ -58,17 +180,63 @@ function Register() {
               id="password"
               name="password"
               type="password"
-              placeholder="••••••••"
+              value={form.password}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  password: event.target.value,
+                }));
+              }}
+              minLength={10}
+              maxLength={128}
+              autoComplete="new-password"
+              placeholder="حداقل ۱۰ کاراکتر"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">تکرار رمز عبور</label>
+
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={form.confirmPassword}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  confirmPassword: event.target.value,
+                }));
+              }}
+              minLength={10}
+              maxLength={128}
+              autoComplete="new-password"
+              placeholder="تکرار رمز عبور"
+              required
             />
           </div>
 
           <label className="form-checkbox">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={form.acceptTerms}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  acceptTerms: event.target.checked,
+                }));
+              }}
+            />
 
-            <span>قوانین سایت را مطالعه کرده‌ام و می‌پذیرم.</span>
+            <span>
+              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و می‌پذیرم.
+            </span>
           </label>
 
-          <Button>ثبت نام</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "در حال ثبت‌نام..." : "ثبت‌نام"}
+          </Button>
         </form>
 
         <p className="form-footer">
