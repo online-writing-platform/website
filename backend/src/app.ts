@@ -15,114 +15,115 @@ import notFoundHandler from "./middlewares/notFound.middleware.js";
 import { generalApiRateLimiter } from "./middlewares/rate-limit.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
+import storyRoutes from "./routes/story.routes.js";
 import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
 function getRequestId(headerValue: string | string[] | undefined): string {
-    if (typeof headerValue === "string") {
-        const requestId = headerValue.trim();
+  if (typeof headerValue === "string") {
+    const requestId = headerValue.trim();
 
-        if (requestId.length > 0) {
-            return requestId.slice(0, 128);
-        }
+    if (requestId.length > 0) {
+      return requestId.slice(0, 128);
     }
+  }
 
-    if (Array.isArray(headerValue)) {
-        const requestId = headerValue.find((value) => value.trim().length > 0);
+  if (Array.isArray(headerValue)) {
+    const requestId = headerValue.find((value) => value.trim().length > 0);
 
-        if (requestId) {
-            return requestId.trim().slice(0, 128);
-        }
+    if (requestId) {
+      return requestId.trim().slice(0, 128);
     }
+  }
 
-    return randomUUID();
+  return randomUUID();
 }
 
 const httpLoggerOptions: PinoHttpOptions<IncomingMessage, ServerResponse> = {
-    logger,
+  logger,
 
-    genReqId(request, response) {
-        const requestId = getRequestId(request.headers["x-request-id"]);
+  genReqId(request, response) {
+    const requestId = getRequestId(request.headers["x-request-id"]);
 
-        response.setHeader("x-request-id", requestId);
+    response.setHeader("x-request-id", requestId);
 
-        return requestId;
-    },
+    return requestId;
+  },
 
-    customLogLevel(_request, response, error) {
-        if (error !== undefined || response.statusCode >= 500) {
-            return "error";
-        }
+  customLogLevel(_request, response, error) {
+    if (error !== undefined || response.statusCode >= 500) {
+      return "error";
+    }
 
-        if (response.statusCode >= 400) {
-            return "warn";
-        }
+    if (response.statusCode >= 400) {
+      return "warn";
+    }
 
-        return "info";
-    },
+    return "info";
+  },
 };
 
 app.disable("x-powered-by");
 
 if (env.trustProxy) {
-    app.set("trust proxy", 1);
+  app.set("trust proxy", 1);
 }
 
 app.use(pinoHttp(httpLoggerOptions));
 
 app.use(
-    helmet({
-        crossOriginResourcePolicy: {
-            policy: "cross-origin",
-        },
-    }),
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  }),
 );
 
 app.use(
-    cors({
-        credentials: true,
+  cors({
+    credentials: true,
 
-        origin(origin, callback) {
-            if (!origin) {
-                callback(null, true);
-                return;
-            }
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
 
-            if (env.clientOrigins.includes(origin)) {
-                callback(null, true);
-                return;
-            }
+      if (env.clientOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
 
-            callback(
-                AppError.forbidden(
-                    "This origin is not allowed to access the API.",
-                    "CORS_ORIGIN_NOT_ALLOWED",
-                ),
-            );
-        },
+      callback(
+        AppError.forbidden(
+          "This origin is not allowed to access the API.",
+          "CORS_ORIGIN_NOT_ALLOWED",
+        ),
+      );
+    },
 
-        methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
 
-        allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
 
-        exposedHeaders: ["X-Request-Id", "RateLimit", "RateLimit-Policy"],
-    }),
+    exposedHeaders: ["X-Request-Id", "RateLimit", "RateLimit-Policy"],
+  }),
 );
 
 app.use(cookieParser());
 
 app.use(
-    express.json({
-        limit: "100kb",
-    }),
+  express.json({
+    limit: "100kb",
+  }),
 );
 
 app.use(
-    express.urlencoded({
-        extended: false,
-        limit: "100kb",
-    }),
+  express.urlencoded({
+    extended: false,
+    limit: "100kb",
+  }),
 );
 
 app.use("/health", healthRoutes);
@@ -130,7 +131,7 @@ app.use("/health", healthRoutes);
 app.use("/api/v1", generalApiRateLimiter);
 
 app.use("/api/v1/auth", authRoutes);
-
+app.use("/api/v1/stories", storyRoutes);
 app.use("/api/v1/users", userRoutes);
 
 app.use(notFoundHandler);
