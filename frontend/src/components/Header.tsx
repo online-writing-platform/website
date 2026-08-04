@@ -6,6 +6,7 @@ import ThemeButton from "./ThemeButton";
 import useAuth from "../hooks/useAuth";
 
 import "./Header.css";
+import SearchBar from "./SearchBar";
 
 function Header() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ function Header() {
         <Link to="/" className="logo">
           <span>Online Writing Platform</span>
         </Link>
+        <SearchBar />
 
         <nav className="navbar">
           <ul>

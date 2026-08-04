@@ -50,8 +50,6 @@ function StorySection({ title }: StorySectionProps) {
 function Home() {
   return (
     <main className="home">
-      <SearchBar />
-
       <Filter />
 
       <StorySection title="تازه‌ها" />

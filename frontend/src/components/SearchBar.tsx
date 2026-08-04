@@ -19,8 +19,6 @@ function SearchBar() {
           placeholder="جستجوی داستان، نویسنده یا ژانر..."
           className="search-input"
         />
-
-        <Button>جستجو</Button>
       </div>
     </form>
   );
