@@ -1,33 +1,27 @@
 import { apiRequest } from "../lib/api";
+import type { GetStoriesResponse } from "../types/story";
 
-import type { StoryListResponse } from "../types/story";
-
-interface GetStoriesOptions {
-  limit?: number;
-
-  cursor?: string;
-
-  sort?: "latest" | "popular" | "recommended";
-}
-
-export async function getStories({
-  limit = 12,
+export function getStories({
   cursor,
-  sort = "latest",
-}: GetStoriesOptions): Promise<StoryListResponse> {
-  const params = new URLSearchParams();
+  signal,
+}: {
+  cursor?: string | null;
+  signal?: AbortSignal;
+} = {}): Promise<GetStoriesResponse> {
+  const searchParams = new URLSearchParams();
+  const normalizedCursor = cursor?.trim();
 
-  params.set("limit", String(limit));
-
-  params.set("sort", sort);
-
-  if (cursor) {
-    params.set("cursor", cursor);
+  if (normalizedCursor) {
+    searchParams.set("cursor", normalizedCursor);
   }
 
-  const response = await apiRequest<{
-    data: StoryListResponse;
-  }>(`/api/v1/stories?${params.toString()}`);
+  const queryString = searchParams.toString();
 
-  return response.data;
+  const path = queryString
+    ? `/api/v1/stories?${queryString}`
+    : "/api/v1/stories";
+
+  return apiRequest<GetStoriesResponse>(path, {
+    signal,
+  });
 }

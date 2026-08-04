@@ -1,25 +1,32 @@
-export interface Story {
-  id: string;
+export type StoryStatus = "DRAFT" | "ONGOING" | "COMPLETED" | "HIATUS";
 
-  title: string;
-
-  description: string;
-
-  coverImage: string | null;
-
-  category: string;
-
-  slug: string;
-
-  views: number;
-
-  likes: number;
-
-  status: "ONGOING" | "COMPLETED";
+export interface StoryAuthor {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
 }
 
-export interface StoryListResponse {
-  stories: Story[];
+export interface StoryListItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  coverUrl: string | null;
+  language: string;
+  status: StoryStatus;
+  isMature: boolean;
+  publishedAt: string;
+  author: StoryAuthor;
+}
 
+export interface StoryPagination {
+  hasMore: boolean;
   nextCursor: string | null;
+}
+
+export interface GetStoriesResponse {
+  data: {
+    stories: StoryListItem[];
+    pagination: StoryPagination;
+  };
 }
