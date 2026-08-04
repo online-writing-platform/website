@@ -64,22 +64,23 @@ function Header() {
 
           {status === "authenticated" && user ? (
             <>
-              <Button to="/profile">{user.displayName}</Button>
+              <Link className="nav-link" to="/profile">
+                {user.displayName}
+              </Link>
 
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  void handleLogout();
-                }}
-              >
+              <button className="nav-link" onClick={() => void handleLogout()}>
                 خروج
-              </Button>
+              </button>
             </>
           ) : status === "anonymous" ? (
             <>
-              <Button to="/register">ثبت نام</Button>
+              <Link className="nav-link" to="/register">
+                ثبت نام
+              </Link>
 
-              <Button to="/login">ورود</Button>
+              <Link className="nav-link" to="/login">
+                ورود
+              </Link>
             </>
           ) : null}
         </div>
