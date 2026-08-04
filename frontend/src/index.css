@@ -5,58 +5,66 @@
 }
 :root {
   /* Backgrounds */
-  --background: #ffffff;
-  --surface: #f8fafc;
-  --surface-hover: #f1f5f9;
+  --background: #f7f1e8; /* کاغذی */
+  --surface: #fffdf9; /* کارت‌ها */
+  --surface-hover: #efe5d8;
 
   /* Text */
-  --text: #1f2937;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
+  --text: #2b2118;
+  --text-secondary: #6b6259;
+  --text-muted: #9a9085;
 
   /* Borders */
-  --border: #e5e7eb;
+  --border: #ded1c2;
 
   /* Brand */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-soft: #dbeafe;
+  --primary: #023b32; /* سبز جنگلی */
+  --primary-hover: #012a24;
+  --primary-soft: #d7e8e2;
+
+  /* Accent */
+  --accent: #8b5e3c; /* قهوه‌ای */
+  --accent-soft: #e8d2c0;
 
   /* Status */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --success: #3f7d58;
+  --warning: #b7791f;
+  --danger: #b94a48;
 
   /* Shadow */
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow: 0 4px 12px rgba(61, 12, 2, 0.12);
 }
 
 .dark {
   /* Backgrounds */
-  --background: #18181b;
-  --surface: #27272a;
-  --surface-hover: #323236;
+  --background: #121a16;
+  --surface: #19231e;
+  --surface-hover: #223129;
 
   /* Text */
-  --text: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text: #f4ede3;
+  --text-secondary: #b9b0a5;
+  --text-muted: #817970;
 
   /* Borders */
-  --border: #3f3f46;
+  --border: #30433a;
 
   /* Brand */
-  --primary: #60a5fa;
-  --primary-hover: #3b82f6;
-  --primary-soft: #1e3a8a;
+  --primary: #4f9f7a;
+  --primary-hover: #6bbf98;
+  --primary-soft: #173b31;
+
+  /* Accent */
+  --accent: #c69076;
+  --accent-soft: #3d2418;
 
   /* Status */
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --danger: #f87171;
+  --success: #6fcf97;
+  --warning: #f2c94c;
+  --danger: #eb5757;
 
   /* Shadow */
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 * {
