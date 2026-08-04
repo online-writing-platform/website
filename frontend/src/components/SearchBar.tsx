@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { FaSearch } from "react-icons/fa";
+import { CiSearch } from "react-icons/ci";
 import "./SearchBar.css";
 import Button from "./Button";
 function SearchBar() {
@@ -10,7 +10,7 @@ function SearchBar() {
   return (
     <form className="search-form" onSubmit={handleSubmit}>
       <div className="search-box" dir="rtl">
-        <FaSearch className="search-icon" />
+        <CiSearch className="search-icon" />
 
         <input
           id="search"
