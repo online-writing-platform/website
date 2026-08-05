@@ -7,16 +7,22 @@ export interface StoryAuthor {
 }
 
 export interface StoryListItem {
-  id: string;
-  slug: string;
+  id: number;
+  image: string;
   title: string;
-  description: string;
-  coverUrl: string | null;
-  language: string;
-  status: StoryStatus;
-  isMature: boolean;
-  publishedAt: string;
-  author: StoryAuthor;
+  category: string;
+  link: string;
+  // id: number;
+  //   image: string;
+  //   slug: string;
+  //   title: string;
+  //   description: string;
+  //   coverUrl: string | null;
+  //   language: string;
+  //   status: StoryStatus;
+  //   isMature: boolean;
+  //   publishedAt: string;
+  //   author: StoryAuthor;
 }
 
 export interface StoryPagination {
@@ -29,4 +35,8 @@ export interface GetStoriesResponse {
     stories: StoryListItem[];
     pagination: StoryPagination;
   };
+}
+export interface StorySectionProps {
+  title: string;
+  stories: StoryListItem[];
 }

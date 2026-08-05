@@ -18,7 +18,17 @@
 }
 
 .story-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+
   gap: 20px;
+
+  overflow-x: auto;
+
+  scroll-behavior: smooth;
+
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+.story-row::-webkit-scrollbar {
+  display: none;
 }

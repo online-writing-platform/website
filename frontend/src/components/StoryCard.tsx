@@ -3,14 +3,11 @@ import { Link } from "react-router-dom";
 import "./StoryCard.css";
 import Button from "./Button";
 
-interface StoryCardProps {
-  image: string;
-  category: string;
-  title: string;
-  description: string;
-  link: string;
-  views?: number | string;
-  likes?: number | string;
+import { StoryListItem } from "../types/story";
+
+interface StoryCardProps extends StoryListItem {
+  views?: number;
+  likes?: number;
   status?: string;
 }
 
@@ -18,7 +15,6 @@ function StoryCard({
   image,
   category,
   title,
-  description,
   views,
   likes,
   status,
@@ -39,8 +35,6 @@ function StoryCard({
         <Link to={link} className="story-title">
           {title}
         </Link>
-
-        <p className="story-description">{description}</p>
 
         {hasMetadata && (
           <div className="story-meta">
