@@ -7,7 +7,6 @@ interface Story {
   image: string;
   category: string;
   title: string;
-  description: string;
   link: string;
 }
 
@@ -16,7 +15,6 @@ const stories: Story[] = Array.from({ length: 5 }, (_, index) => ({
   image: "https://picsum.photos/300/200",
   category: "فانتزی",
   title: "افسانه آخر",
-  description: "داستانی درباره سفر یک قهرمان...",
   link: "/story/1",
 }));
 
@@ -36,7 +34,6 @@ function StorySection({ title }: StorySectionProps) {
             image={story.image}
             category={story.category}
             title={story.title}
-            description={story.description}
             link={story.link}
           />
         ))}

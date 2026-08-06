@@ -7,7 +7,6 @@ interface StoryCardProps {
   image: string;
   category: string;
   title: string;
-  description: string;
   link: string;
   views?: number | string;
   likes?: number | string;
@@ -18,7 +17,6 @@ function StoryCard({
   image,
   category,
   title,
-  description,
   views,
   likes,
   status,
@@ -39,8 +37,6 @@ function StoryCard({
         <Link to={link} className="story-title">
           {title}
         </Link>
-
-        <p className="story-description">{description}</p>
 
         {hasMetadata && (
           <div className="story-meta">
