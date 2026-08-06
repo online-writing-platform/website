@@ -1,6 +1,4 @@
 import "./Home.css";
-
-import Filter from "../components/Filters/Filter";
 import SearchBar from "../components/SearchBar";
 import StoryCard from "../components/StoryCard";
 
@@ -50,8 +48,6 @@ function StorySection({ title }: StorySectionProps) {
 function Home() {
   return (
     <main className="home">
-      <Filter />
-
       <StorySection title="تازه‌ها" />
 
       <StorySection title="محبوب‌ها" />
