@@ -1,15 +1,15 @@
 .home {
   width: 90%;
-  margin: auto;
+  margin: 0 165px;
   padding: 40px 0;
   background: var(--background);
   color: var(--text);
 }
 
 /* Story Sections */
-
-.story-section {
+.Story-title .story-section {
   margin-bottom: 50px;
+  font-size: 20px;
 }
 
 .story-section h2 {
@@ -19,6 +19,5 @@
 
 .story-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(8, [col-start] 150px [col-end]);
 }

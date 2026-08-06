@@ -32,8 +32,6 @@ function StoryCard({
       </Link>
 
       <div className="story-card-body">
-        <span className="story-category">{category}</span>
-
         <Link to={link} className="story-title">
           {title}
         </Link>
@@ -41,13 +39,6 @@ function StoryCard({
         {hasMetadata && (
           <div className="story-meta">
             <div className="story-stats">
-              {views !== undefined && (
-                <span>
-                  <HiOutlineEye />
-                  {views}
-                </span>
-              )}
-
               {likes !== undefined && (
                 <span>
                   <HiOutlineHeart />
@@ -59,8 +50,11 @@ function StoryCard({
             {status && <span className="story-status">{status}</span>}
           </div>
         )}
-
-        <Button to={link}>مطالعه داستان</Button>
+        <span className="story-category">{category}</span>
+        <span className="views">
+          <HiOutlineEye className="icon" />
+          {views}
+        </span>
       </div>
     </article>
   );
