@@ -1,6 +1,8 @@
 import "./Home.css";
 import SearchBar from "../components/SearchBar";
 import StoryCard from "../components/StoryCard";
+
+import Smooth3DSlideshow from "../components/originkit/ui/coverflowgallery";
 import storycover from "../assets/storycover.jpg";
 import wedding from "../assets/wedding.jpg";
 import myBoy from "../assets/myBoy.jpg";
@@ -9,45 +11,6 @@ import Girl from "../assets/Girl.jpg";
 
 import { Link } from "react-router-dom";
 
-import Coverflow, { CoverflowItem } from "../components/Coverflow";
-
-const heroItems: CoverflowItem[] = [
-  {
-    id: 1,
-    image: storycover,
-    title: "فانتزی",
-    subtitle: "دنیایی از جادو",
-    href: "/story/1",
-  },
-  {
-    id: 2,
-    image: myBoy,
-    title: "علمی تخیلی",
-    subtitle: "سفر به آینده",
-    href: "/story/2",
-  },
-  {
-    id: 3,
-    image: Hands,
-    title: "عاشقانه",
-    subtitle: "روایتی احساسی",
-    href: "/story/3",
-  },
-  {
-    id: 4,
-    image: wedding,
-    title: "جنایی",
-    subtitle: "رازهای تاریک",
-    href: "/story/4",
-  },
-  {
-    id: 5,
-    image: Girl,
-    title: "ترسناک",
-    subtitle: "جرئت داری بخوانی؟",
-    href: "/story/5",
-  },
-];
 interface Story {
   id: number;
   image: string;
@@ -92,7 +55,7 @@ function StorySection({ title }: StorySectionProps) {
 function Home() {
   return (
     <main className="home">
-      <Coverflow items={heroItems} />
+      <Smooth3DSlideshow />
       <div className="Story-Container">
         <StorySection title="تازه‌ها" />
 
