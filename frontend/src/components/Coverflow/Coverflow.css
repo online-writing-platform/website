@@ -81,3 +81,73 @@
 .coverflow-arrow-right {
   right: 12px;
 }
+.coverflow-stage::before {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: -30px;
+
+  width: 520px;
+
+  height: 60px;
+
+  transform: translateX(-50%);
+
+  border-radius: 50%;
+
+  background: radial-gradient(rgba(0, 0, 0, 0.35), transparent 70%);
+
+  filter: blur(18px);
+
+  pointer-events: none;
+}
+
+.coverflow-card {
+  backface-visibility: hidden;
+}
+
+.coverflow-card.active {
+  transition-duration: 0.4s;
+}
+@media (max-width: 1100px) {
+  .coverflow {
+    padding: 70px 50px;
+  }
+
+  .coverflow-stage {
+    height: 420px;
+  }
+}
+
+@media (max-width: 900px) {
+  .coverflow-stage {
+    height: 360px;
+  }
+
+  .coverflow-arrow {
+    width: 46px;
+
+    height: 46px;
+
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 700px) {
+  .coverflow {
+    padding: 60px 20px;
+  }
+
+  .coverflow-stage {
+    height: 320px;
+  }
+}
+
+@media (max-width: 500px) {
+  .coverflow-stage {
+    height: 280px;
+  }
+}

@@ -250,3 +250,4 @@ function Coverflow({
     </section>
   );
 }
+export default Coverflow;

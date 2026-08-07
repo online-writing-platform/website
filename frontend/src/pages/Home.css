@@ -1,6 +1,6 @@
 .home {
   width: 90%;
-  margin: 0 165px;
+  margin: auto;
   padding: 40px 0;
   background: var(--background);
   color: var(--text);
@@ -16,7 +16,9 @@
   margin-bottom: 20px;
   color: var(--text);
 }
-
+.Story-Container {
+  margin: 0 10%;
+}
 .story-row {
   display: grid;
   grid-template-columns: repeat(7, [col-start] 160px [col-end]);
