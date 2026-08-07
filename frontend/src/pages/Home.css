@@ -19,5 +19,5 @@
 
 .story-row {
   display: grid;
-  grid-template-columns: repeat(8, [col-start] 150px [col-end]);
+  grid-template-columns: repeat(7, [col-start] 160px [col-end]);
 }

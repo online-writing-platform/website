@@ -2,6 +2,7 @@ import "./Home.css";
 import SearchBar from "../components/SearchBar";
 import StoryCard from "../components/StoryCard";
 import storycover from "../assets/storycover.jpg";
+import { Link } from "react-router-dom";
 
 interface Story {
   id: number;
@@ -11,7 +12,7 @@ interface Story {
   link: string;
 }
 
-const stories: Story[] = Array.from({ length: 8 }, (_, index) => ({
+const stories: Story[] = Array.from({ length: 7 }, (_, index) => ({
   id: index + 1,
   image: storycover,
   category: "فانتزی",
