@@ -18,7 +18,6 @@ function Search() {
           image="https://picsum.photos/300/200"
           category="فانتزی"
           title="افسانه آخر"
-          description="داستانی درباره سفر یک قهرمان..."
           link="/story/1"
         />
 
@@ -26,7 +25,6 @@ function Search() {
           image="https://picsum.photos/300/200"
           category="فانتزی"
           title="افسانه آخر"
-          description="داستانی درباره سفر یک قهرمان..."
           link="/story/1"
         />
 
@@ -34,7 +32,6 @@ function Search() {
           image="https://picsum.photos/300/200"
           category="فانتزی"
           title="افسانه آخر"
-          description="داستانی درباره سفر یک قهرمان..."
           link="/story/1"
         />
       </section>
