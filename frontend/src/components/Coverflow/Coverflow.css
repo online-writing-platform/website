@@ -57,21 +57,7 @@
 
   font-size: 28px;
 
-  color: white;
-
-  background: rgba(0, 0, 0, 0.45);
-
-  backdrop-filter: blur(10px);
-
-  transition:
-    background 0.25s ease,
-    transform 0.25s ease;
-}
-
-.coverflow-arrow:hover {
-  background: rgba(0, 0, 0, 0.7);
-
-  transform: translateY(-50%) scale(1.05);
+  color: var(--text);
 }
 
 .coverflow-arrow-left {
