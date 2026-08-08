@@ -28,20 +28,27 @@ enum ChapterStatus {
 }
 
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique @db.VarChar(320)
-  username        String    @unique @db.VarChar(30)
-  passwordHash    String    @map("password_hash") @db.VarChar(255)
-  displayName     String    @map("display_name") @db.VarChar(80)
-  bio             String?   @db.VarChar(500)
-  avatarUrl       String?   @map("avatar_url") @db.Text
-  termsAcceptedAt DateTime  @default(now()) @map("terms_accepted_at")
-  termsVersion    String    @default("v1") @map("terms_version") @db.VarChar(20)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id              String   @id @default(uuid()) @db.Uuid
 
-  stories Story[]
-  sessions Session[]
+  email           String   @unique @db.Citext
+  username        String   @unique @db.Citext
+
+  passwordHash    String   @map("password_hash") @db.VarChar(255)
+
+  displayName     String   @map("display_name") @db.VarChar(80)
+  birthDate       DateTime @map("birth_date") @db.Date
+
+  bio             String?  @db.VarChar(500)
+  avatarUrl       String?  @map("avatar_url") @db.Text
+
+  termsAcceptedAt DateTime @default(now()) @map("terms_accepted_at")
+  termsVersion    String   @default("v1") @map("terms_version") @db.VarChar(20)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  stories         Story[]
+  sessions        Session[]
 
   @@map("users")
 }
@@ -49,20 +56,28 @@ model User {
 model Session {
   id               String    @id @default(uuid()) @db.Uuid
   userId           String    @map("user_id") @db.Uuid
+
   refreshTokenHash String    @unique @map("refresh_token_hash") @db.Char(64)
-  isPersistent     Boolean   @default(false) @map("is_persistent")
+
   userAgent        String?   @map("user_agent") @db.VarChar(512)
   ipAddress        String?   @map("ip_address") @db.VarChar(45)
+
   lastUsedAt       DateTime  @default(now()) @map("last_used_at")
   expiresAt        DateTime  @map("expires_at")
   revokedAt        DateTime? @map("revoked_at")
+
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
+
   @@map("sessions")
 }
 
