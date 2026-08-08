@@ -1,15 +1,13 @@
 import "./Home.css";
-import SearchBar from "../components/SearchBar";
-import StoryCard from "../components/StoryCard";
 
+import StoryCard from "../components/StoryCard";
 import Smooth3DSlideshow from "../components/originkit/ui/coverflowgallery";
+
 import storycover from "../assets/storycover.jpg";
 import wedding from "../assets/wedding.jpg";
 import myBoy from "../assets/myBoy.jpg";
 import Hands from "../assets/Hands.jpg";
 import Girl from "../assets/Girl.jpg";
-
-import { Link } from "react-router-dom";
 
 interface Story {
   id: number;
@@ -19,13 +17,57 @@ interface Story {
   link: string;
 }
 
-const stories: Story[] = Array.from({ length: 7 }, (_, index) => ({
-  id: index + 1,
-  image: storycover,
-  category: "فانتزی",
-  title: "افسانه آخر",
-  link: "/story/1",
-}));
+const stories: Story[] = [
+  {
+    id: 1,
+    image: storycover,
+    category: "فانتزی",
+    title: "افسانه آخر",
+    link: "/story/1",
+  },
+  {
+    id: 2,
+    image: wedding,
+    category: "عاشقانه",
+    title: "عروس",
+    link: "/story/2",
+  },
+  {
+    id: 3,
+    image: myBoy,
+    category: "عاشقانه",
+    title: "پسر من",
+    link: "/story/3",
+  },
+  {
+    id: 4,
+    image: Hands,
+    category: "درام",
+    title: "دست در دست",
+    link: "/story/4",
+  },
+  {
+    id: 5,
+    image: Girl,
+    category: "معمایی",
+    title: "آن دختر واقعی نبود",
+    link: "/story/5",
+  },
+  {
+    id: 6,
+    image: storycover,
+    category: "فانتزی",
+    title: "راز آخر",
+    link: "/story/6",
+  },
+  {
+    id: 7,
+    image: wedding,
+    category: "عاشقانه",
+    title: "خاطره",
+    link: "/story/7",
+  },
+];
 
 interface StorySectionProps {
   title: string;
@@ -34,7 +76,7 @@ interface StorySectionProps {
 function StorySection({ title }: StorySectionProps) {
   return (
     <section className="story-section">
-      <h2 className="Story-title">{title}</h2>
+      <h2>{title}</h2>
 
       <div className="story-row">
         {stories.map((story) => (
@@ -53,16 +95,25 @@ function StorySection({ title }: StorySectionProps) {
 }
 
 function Home() {
+  const heroSlides = stories.map((story) => ({
+    image: {
+      src: story.image,
+      alt: story.title,
+    },
+    title: story.title,
+  }));
+
   return (
     <main className="home">
-      <Smooth3DSlideshow />
-      <div className="Story-Container">
-        <StorySection title="تازه‌ها" />
+      <section className="home-hero">
+        <Smooth3DSlideshow />
+      </section>
 
-        <StorySection title="محبوب‌ها" />
+      <StorySection title="تازه‌ها" />
 
-        <StorySection title="مطابق با سلیقه شما" />
-      </div>
+      <StorySection title="محبوب‌ها" />
+
+      <StorySection title="مطابق با سلیقه شما" />
     </main>
   );
 }

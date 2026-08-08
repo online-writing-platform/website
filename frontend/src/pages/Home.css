@@ -7,8 +7,9 @@
 }
 
 /* Story Sections */
-.Story-title .story-section {
+.story-section {
   margin-bottom: 50px;
+  margin-top: 50px;
   font-size: 20px;
 }
 
