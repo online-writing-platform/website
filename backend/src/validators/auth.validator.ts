@@ -1,3 +1,8 @@
+import {
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+} from "../security/password-strength.js";
+
 import { z } from "zod";
 
 const usernameSchema = z
@@ -20,8 +25,8 @@ const emailSchema = z
 
 const passwordSchema = z
     .string()
-    .min(10, "Password must contain at least 10 characters.")
-    .max(128, "Password cannot contain more than 128 characters.");
+    .min(MIN_PASSWORD_LENGTH, `Password must contain at least ${MIN_PASSWORD_LENGTH} characters.`)
+    .max(MAX_PASSWORD_LENGTH, `Password cannot contain more than ${MAX_PASSWORD_LENGTH} characters.`);
 
 export const registerSchema = z
     .object({
