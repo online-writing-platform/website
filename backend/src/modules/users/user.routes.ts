@@ -1,29 +1,41 @@
 import { Router } from "express";
 
-import {
-    getMe,
-    getProfileByUsername,
-    updateMe,
-} from "../controllers/user.controller.js";
-import { authenticate } from "../middlewares/auth.middleware.js";
+import { authenticate } from "../auth/auth.middleware.js";
+
 import {
     validateBody,
     validateParams,
-} from "../middlewares/validate.middleware.js";
-import {
-    updateProfileSchema,
-    usernameParamsSchema,
-} from "../validators/user.validator.js";
+} from "../../middlewares/validate.middleware.js";
+
+import { getMe, getProfileByUsername, updateMe } from "./user.controller.js";
+
+import { updateProfileSchema, usernameParamsSchema } from "./user.schema.js";
 
 const router = Router();
 
-router.get("/me", authenticate, getMe);
+router.get(
+    "/me",
 
-router.patch("/me", authenticate, validateBody(updateProfileSchema), updateMe);
+    authenticate,
+
+    getMe,
+);
+
+router.patch(
+    "/me",
+
+    authenticate,
+
+    validateBody(updateProfileSchema),
+
+    updateMe,
+);
 
 router.get(
     "/:username",
+
     validateParams(usernameParamsSchema),
+
     getProfileByUsername,
 );
 

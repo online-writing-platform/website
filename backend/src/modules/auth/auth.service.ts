@@ -1,59 +1,80 @@
-import env from "../config/env.js";
-import { prisma } from "../db/index.js";
-import AppError from "../errors/app-error.js";
-import type { ClientInformation } from "../types/auth.js";
+import env from "../../config/env.js";
+import { prisma } from "../../db/index.js";
+
+import AppError from "../../errors/app-error.js";
+
+import { hashPassword, verifyPassword } from "../../security/password.js";
+
 import {
     calculateSessionExpiration,
     createAccessToken,
     generateRefreshToken,
     hashRefreshToken,
-} from "../utils/token.js";
-import { normalizeEmail, normalizeUsername } from "../utils/normalize.js";
-import { hashPassword, verifyPassword } from "../utils/password.js";
-import { isPrismaErrorCode } from "../utils/prisma-error.js";
+} from "../../security/token.js";
+
+import { normalizeEmail, normalizeUsername } from "../../utils/normalize.js";
+
+import { isPrismaErrorCode } from "../../utils/prisma-error.js";
+
+import {
+    ensurePasswordMeetsPolicy,
+    parseAndValidateBirthDate,
+} from "./auth.policy.js";
+
+import type { LoginInput, RegisterInput } from "./auth.schema.js";
+
 import type {
-    LoginInput,
-    RegisterInput,
-} from "../validators/auth.validator.js";
-import { assessPasswordStrength } from "../security/password-strength.js";
+    AuthenticatedUser,
+    AuthenticationResult,
+    ClientInformation,
+} from "./auth.types.js";
 
-export interface AuthenticatedUser {
-    id: string;
-    email: string;
-    username: string;
-    displayName: string;
-    bio: string | null;
-    avatarUrl: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface AuthenticationResult {
-    user: AuthenticatedUser;
-    accessToken: string;
-    refreshToken: string;
-    sessionExpiresAt: Date;
-    isPersistent: boolean;
-}
+type UserStatusValue = "ACTIVE" | "SUSPENDED" | "DELETED";
 
 interface AuthUserRecord {
     id: string;
+
     email: string;
+
     username: string;
     displayName: string;
+
     bio: string | null;
     avatarUrl: string | null;
+
+    emailVerifiedAt: Date | null;
+
+    status: UserStatusValue;
+
     createdAt: Date;
     updatedAt: Date;
+}
+
+interface SessionMaterial {
+    refreshToken: string;
+    refreshTokenHash: string;
+
+    expiresAt: Date;
+
+    userAgent?: string;
+    ipAddress?: string;
 }
 
 const authUserSelect = {
     id: true,
+
     email: true,
+
     username: true,
     displayName: true,
+
     bio: true,
     avatarUrl: true,
+
+    emailVerifiedAt: true,
+
+    status: true,
+
     createdAt: true,
     updatedAt: true,
 } as const;
@@ -61,12 +82,21 @@ const authUserSelect = {
 function mapAuthenticatedUser(user: AuthUserRecord): AuthenticatedUser {
     return {
         id: user.id,
+
         email: user.email,
+
         username: user.username,
+
         displayName: user.displayName,
+
         bio: user.bio,
+
         avatarUrl: user.avatarUrl,
+
+        emailVerified: user.emailVerifiedAt !== null,
+
         createdAt: user.createdAt,
+
         updatedAt: user.updatedAt,
     };
 }
@@ -79,14 +109,44 @@ function sanitizeClientInformation(
     const ipAddress = clientInformation.ipAddress?.trim().slice(0, 45);
 
     return {
-        ...(userAgent ? { userAgent } : {}),
-        ...(ipAddress ? { ipAddress } : {}),
+        ...(userAgent
+            ? {
+                  userAgent,
+              }
+            : {}),
+
+        ...(ipAddress
+            ? {
+                  ipAddress,
+              }
+            : {}),
     };
 }
 
-async function ensureRegistrationIdentityIsAvailable(
+function createSessionMaterial(
+    clientInformation: ClientInformation,
+): SessionMaterial {
+    const refreshToken = generateRefreshToken();
+
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+
+    const expiresAt = calculateSessionExpiration();
+
+    const safeClientInformation = sanitizeClientInformation(clientInformation);
+
+    return {
+        refreshToken,
+        refreshTokenHash,
+
+        expiresAt,
+
+        ...safeClientInformation,
+    };
+}
+
+async function ensureIdentityIsAvailable(
     email: string,
-    username: string,
+    usernameNormalized: string,
 ): Promise<void> {
     const existingUser = await prisma.user.findFirst({
         where: {
@@ -94,15 +154,16 @@ async function ensureRegistrationIdentityIsAvailable(
                 {
                     email,
                 },
+
                 {
-                    username,
+                    usernameNormalized,
                 },
             ],
         },
 
         select: {
             email: true,
-            username: true,
+            usernameNormalized: true,
         },
     });
 
@@ -123,62 +184,59 @@ async function ensureRegistrationIdentityIsAvailable(
     );
 }
 
-function ensurePasswordIsAcceptable(password: string, userInputs: string[]): void {
-    const assessment = assessPasswordStrength(password, userInputs);
-
-    if (assessment.acceptable) {
+function ensureAccountCanLogin(status: UserStatusValue): void {
+    if (status === "ACTIVE") {
         return;
     }
 
-    throw AppError.badRequest(
-        "The Selected Password is too weak.",
-        "PASSWORD_TOO_WEAK",
-        {
-            score: assessment.score,
-            level: assessment.level,
-            warningKey: assessment.warningKey,
-            suggestionKeys: assessment.suggestionKeys,
-        },
+    if (status === "SUSPENDED") {
+        throw AppError.forbidden(
+            "This account has been suspended.",
+            "ACCOUNT_SUSPENDED",
+        );
+    }
+
+    throw AppError.unauthorized(
+        "The email, username, or password is incorrect.",
+        "INVALID_CREDENTIALS",
     );
-};
+}
 
 export async function registerUser(
     input: RegisterInput,
     clientInformation: ClientInformation,
 ): Promise<AuthenticationResult> {
     const email = normalizeEmail(input.email);
-    const username = normalizeUsername(input.username);
-    const displayName = input.displayName.trim();
 
-    const emailLocalPart = email.split("@")[0] ?? "";
+    const username = input.username.trim();
 
-    ensurePasswordIsAcceptable(input.password, [
-        email,
-        emailLocalPart,
-        username,
-        displayName,
-    ]);
+    const usernameNormalized = normalizeUsername(username);
 
-    await ensureRegistrationIdentityIsAvailable(email, username);
+    const birthDate = parseAndValidateBirthDate(input.birthDate);
+
+    ensurePasswordMeetsPolicy(input.password, username);
+
+    await ensureIdentityIsAvailable(email, usernameNormalized);
 
     const passwordHash = await hashPassword(input.password);
 
-    const refreshToken = generateRefreshToken();
-    const refreshTokenHash = hashRefreshToken(refreshToken);
-
-    const isPersistent = true;
-    const sessionExpiresAt = calculateSessionExpiration(isPersistent);
-
-    const safeClientInformation = sanitizeClientInformation(clientInformation);
+    const sessionMaterial = createSessionMaterial(clientInformation);
 
     try {
         const result = await prisma.$transaction(async (transaction) => {
             const user = await transaction.user.create({
                 data: {
                     email,
+
                     username,
-                    displayName: displayName,
+                    usernameNormalized,
+
                     passwordHash,
+
+                    displayName: username,
+
+                    birthDate,
+
                     termsVersion: env.termsVersion,
                 },
 
@@ -188,11 +246,14 @@ export async function registerUser(
             const session = await transaction.session.create({
                 data: {
                     userId: user.id,
-                    refreshTokenHash,
-                    isPersistent,
-                    expiresAt: sessionExpiresAt,
-                    userAgent: safeClientInformation.userAgent,
-                    ipAddress: safeClientInformation.ipAddress,
+
+                    refreshTokenHash: sessionMaterial.refreshTokenHash,
+
+                    expiresAt: sessionMaterial.expiresAt,
+
+                    userAgent: sessionMaterial.userAgent,
+
+                    ipAddress: sessionMaterial.ipAddress,
                 },
 
                 select: {
@@ -208,15 +269,18 @@ export async function registerUser(
 
         const accessToken = await createAccessToken({
             userId: result.user.id,
+
             sessionId: result.sessionId,
         });
 
         return {
             user: mapAuthenticatedUser(result.user),
+
             accessToken,
-            refreshToken,
-            sessionExpiresAt,
-            isPersistent,
+
+            refreshToken: sessionMaterial.refreshToken,
+
+            sessionExpiresAt: sessionMaterial.expiresAt,
         };
     } catch (error) {
         if (error instanceof AppError) {
@@ -238,22 +302,26 @@ export async function loginUser(
     input: LoginInput,
     clientInformation: ClientInformation,
 ): Promise<AuthenticationResult> {
-    const identifier = input.identifier.trim().toLowerCase();
+    const identifier = input.identifier.trim();
+
+    const normalizedIdentifier = identifier.toLowerCase();
 
     const user = await prisma.user.findFirst({
         where: {
             OR: [
                 {
-                    email: identifier,
+                    email: normalizeEmail(identifier),
                 },
+
                 {
-                    username: identifier,
+                    usernameNormalized: normalizedIdentifier,
                 },
             ],
         },
 
         select: {
             ...authUserSelect,
+
             passwordHash: true,
         },
     });
@@ -277,22 +345,21 @@ export async function loginUser(
         );
     }
 
-    const refreshToken = generateRefreshToken();
-    const refreshTokenHash = hashRefreshToken(refreshToken);
+    ensureAccountCanLogin(user.status);
 
-    const isPersistent = input.rememberMe;
-    const sessionExpiresAt = calculateSessionExpiration(isPersistent);
-
-    const safeClientInformation = sanitizeClientInformation(clientInformation);
+    const sessionMaterial = createSessionMaterial(clientInformation);
 
     const session = await prisma.session.create({
         data: {
             userId: user.id,
-            refreshTokenHash,
-            isPersistent,
-            expiresAt: sessionExpiresAt,
-            userAgent: safeClientInformation.userAgent,
-            ipAddress: safeClientInformation.ipAddress,
+
+            refreshTokenHash: sessionMaterial.refreshTokenHash,
+
+            expiresAt: sessionMaterial.expiresAt,
+
+            userAgent: sessionMaterial.userAgent,
+
+            ipAddress: sessionMaterial.ipAddress,
         },
 
         select: {
@@ -302,15 +369,18 @@ export async function loginUser(
 
     const accessToken = await createAccessToken({
         userId: user.id,
+
         sessionId: session.id,
     });
 
     return {
         user: mapAuthenticatedUser(user),
+
         accessToken,
-        refreshToken,
-        sessionExpiresAt,
-        isPersistent,
+
+        refreshToken: sessionMaterial.refreshToken,
+
+        sessionExpiresAt: sessionMaterial.expiresAt,
     };
 }
 
@@ -352,14 +422,35 @@ export async function refreshAuthentication(
         );
     }
 
+    if (session.user.status !== "ACTIVE") {
+        await prisma.session.update({
+            where: {
+                id: session.id,
+            },
+
+            data: {
+                revokedAt: now,
+            },
+        });
+
+        throw AppError.unauthorized(
+            "The session is no longer active.",
+            "INACTIVE_SESSION",
+        );
+    }
+
     const nextRefreshToken = generateRefreshToken();
+
     const nextRefreshTokenHash = hashRefreshToken(nextRefreshToken);
 
     const updateResult = await prisma.session.updateMany({
         where: {
             id: session.id,
+
             refreshTokenHash: currentTokenHash,
+
             revokedAt: null,
+
             expiresAt: {
                 gt: now,
             },
@@ -367,6 +458,7 @@ export async function refreshAuthentication(
 
         data: {
             refreshTokenHash: nextRefreshTokenHash,
+
             lastUsedAt: now,
         },
     });
@@ -380,15 +472,18 @@ export async function refreshAuthentication(
 
     const accessToken = await createAccessToken({
         userId: session.userId,
+
         sessionId: session.id,
     });
 
     return {
         user: mapAuthenticatedUser(session.user),
+
         accessToken,
+
         refreshToken: nextRefreshToken,
+
         sessionExpiresAt: session.expiresAt,
-        isPersistent: session.isPersistent,
     };
 }
 
@@ -404,6 +499,7 @@ export async function logoutUser(
     await prisma.session.updateMany({
         where: {
             refreshTokenHash,
+
             revokedAt: null,
         },
 

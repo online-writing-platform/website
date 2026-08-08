@@ -1,48 +1,117 @@
-import { prisma } from "../db/index.js";
-import AppError from "../errors/app-error.js";
-import { normalizeUsername } from "../utils/normalize.js";
-import { isPrismaErrorCode } from "../utils/prisma-error.js";
-import type { UpdateProfileInput } from "../validators/user.validator.js";
+import { prisma } from "../../db/index.js";
+
+import AppError from "../../errors/app-error.js";
+
+import { normalizeUsername } from "../../utils/normalize.js";
+
+import { isPrismaErrorCode } from "../../utils/prisma-error.js";
+
+import type { UpdateProfileInput } from "./user.schema.js";
 
 export interface PrivateUserProfile {
     id: string;
+
     email: string;
+
     username: string;
     displayName: string;
+
     bio: string | null;
     avatarUrl: string | null;
+
+    birthDate: string;
+
+    emailVerified: boolean;
+
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface PublicUserProfile {
     id: string;
+
     username: string;
     displayName: string;
+
     bio: string | null;
     avatarUrl: string | null;
+
     createdAt: Date;
+}
+
+interface PrivateUserRecord {
+    id: string;
+
+    email: string;
+
+    username: string;
+    displayName: string;
+
+    bio: string | null;
+    avatarUrl: string | null;
+
+    birthDate: Date;
+
+    emailVerifiedAt: Date | null;
+
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const privateProfileSelect = {
     id: true,
+
     email: true,
+
     username: true,
     displayName: true,
+
     bio: true,
     avatarUrl: true,
+
+    birthDate: true,
+
+    emailVerifiedAt: true,
+
     createdAt: true,
     updatedAt: true,
 } as const;
 
 const publicProfileSelect = {
     id: true,
+
     username: true,
     displayName: true,
+
     bio: true,
     avatarUrl: true,
+
     createdAt: true,
 } as const;
+
+function mapPrivateProfile(user: PrivateUserRecord): PrivateUserProfile {
+    return {
+        id: user.id,
+
+        email: user.email,
+
+        username: user.username,
+
+        displayName: user.displayName,
+
+        bio: user.bio,
+
+        avatarUrl: user.avatarUrl,
+
+        birthDate: user.birthDate.toISOString().slice(0, 10),
+
+        emailVerified: user.emailVerifiedAt !== null,
+
+        createdAt: user.createdAt,
+
+        updatedAt: user.updatedAt,
+    };
+}
 
 export async function getMyProfile(
     userId: string,
@@ -62,17 +131,17 @@ export async function getMyProfile(
         );
     }
 
-    return user;
+    return mapPrivateProfile(user);
 }
 
 export async function getPublicProfile(
     usernameInput: string,
 ): Promise<PublicUserProfile> {
-    const username = normalizeUsername(usernameInput);
+    const usernameNormalized = normalizeUsername(usernameInput);
 
     const user = await prisma.user.findUnique({
         where: {
-            username,
+            usernameNormalized,
         },
 
         select: publicProfileSelect,
@@ -93,37 +162,10 @@ export async function updateMyProfile(
     input: UpdateProfileInput,
 ): Promise<PrivateUserProfile> {
     const updateData: {
-        username?: string;
         displayName?: string;
         bio?: string | null;
         avatarUrl?: string | null;
     } = {};
-
-    if (input.username !== undefined) {
-        const normalizedUsername = normalizeUsername(input.username);
-
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                username: normalizedUsername,
-                NOT: {
-                    id: userId,
-                },
-            },
-
-            select: {
-                id: true,
-            },
-        });
-
-        if (existingUser) {
-            throw AppError.conflict(
-                "This username is already in use.",
-                "USERNAME_ALREADY_EXISTS",
-            );
-        }
-
-        updateData.username = normalizedUsername;
-    }
 
     if (input.displayName !== undefined) {
         updateData.displayName = input.displayName.trim();
@@ -139,7 +181,7 @@ export async function updateMyProfile(
     }
 
     try {
-        return await prisma.user.update({
+        const user = await prisma.user.update({
             where: {
                 id: userId,
             },
@@ -148,14 +190,9 @@ export async function updateMyProfile(
 
             select: privateProfileSelect,
         });
-    } catch (error) {
-        if (isPrismaErrorCode(error, "P2002")) {
-            throw AppError.conflict(
-                "This username is already in use.",
-                "USERNAME_ALREADY_EXISTS",
-            );
-        }
 
+        return mapPrivateProfile(user);
+    } catch (error) {
         if (isPrismaErrorCode(error, "P2025")) {
             throw AppError.notFound(
                 "The user account was not found.",

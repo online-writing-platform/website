@@ -34,57 +34,53 @@ enum ChapterStatus {
 }
 
 model User {
-  id                 String     @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  email              String     @unique @db.VarChar(320)
+  email String @unique @db.VarChar(320)
 
-  username           String     @db.VarChar(20)
-  usernameNormalized String     @unique @map("username_normalized") @db.VarChar(20)
+  username           String @db.VarChar(20)
+  usernameNormalized String @unique @map("username_normalized") @db.VarChar(20)
 
-  passwordHash       String     @map("password_hash") @db.VarChar(255)
+  passwordHash String @map("password_hash") @db.VarChar(255)
 
-  displayName        String     @map("display_name") @db.VarChar(80)
-  bio                String?    @db.VarChar(500)
-  avatarUrl          String?    @map("avatar_url") @db.Text
+  displayName String  @map("display_name") @db.VarChar(80)
+  bio         String? @db.VarChar(500)
+  avatarUrl   String? @map("avatar_url") @db.Text
 
-  birthDate          DateTime   @map("birth_date") @db.Date
-  emailVerifiedAt    DateTime?  @map("email_verified_at")
+  birthDate       DateTime  @map("birth_date") @db.Date
+  emailVerifiedAt DateTime? @map("email_verified_at")
 
-  status             UserStatus @default(ACTIVE)
+  status UserStatus @default(ACTIVE)
 
-  termsAcceptedAt    DateTime   @default(now()) @map("terms_accepted_at")
-  termsVersion       String     @map("terms_version") @db.VarChar(20)
+  termsAcceptedAt DateTime @default(now()) @map("terms_accepted_at")
+  termsVersion    String   @map("terms_version") @db.VarChar(20)
 
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  stories            Story[]
-  sessions           Session[]
+  stories  Story[]
+  sessions Session[]
 
   @@map("users")
 }
 
 model Session {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  refreshTokenHash String    @unique @map("refresh_token_hash") @db.Char(64)
+  refreshTokenHash String @unique @map("refresh_token_hash") @db.Char(64)
 
-  userAgent        String?   @map("user_agent") @db.VarChar(512)
-  ipAddress        String?   @map("ip_address") @db.VarChar(45)
+  userAgent String? @map("user_agent") @db.VarChar(512)
+  ipAddress String? @map("ip_address") @db.VarChar(45)
 
-  lastUsedAt       DateTime  @default(now()) @map("last_used_at")
-  expiresAt        DateTime  @map("expires_at")
-  revokedAt        DateTime? @map("revoked_at")
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
 
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(
-    fields: [userId],
-    references: [id],
-    onDelete: Cascade
-  )
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
@@ -92,28 +88,28 @@ model Session {
 }
 
 model Story {
-  id          String          @id @default(uuid()) @db.Uuid
-  authorId    String          @map("author_id") @db.Uuid
+  id       String @id @default(uuid()) @db.Uuid
+  authorId String @map("author_id") @db.Uuid
 
-  title       String          @db.VarChar(200)
-  slug        String          @unique @db.VarChar(220)
-  description String          @db.Text
-  coverUrl    String?         @map("cover_url") @db.Text
+  title       String  @db.VarChar(200)
+  slug        String  @unique @db.VarChar(220)
+  description String  @db.Text
+  coverUrl    String? @map("cover_url") @db.Text
 
-  language    String          @default("fa") @db.VarChar(10)
+  language String @default("fa") @db.VarChar(10)
 
-  status      StoryStatus     @default(DRAFT)
-  visibility  StoryVisibility @default(PRIVATE)
+  status     StoryStatus     @default(DRAFT)
+  visibility StoryVisibility @default(PRIVATE)
 
-  isMature    Boolean         @default(false) @map("is_mature")
+  isMature Boolean @default(false) @map("is_mature")
 
-  publishedAt DateTime?       @map("published_at")
+  publishedAt DateTime? @map("published_at")
 
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  chapters    Chapter[]
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
 
   @@index([authorId])
   @@index([status, visibility])
@@ -121,20 +117,20 @@ model Story {
 }
 
 model Chapter {
-  id          String        @id @default(uuid()) @db.Uuid
-  storyId     String        @map("story_id") @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
+  storyId String @map("story_id") @db.Uuid
 
-  title       String        @db.VarChar(200)
-  position    Int
-  content     String        @db.Text
+  title    String @db.VarChar(200)
+  position Int
+  content  String @db.Text
 
-  status      ChapterStatus @default(DRAFT)
+  status ChapterStatus @default(DRAFT)
 
-  wordCount   Int           @default(0) @map("word_count")
-  publishedAt DateTime?     @map("published_at")
+  wordCount   Int       @default(0) @map("word_count")
+  publishedAt DateTime? @map("published_at")
 
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 

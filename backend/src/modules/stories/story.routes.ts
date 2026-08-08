@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getStories } from "../controllers/story.controller.js";
+import { getStories } from "./story.controller.js";
 
 const router = Router();
 

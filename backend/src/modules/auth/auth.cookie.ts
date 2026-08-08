@@ -1,12 +1,15 @@
 import type { CookieOptions, Request, Response } from "express";
 
-import env from "../config/env.js";
+import env from "../../config/env.js";
 
 function getBaseRefreshCookieOptions(): CookieOptions {
     return {
         httpOnly: true,
+
         secure: env.isProduction,
+
         sameSite: "lax",
+
         path: "/api/v1/auth",
     };
 }
@@ -15,15 +18,12 @@ export function setRefreshTokenCookie(
     response: Response,
     refreshToken: string,
     expiresAt: Date,
-    isPersistent: boolean,
 ): void {
-    const options = getBaseRefreshCookieOptions();
+    response.cookie(env.refreshCookieName, refreshToken, {
+        ...getBaseRefreshCookieOptions(),
 
-    if (isPersistent) {
-        options.expires = expiresAt;
-    }
-
-    response.cookie(env.refreshCookieName, refreshToken, options);
+        expires: expiresAt,
+    });
 }
 
 export function clearRefreshTokenCookie(response: Response): void {
@@ -35,5 +35,9 @@ export function getRefreshTokenCookie(request: Request): string | undefined {
 
     const value = cookies?.[env.refreshCookieName];
 
-    return typeof value === "string" && value.length > 0 ? value : undefined;
+    if (typeof value !== "string" || value.length === 0) {
+        return undefined;
+    }
+
+    return value;
 }

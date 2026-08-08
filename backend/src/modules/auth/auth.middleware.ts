@@ -1,8 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { prisma } from "../db/index.js";
-import AppError from "../errors/app-error.js";
-import { verifyAccessToken } from "../utils/token.js";
+import { prisma } from "../../db/index.js";
+import AppError from "../../errors/app-error.js";
+
+import { verifyAccessToken } from "../../security/token.js";
 
 function extractBearerToken(authorizationHeader: string | undefined): string {
     if (!authorizationHeader) {
@@ -33,36 +34,40 @@ export async function authenticate(
     _response: Response,
     next: NextFunction,
 ): Promise<void> {
-    try {
-        const accessToken = extractBearerToken(request.get("authorization"));
+    const accessToken = extractBearerToken(request.get("authorization"));
 
-        const authContext = await verifyAccessToken(accessToken);
+    const authContext = await verifyAccessToken(accessToken);
 
-        const activeSession = await prisma.session.findFirst({
-            where: {
-                id: authContext.sessionId,
-                userId: authContext.userId,
-                revokedAt: null,
-                expiresAt: {
-                    gt: new Date(),
-                },
+    const activeSession = await prisma.session.findFirst({
+        where: {
+            id: authContext.sessionId,
+
+            userId: authContext.userId,
+
+            revokedAt: null,
+
+            expiresAt: {
+                gt: new Date(),
             },
 
-            select: {
-                id: true,
+            user: {
+                status: "ACTIVE",
             },
-        });
+        },
 
-        if (!activeSession) {
-            throw AppError.unauthorized(
-                "The session is no longer active.",
-                "INACTIVE_SESSION",
-            );
-        }
+        select: {
+            id: true,
+        },
+    });
 
-        request.auth = authContext;
-        next();
-    } catch (error) {
-        next(error);
+    if (!activeSession) {
+        throw AppError.unauthorized(
+            "The session is no longer active.",
+            "INACTIVE_SESSION",
+        );
     }
+
+    request.auth = authContext;
+
+    next();
 }
