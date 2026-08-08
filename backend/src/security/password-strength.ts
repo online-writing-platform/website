@@ -35,7 +35,7 @@ const passwordEstimator = new ZxcvbnFactory({
     maxLength: MAX_PASSWORD_LENGTH,
 });
 
-function getStrenghtLevel(score: PasswordScore): PasswordStrengthLevel {
+function getStrengthLevel(score: PasswordScore): PasswordStrengthLevel {
     switch (score) {
         case 0:
             return "very_weak";
@@ -70,7 +70,7 @@ export function assessPasswordStrength(
 
     return {
         score,
-        level: getStrenghtLevel(score),
+        level: getStrengthLevel(score),
 
         acceptable:
             hasValidLength &&
