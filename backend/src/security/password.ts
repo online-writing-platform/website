@@ -11,12 +11,8 @@ const ARGON2_OPTIONS: Argon2Options = {
     hashLength: 32,
 };
 
-function normalizePassword(password: string): string {
-    return password.normalize("NFC");
-}
-
 export async function hashPassword(password: string): Promise<string> {
-    return argon2.hash(normalizePassword(password), ARGON2_OPTIONS);
+    return argon2.hash(password, ARGON2_OPTIONS);
 }
 
 export async function verifyPassword(
@@ -24,7 +20,7 @@ export async function verifyPassword(
     password: string,
 ): Promise<boolean> {
     try {
-        return await argon2.verify(passwordHash, normalizePassword(password));
+        return await argon2.verify(passwordHash, password);
     } catch {
         return false;
     }

@@ -4,10 +4,14 @@ import { jwtVerify, SignJWT } from "jose";
 
 import env from "../config/env.js";
 import AppError from "../errors/app-error.js";
-import type { AuthContext } from "../types/auth.js";
+
+import type { AuthContext } from "../modules/auth/auth.types.js";
 
 const ACCESS_TOKEN_ISSUER = "writing-platform-api";
+
 const ACCESS_TOKEN_AUDIENCE = "writing-platform-client";
+
+const REFRESH_TOKEN_BYTES = 48;
 
 const accessTokenSecret = new TextEncoder().encode(env.accessTokenSecret);
 
@@ -43,7 +47,9 @@ export async function verifyAccessToken(
     try {
         const { payload } = await jwtVerify(accessToken, accessTokenSecret, {
             issuer: ACCESS_TOKEN_ISSUER,
+
             audience: ACCESS_TOKEN_AUDIENCE,
+
             algorithms: ["HS256"],
         });
 
@@ -60,6 +66,7 @@ export async function verifyAccessToken(
 
         return {
             userId: payload.sub,
+
             sessionId: payload.sessionId,
         };
     } catch (error) {
@@ -75,21 +82,17 @@ export async function verifyAccessToken(
 }
 
 export function generateRefreshToken(): string {
-    return randomBytes(48).toString("base64url");
+    return randomBytes(REFRESH_TOKEN_BYTES).toString("base64url");
 }
 
 export function hashRefreshToken(refreshToken: string): string {
     return createHash("sha256").update(refreshToken).digest("hex");
 }
 
-export function calculateSessionExpiration(isPersistent: boolean): Date {
+export function calculateSessionExpiration(): Date {
     const expiration = new Date();
 
-    if (isPersistent) {
-        expiration.setDate(expiration.getDate() + env.persistentSessionTtlDays);
-    } else {
-        expiration.setHours(expiration.getHours() + env.sessionTtlHours);
-    }
+    expiration.setDate(expiration.getDate() + env.sessionTtlDays);
 
     return expiration;
 }
