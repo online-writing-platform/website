@@ -15,6 +15,7 @@ import type {
     LoginInput,
     RegisterInput,
 } from "../validators/auth.validator.js";
+import { assessPasswordStrength } from "../security/password-strength.js";
 
 export interface AuthenticatedUser {
     id: string;
@@ -122,12 +123,41 @@ async function ensureRegistrationIdentityIsAvailable(
     );
 }
 
+function ensurePasswordIsAcceptable(password: string, userInputs: string[]): void {
+    const assessment = assessPasswordStrength(password, userInputs);
+
+    if (assessment.acceptable) {
+        return;
+    }
+
+    throw AppError.badRequest(
+        "The Selected Password is too weak.",
+        "PASSWORD_TOO_WEAK",
+        {
+            score: assessment.score,
+            level: assessment.level,
+            warningKey: assessment.warningKey,
+            suggestionKeys: assessment.suggestionKeys,
+        },
+    );
+};
+
 export async function registerUser(
     input: RegisterInput,
     clientInformation: ClientInformation,
 ): Promise<AuthenticationResult> {
     const email = normalizeEmail(input.email);
     const username = normalizeUsername(input.username);
+    const displayName = input.displayName.trim();
+
+    const emailLocalPart = email.split("@")[0] ?? "";
+
+    ensurePasswordIsAcceptable(input.password, [
+        email,
+        emailLocalPart,
+        username,
+        displayName,
+    ]);
 
     await ensureRegistrationIdentityIsAvailable(email, username);
 
@@ -147,7 +177,7 @@ export async function registerUser(
                 data: {
                     email,
                     username,
-                    displayName: input.displayName.trim(),
+                    displayName: displayName,
                     passwordHash,
                     termsVersion: env.termsVersion,
                 },
