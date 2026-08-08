@@ -109,7 +109,7 @@ function cssTransition(t: any): { dur: number; ease: string } {
  * @framerSupportedLayoutWidth any-prefer-fixed
  * @framerSupportedLayoutHeight any-prefer-fixed
  */
-function Smooth3DSlideshow(props: Smooth3DSlideshowProps) {
+function __OriginkitBase_Smooth3DSlideshow(props: Smooth3DSlideshowProps) {
   props = { ...COMPONENT_DEFAULTS, ...props };
   const {
     slides = DEFAULT_SLIDES,
@@ -381,34 +381,34 @@ const COMPONENT_DEFAULTS = {
       image: {
         src: Hands,
       },
-      title: "عاشقانه",
-    },
-    {
-      image: {
-        src: wedding,
-      },
-      title: "جنایی",
-    },
-    {
-      image: {
-        src: Girl,
-      },
-      title: "ترسناک",
+      title: "دست در دست",
     },
     {
       image: {
         src: storycover,
       },
-      title: "فانتزی",
+      title: "افسانه آخر",
+    },
+    {
+      image: {
+        src: wedding,
+      },
+      title: "عروس",
     },
     {
       image: {
         src: myBoy,
       },
-      title: "سفر در زمان",
+      title: "پسر  من",
+    },
+    {
+      image: {
+        src: Girl,
+      },
+      title: "آن دختر واقعی نبود",
     },
   ],
-  cardWidth: 300,
+  cardWidth: 400,
   cardHeight: 400,
   radius: 3,
   tilt: 12,
@@ -433,11 +433,41 @@ const COMPONENT_DEFAULTS = {
   } as any,
   titleColor: "#ffffff",
   titlePosition: {
-    position: "bottomRight",
+    position: "bottomLeft",
     paddingLeft: 22,
     paddingRight: 22,
     paddingTop: 24,
     paddingBottom: 24,
   },
 };
-export default Smooth3DSlideshow;
+
+const __originkitPresetProps = {
+  cardWidth: 300,
+  tilt: 0,
+  autoplay: true,
+  transition: {
+    ease: [0.22, 1, 0.36, 1],
+    mass: 1,
+    type: "tween",
+    delay: 2.5,
+    damping: 60,
+    duration: 3,
+    stiffness: 800,
+  },
+  titlePosition: {
+    position: "bottomRight",
+    paddingTop: 24,
+    paddingLeft: 22,
+    paddingRight: 22,
+    paddingBottom: 24,
+  },
+};
+
+export default function Smooth3DSlideshow(props: Record<string, unknown>) {
+  return (
+    <__OriginkitBase_Smooth3DSlideshow
+      {...(__originkitPresetProps as Record<string, unknown>)}
+      {...props}
+    />
+  );
+}
