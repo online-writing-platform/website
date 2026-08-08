@@ -1,10 +1,10 @@
 import "./Home.css";
 import StorySection from "../components/StorySection";
 import Smooth3DSlideshow from "../components/originkit/ui/coverflowgallery";
-import { stories } from "../components/StorySection";
+import { mockStories } from "@/data/mockStories";
 
 function Home() {
-  const heroSlides = stories.map((story) => ({
+  const heroSlides = mockStories.map((story) => ({
     image: {
       src: story.image,
       alt: story.title,
