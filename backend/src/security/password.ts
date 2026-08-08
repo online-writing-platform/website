@@ -3,14 +3,20 @@ import type { Options as Argon2Options } from "argon2";
 
 const ARGON2_OPTIONS: Argon2Options = {
     type: argon2.argon2id,
+
     memoryCost: 19_456,
     timeCost: 2,
     parallelism: 1,
+
     hashLength: 32,
 };
 
+function normalizePassword(password: string): string {
+    return password.normalize("NFC");
+}
+
 export async function hashPassword(password: string): Promise<string> {
-    return argon2.hash(password, ARGON2_OPTIONS);
+    return argon2.hash(normalizePassword(password), ARGON2_OPTIONS);
 }
 
 export async function verifyPassword(
@@ -18,7 +24,7 @@ export async function verifyPassword(
     password: string,
 ): Promise<boolean> {
     try {
-        return await argon2.verify(passwordHash, password);
+        return await argon2.verify(passwordHash, normalizePassword(password));
     } catch {
         return false;
     }

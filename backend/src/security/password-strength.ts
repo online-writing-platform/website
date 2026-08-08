@@ -3,8 +3,9 @@ import * as commonPackage from "@zxcvbn-ts/language-common";
 import * as englishPackage from "@zxcvbn-ts/language-en";
 
 export const MIN_PASSWORD_LENGTH = 10;
-export const MAX_PASSWORD_LENGTH = 64;
-export const MIN_ACCEPTABLE_PASSWORD_SCORE = 2;
+export const MAX_PASSWORD_LENGTH = 128;
+
+const MIN_ACCEPTABLE_PASSWORD_SCORE = 2;
 
 export type PasswordScore = 0 | 1 | 2 | 3 | 4;
 
@@ -19,8 +20,6 @@ export interface PasswordStrengthAssessment {
     score: PasswordScore;
     level: PasswordStrengthLevel;
     acceptable: boolean;
-    warningKey: string | null;
-    suggestionKeys: string[];
 }
 
 const passwordEstimator = new ZxcvbnFactory({
@@ -29,6 +28,8 @@ const passwordEstimator = new ZxcvbnFactory({
     dictionary: {
         ...commonPackage.dictionary,
         ...englishPackage.dictionary,
+
+        userInputs: ["رمز", "رمزعبور", "رمزعبورمن", "۱۲۳۴۵۶۷۸۹", "۱۲۳۴۵۶۷۸۹۰"],
     },
 
     useLevenshteinDistance: true,
@@ -55,29 +56,23 @@ function getStrengthLevel(score: PasswordScore): PasswordStrengthLevel {
 }
 
 export function assessPasswordStrength(
-    password: string,
+    rawPassword: string,
     userInputs: string[] = [],
 ): PasswordStrengthAssessment {
+    const password = rawPassword.normalize("NFC");
+
     const result = passwordEstimator.check(password, userInputs);
-    const score = result.score;
 
     const hasValidLength =
         password.length >= MIN_PASSWORD_LENGTH &&
         password.length <= MAX_PASSWORD_LENGTH;
 
-    const hasValidWhitespace =
-        password.length > 0 && password.trim() === password;
-
     return {
-        score,
-        level: getStrengthLevel(score),
+        score: result.score,
+
+        level: getStrengthLevel(result.score),
 
         acceptable:
-            hasValidLength &&
-            hasValidWhitespace &&
-            score >= MIN_ACCEPTABLE_PASSWORD_SCORE,
-
-        warningKey: result.feedback.warning || null,
-        suggestionKeys: result.feedback.suggestions,
+            hasValidLength && result.score >= MIN_ACCEPTABLE_PASSWORD_SCORE,
     };
 }
