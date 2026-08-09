@@ -1,5 +1,13 @@
-export type StoryStatusValue = "DRAFT" | "ONGOING" | "COMPLETED" | "HIATUS";
+export type StoryStatusValue =
+    | "DRAFT"
+    | "ONGOING"
+    | "COMPLETED"
+    | "HIATUS";
 export type StoryVisibilityValue = "PRIVATE" | "UNLISTED" | "PUBLIC";
+export type StoryRightsValue =
+    | "ALL_RIGHTS_RESERVED"
+    | "PUBLIC_DOMAIN"
+    | "CREATIVE_COMMONS";
 export type ChapterStatusValue = "DRAFT" | "PUBLISHED";
 export type ModerationStateValue = "VISIBLE" | "HIDDEN" | "REMOVED";
 
@@ -24,6 +32,7 @@ export interface ChapterView {
     title: string;
     position: number;
     content?: string;
+    version: number;
     status: ChapterStatusValue;
     moderationState: ModerationStateValue;
     wordCount: number;
@@ -39,6 +48,7 @@ export interface StorySummary {
     description: string;
     coverUrl: string | null;
     language: string;
+    rights: StoryRightsValue;
     status: StoryStatusValue;
     visibility: StoryVisibilityValue;
     moderationState: ModerationStateValue;
@@ -60,6 +70,7 @@ export interface CreateStoryInput {
     description: string;
     coverUrl?: string | null;
     language?: string;
+    rights?: StoryRightsValue;
     isMature?: boolean;
     genreSlug?: string | null;
     tags?: string[];
@@ -70,6 +81,7 @@ export interface UpdateStoryInput {
     description?: string;
     coverUrl?: string | null;
     language?: string;
+    rights?: StoryRightsValue;
     isMature?: boolean;
     genreSlug?: string | null;
     tags?: string[];
@@ -83,6 +95,7 @@ export interface CreateChapterInput {
 }
 
 export interface UpdateChapterInput {
+    expectedVersion: number;
     title?: string;
     content?: string;
 }

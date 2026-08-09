@@ -10,14 +10,17 @@ const slugSchema = z.string().trim().min(1).max(220);
 const languageSchema = z.string().trim().min(2).max(10);
 const genreSlugSchema = z.string().trim().min(1).max(80);
 const tagSchema = z.string().trim().min(1).max(80);
+const rightsSchema = z.enum([
+    "ALL_RIGHTS_RESERVED",
+    "PUBLIC_DOMAIN",
+    "CREATIVE_COMMONS",
+]);
 
 export const storyIdParamsSchema = z
     .object({ storyId: uuidSchema })
     .strict();
 
-export const storySlugParamsSchema = z
-    .object({ slug: slugSchema })
-    .strict();
+export const storySlugParamsSchema = z.object({ slug: slugSchema }).strict();
 
 export const storyChapterParamsSchema = z
     .object({
@@ -57,6 +60,7 @@ export const createStorySchema = z
         description: z.string().trim().min(1).max(5000),
         coverUrl: z.string().trim().url().max(2048).nullable().optional(),
         language: languageSchema.optional(),
+        rights: rightsSchema.optional(),
         isMature: z.boolean().optional(),
         genreSlug: genreSlugSchema.nullable().optional(),
         tags: z.array(tagSchema).max(25).optional(),
@@ -69,6 +73,7 @@ export const updateStorySchema = z
         description: z.string().trim().min(1).max(5000).optional(),
         coverUrl: z.string().trim().url().max(2048).nullable().optional(),
         language: languageSchema.optional(),
+        rights: rightsSchema.optional(),
         isMature: z.boolean().optional(),
         genreSlug: genreSlugSchema.nullable().optional(),
         tags: z.array(tagSchema).max(25).optional(),
@@ -89,13 +94,18 @@ export const createChapterSchema = z
 
 export const updateChapterSchema = z
     .object({
+        expectedVersion: z.number().int().min(1),
         title: z.string().trim().min(1).max(200).optional(),
         content: z.string().max(100_000).optional(),
     })
     .strict()
-    .refine((value) => Object.keys(value).length > 0, {
-        message: "At least one chapter field must be provided.",
-    });
+    .refine(
+        (value) =>
+            value.title !== undefined || value.content !== undefined,
+        {
+            message: "At least one chapter field must be provided.",
+        },
+    );
 
 export const reorderChaptersSchema = z
     .object({
@@ -108,7 +118,9 @@ export type StorySlugParams = z.infer<typeof storySlugParamsSchema>;
 export type StoryChapterParams = z.infer<typeof storyChapterParamsSchema>;
 export type PublicChapterParams = z.infer<typeof publicChapterParamsSchema>;
 export type ListStoriesQuery = z.infer<typeof listStoriesQuerySchema>;
-export type ListOwnedStoriesQuery = z.infer<typeof listOwnedStoriesQuerySchema>;
+export type ListOwnedStoriesQuery = z.infer<
+    typeof listOwnedStoriesQuerySchema
+>;
 export type CreateStoryBody = z.infer<typeof createStorySchema>;
 export type UpdateStoryBody = z.infer<typeof updateStorySchema>;
 export type CreateChapterBody = z.infer<typeof createChapterSchema>;

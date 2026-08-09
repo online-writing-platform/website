@@ -2,26 +2,10 @@ import type { Prisma } from "../../../generated/prisma/client.js";
 import { prisma } from "../../../db/index.js";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
 import { isPrismaErrorCode } from "../../../utils/prisma-error.js";
+import { isAtLeastAge } from "../../stories/domain/mature.policy.js";
 
 import type { LibraryStore } from "../application/library.ports.js";
 import { ReadingListNameConflictError } from "../domain/library.errors.js";
-
-const visibleStoryWhere = {
-    deletedAt: null,
-    moderationState: "VISIBLE",
-    visibility: {
-        in: ["PUBLIC", "UNLISTED"],
-    },
-    publishedAt: {
-        not: null,
-    },
-    status: {
-        not: "DRAFT",
-    },
-    author: {
-        status: "ACTIVE",
-    },
-} satisfies Prisma.StoryWhereInput;
 
 const storySummarySelect = {
     id: true,
@@ -37,6 +21,62 @@ const storySummarySelect = {
         },
     },
 } satisfies Prisma.StorySelect;
+
+async function buildVisibleStoryWhere(
+    viewerId: string | undefined,
+    visibility: Prisma.StoryWhereInput["visibility"] = {
+        in: ["PUBLIC", "UNLISTED"],
+    },
+): Promise<Prisma.StoryWhereInput> {
+    if (!viewerId) {
+        return {
+            deletedAt: null,
+            moderationState: "VISIBLE",
+            visibility,
+            publishedAt: { not: null },
+            status: { not: "DRAFT" },
+            isMature: false,
+            author: { status: "ACTIVE" },
+        };
+    }
+
+    const [viewer, blocks] = await Promise.all([
+        prisma.user.findUnique({
+            where: { id: viewerId },
+            select: {
+                birthDate: true,
+                preferences: {
+                    select: { allowMatureContent: true },
+                },
+            },
+        }),
+        prisma.block.findMany({
+            where: {
+                OR: [{ blockerId: viewerId }, { blockedId: viewerId }],
+            },
+            select: { blockerId: true, blockedId: true },
+        }),
+    ]);
+
+    const includeMature =
+        viewer !== null &&
+        viewer.preferences?.allowMatureContent === true &&
+        isAtLeastAge(viewer.birthDate, 18, new Date());
+    const blockedIds = blocks.map((block) =>
+        block.blockerId === viewerId ? block.blockedId : block.blockerId,
+    );
+
+    return {
+        deletedAt: null,
+        moderationState: "VISIBLE",
+        visibility,
+        publishedAt: { not: null },
+        status: { not: "DRAFT" },
+        ...(includeMature ? {} : { isMature: false }),
+        ...(blockedIds.length > 0 ? { authorId: { notIn: blockedIds } } : {}),
+        author: { status: "ACTIVE" },
+    };
+}
 
 const listSelect = {
     id: true,
@@ -111,6 +151,7 @@ export class PrismaLibraryStore implements LibraryStore {
         cursor: string | undefined,
         limit: number,
     ) {
+        const visibleStoryWhere = await buildVisibleStoryWhere(userId);
         const rows = await prisma.libraryEntry.findMany({
             where: {
                 userId,
@@ -220,6 +261,7 @@ export class PrismaLibraryStore implements LibraryStore {
         cursor: string | undefined,
         limit: number,
     ) {
+        const visibleStoryWhere = await buildVisibleStoryWhere(userId);
         const rows = await prisma.readingProgress.findMany({
             where: {
                 userId,
@@ -388,11 +430,23 @@ export class PrismaLibraryStore implements LibraryStore {
         return rows.map(mapList);
     }
 
-    public async listPublicReadingLists(userId: string) {
+    public async listPublicReadingLists(
+        userId: string,
+        viewerId?: string,
+    ) {
         const rows = await prisma.readingList.findMany({
             where: {
                 userId,
                 isPublic: true,
+                user: {
+                    status: "ACTIVE",
+                    ...(viewerId
+                        ? {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          }
+                        : {}),
+                },
             },
             orderBy: [
                 {
@@ -429,6 +483,12 @@ export class PrismaLibraryStore implements LibraryStore {
                 ],
                 user: {
                     status: "ACTIVE",
+                    ...(viewerId
+                        ? {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          }
+                        : {}),
                 },
             },
             select: {
@@ -449,24 +509,10 @@ export class PrismaLibraryStore implements LibraryStore {
 
         const isOwner = viewerId !== undefined && viewerId === list.userId;
 
-        const readableStoryWhere = {
-            deletedAt: null,
-            moderationState: "VISIBLE",
-            visibility: isOwner
-                ? {
-                      in: ["PUBLIC", "UNLISTED"],
-                  }
-                : "PUBLIC",
-            publishedAt: {
-                not: null,
-            },
-            status: {
-                not: "DRAFT",
-            },
-            author: {
-                status: "ACTIVE",
-            },
-        } satisfies Prisma.StoryWhereInput;
+        const readableStoryWhere = await buildVisibleStoryWhere(
+            viewerId,
+            isOwner ? { in: ["PUBLIC", "UNLISTED"] } : "PUBLIC",
+        );
 
         const items = await prisma.readingListItem.findMany({
             where: {

@@ -1,7 +1,6 @@
 import type { FormEvent } from "react";
 import { CiSearch } from "react-icons/ci";
 import "./SearchBar.css";
-import Button from "./Button";
 function SearchBar() {
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();

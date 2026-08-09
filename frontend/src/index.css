@@ -2,143 +2,130 @@
   font-family: "Estedad";
   src: url("./assets/fonts/Estedad-Regular.woff2");
   font-weight: 400;
+  font-display: swap;
 }
 
 @import "tailwindcss";
-:root {
-  /* Backgrounds */
-  --background: #fff; /* کاغذی */
-  --surface: #f7f1e8; /* کارت‌ها */
-  --surface-hover: #efe5d8;
 
-  /* Text */
+:root {
+  --background: #fff;
+  --surface: #f7f1e8;
+  --surface-hover: #efe5d8;
   --text: #2b2118;
   --text-secondary: #6b6259;
-  --text-muted: #9a9085;
-
-  /* Borders */
+  --text-muted: #8b8177;
   --border: #ded1c2;
-
-  /* Brand */
-  --primary: #023b32; /* سبز جنگلی */
+  --primary: #023b32;
   --primary-hover: #012a24;
   --primary-soft: #d7e8e2;
   --primary-normal: #bcd9cf;
-
-  /* Accent */
-  --accent: #8b5e3c; /* قهوه‌ای */
+  --accent: #8b5e3c;
   --accent-soft: #e8d2c0;
-
-  /* Status */
   --success: #3f7d58;
-  --warning: #b7791f;
-  --danger: #b94a48;
-
-  /* Shadow */
-  --shadow: 0 4px 12px rgba(61, 12, 2, 0.12);
+  --warning: #9b6618;
+  --danger: #a63f3d;
+  --shadow: 0 4px 12px rgb(61 12 2 / 12%);
+  --content-max: 1180px;
+  --reader-max: 760px;
 }
 
 .dark {
-  /* Backgrounds */
-  --background: #000;
-  --surface: #19231e;
-  --surface-hover: #223129;
-
-  /* Text */
-  --text: #f4ede3;
-  --text-secondary: #b9b0a5;
-  --text-muted: #817970;
-
-  /* Borders */
-  --border: #30433a;
-
-  /* Brand */
-  --primary: #4f9f7a;
-  --primary-hover: #6bbf98;
-  --primary-soft: #173b31;
-
-  /* Accent */
-  --accent: #c69076;
-  --accent-soft: #3d2418;
-
-  /* Status */
-  --success: #6fcf97;
-  --warning: #f2c94c;
-  --danger: #eb5757;
-
-  /* Shadow */
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-}
-.dark {
-  /* Backgrounds */
-  --background: #000; /* قهوه‌ای خیلی تیره - پس‌زمینه اصلی */
-  --surface: #342017; /* کارت‌ها */
-  --surface-hover: #342017; /* حالت hover */
-
-  /* Text */
+  --background: #14100d;
+  --surface: #241a15;
+  --surface-hover: #30221b;
   --text: #f5ede3;
   --text-secondary: #c8b8aa;
-  --text-muted: #8f7d70;
-
-  /* Borders */
+  --text-muted: #9a887b;
   --border: #493126;
-
-  /* Brand */
-  --primary: #8faf8b; /* سبز ملایم، نه غالب */
+  --primary: #8faf8b;
   --primary-hover: #a9c9a4;
   --primary-soft: #263d2d;
-
-  /* Accent */
-  --accent: #c69076; /* رزگلد/قهوه‌ای روشن */
+  --primary-normal: #31513a;
+  --accent: #c69076;
   --accent-soft: #3d241a;
-
-  /* Status */
-  --success: #6faf7b;
+  --success: #78ba87;
   --warning: #d6a34a;
-  --danger: #d16b5a;
-
-  /* Shadow */
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --danger: #dc7665;
+  --shadow: 0 4px 12px rgb(0 0 0 / 45%);
 }
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-  font-family: "Estedad";
 }
 
 html {
   scroll-behavior: smooth;
-
   background: var(--background);
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
 }
 
 body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
   background: var(--background);
   color: var(--text);
-
-  font-family: "Vazirmatn", sans-serif;
-
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
+  font-family: "Estedad", system-ui, sans-serif;
   direction: rtl;
   text-align: right;
+  line-height: 1.6;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--primary-soft);
 }
 
 #root {
-  background: var(--background);
   min-height: 100vh;
 }
-html,
-body,
-#root {
-  width: 100%;
-  min-height: 100%;
-  height: 100%;
-  overflow-x: hidden;
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

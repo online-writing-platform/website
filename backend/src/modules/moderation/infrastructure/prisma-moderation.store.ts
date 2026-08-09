@@ -1,5 +1,6 @@
 import { prisma } from "../../../db/index.js";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
+import { isPrismaErrorCode } from "../../../utils/prisma-error.js";
 
 import type { ModerationStore } from "../application/moderation.ports.js";
 import type { ModerationActionValue, ReportTargetTypeValue } from "../domain/moderation.types.js";
@@ -40,17 +41,37 @@ export class PrismaModerationStore implements ModerationStore {
         return report !== null;
     }
 
-    public createReport(input: Parameters<ModerationStore["createReport"]>[0]) {
-        return prisma.report.create({
-            data: {
-                reporterId: input.reporterId,
-                targetType: input.targetType,
-                targetId: input.targetId,
-                reason: input.reason,
-                ...(input.details ? { details: input.details } : {}),
-            },
-            select: { id: true, status: true, createdAt: true },
-        });
+    public async createReport(
+        input: Parameters<ModerationStore["createReport"]>[0],
+    ) {
+        try {
+            return await prisma.report.create({
+                data: {
+                    reporterId: input.reporterId,
+                    targetType: input.targetType,
+                    targetId: input.targetId,
+                    reason: input.reason,
+                    ...(input.details ? { details: input.details } : {}),
+                },
+                select: { id: true, status: true, createdAt: true },
+            });
+        } catch (error) {
+            if (!isPrismaErrorCode(error, "P2002")) throw error;
+
+            const existing = await prisma.report.findFirst({
+                where: {
+                    reporterId: input.reporterId,
+                    targetType: input.targetType,
+                    targetId: input.targetId,
+                    status: { in: ["OPEN", "REVIEWING"] },
+                },
+                orderBy: { createdAt: "desc" },
+                select: { id: true, status: true, createdAt: true },
+            });
+
+            if (existing) return existing;
+            throw error;
+        }
     }
 
     public async listReports(input: Parameters<ModerationStore["listReports"]>[0]) {

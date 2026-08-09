@@ -8,8 +8,8 @@ function WriteStory() {
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [summary, setSummary] = useState("");
-  const [chapterTitle, setChapterTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [chapterTitle] = useState("");
+  const [content] = useState("");
   const [cover, setCover] = useState<File | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {

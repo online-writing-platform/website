@@ -6,7 +6,6 @@ const optionalEnvironmentString = z.preprocess((value) => {
     if (typeof value === "string" && value.trim().length === 0) {
         return undefined;
     }
-
     return value;
 }, z.string().trim().min(1).optional());
 
@@ -19,18 +18,35 @@ const environmentSchema = z
         PORT: z.coerce.number().int().min(1).max(65_535).default(5000),
         DATABASE_URL: z.string().trim().min(1),
         CLIENT_ORIGINS: z.string().trim().default("http://localhost:5173"),
-        WEB_APP_URL: z.string().trim().url().default("http://localhost:5173"),
+        WEB_APP_URL: z
+            .string()
+            .trim()
+            .url()
+            .default("http://localhost:5173"),
+        PUBLIC_API_URL: z
+            .string()
+            .trim()
+            .url()
+            .default("http://localhost:5000"),
 
         ACCESS_TOKEN_SECRET: z
             .string()
-            .min(32, "ACCESS_TOKEN_SECRET must contain at least 32 characters"),
+            .min(
+                32,
+                "ACCESS_TOKEN_SECRET must contain at least 32 characters",
+            ),
         ACCESS_TOKEN_TTL_SECONDS: z.coerce
             .number()
             .int()
             .min(60)
             .max(86_400)
             .default(900),
-        SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+        SESSION_TTL_DAYS: z.coerce
+            .number()
+            .int()
+            .min(1)
+            .max(365)
+            .default(30),
         REFRESH_COOKIE_NAME: z
             .string()
             .trim()
@@ -88,7 +104,33 @@ const environmentSchema = z
         SMTP_USER: optionalEnvironmentString,
         SMTP_PASS: optionalEnvironmentString,
 
-        DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+        MONETIZATION_ENABLED: z.enum(["true", "false"]).default("false"),
+        ENTITLEMENT_PROVIDER: z.enum(["disabled"]).default("disabled"),
+
+        MEDIA_PROVIDER: z.enum(["local", "s3"]).default("local"),
+        MEDIA_LOCAL_ROOT: z
+            .string()
+            .trim()
+            .min(1)
+            .default("./var/media"),
+        MEDIA_MAX_BYTES: z.coerce
+            .number()
+            .int()
+            .min(100_000)
+            .max(20_000_000)
+            .default(5_000_000),
+        S3_ENDPOINT: optionalEnvironmentString,
+        S3_REGION: z.string().trim().min(1).default("us-east-1"),
+        S3_BUCKET: optionalEnvironmentString,
+        S3_ACCESS_KEY_ID: optionalEnvironmentString,
+        S3_SECRET_ACCESS_KEY: optionalEnvironmentString,
+
+        DATABASE_POOL_MAX: z.coerce
+            .number()
+            .int()
+            .min(1)
+            .max(100)
+            .default(10),
         DATABASE_CONNECTION_TIMEOUT_MS: z.coerce
             .number()
             .int()
@@ -130,13 +172,13 @@ const environmentSchema = z
             context.addIssue({
                 code: "custom",
                 path: ["SMTP_HOST"],
-                message: "SMTP_HOST is required when MAIL_TRANSPORT is smtp.",
+                message:
+                    "SMTP_HOST is required when MAIL_TRANSPORT is smtp.",
             });
         }
 
         const hasSmtpUser = values.SMTP_USER !== undefined;
         const hasSmtpPassword = values.SMTP_PASS !== undefined;
-
         if (hasSmtpUser !== hasSmtpPassword) {
             context.addIssue({
                 code: "custom",
@@ -144,6 +186,39 @@ const environmentSchema = z
                 message:
                     "SMTP_USER and SMTP_PASS must either both be provided or both be omitted.",
             });
+        }
+
+        if (
+            values.MONETIZATION_ENABLED === "true" &&
+            values.ENTITLEMENT_PROVIDER === "disabled"
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["ENTITLEMENT_PROVIDER"],
+                message:
+                    "A real entitlement provider must be implemented before monetization can be enabled.",
+            });
+        }
+
+        if (values.MEDIA_PROVIDER === "s3") {
+            if (!values.S3_BUCKET) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["S3_BUCKET"],
+                    message:
+                        "S3_BUCKET is required when MEDIA_PROVIDER is s3.",
+                });
+            }
+            const hasKey = values.S3_ACCESS_KEY_ID !== undefined;
+            const hasSecret = values.S3_SECRET_ACCESS_KEY !== undefined;
+            if (hasKey !== hasSecret) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["S3_ACCESS_KEY_ID"],
+                    message:
+                        "S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must both be provided or both omitted.",
+                });
+            }
         }
     });
 
@@ -153,8 +228,9 @@ if (!parsedEnvironment.success) {
     const messages = parsedEnvironment.error.issues.map(
         (issue) => `${issue.path.join(".")}: ${issue.message}`,
     );
-
-    throw new Error(`Invalid environment variables:\n${messages.join("\n")}`);
+    throw new Error(
+        `Invalid environment variables:\n${messages.join("\n")}`,
+    );
 }
 
 const values = parsedEnvironment.data;
@@ -176,6 +252,7 @@ const env = Object.freeze({
     databaseUrl: values.DATABASE_URL,
     clientOrigins,
     webAppUrl: values.WEB_APP_URL,
+    publicApiUrl: values.PUBLIC_API_URL.replace(/\/+$/u, ""),
     accessTokenSecret: values.ACCESS_TOKEN_SECRET,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     sessionTtlDays: values.SESSION_TTL_DAYS,
@@ -196,6 +273,16 @@ const env = Object.freeze({
     smtpSecure: values.SMTP_SECURE === "true",
     smtpUser: values.SMTP_USER,
     smtpPass: values.SMTP_PASS,
+    monetizationEnabled: values.MONETIZATION_ENABLED === "true",
+    entitlementProvider: values.ENTITLEMENT_PROVIDER,
+    mediaProvider: values.MEDIA_PROVIDER,
+    mediaLocalRoot: values.MEDIA_LOCAL_ROOT,
+    mediaMaxBytes: values.MEDIA_MAX_BYTES,
+    s3Endpoint: values.S3_ENDPOINT,
+    s3Region: values.S3_REGION,
+    s3Bucket: values.S3_BUCKET ?? "",
+    s3AccessKeyId: values.S3_ACCESS_KEY_ID,
+    s3SecretAccessKey: values.S3_SECRET_ACCESS_KEY,
     databasePoolMax: values.DATABASE_POOL_MAX,
     databaseConnectionTimeoutMs: values.DATABASE_CONNECTION_TIMEOUT_MS,
     databaseIdleTimeoutMs: values.DATABASE_IDLE_TIMEOUT_MS,

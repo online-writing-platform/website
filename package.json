@@ -1,6 +1,17 @@
 {
-  "devDependencies": {
-    "@types/node": "^26.1.2",
-    "vite-tsconfig-paths": "^6.1.1"
+  "name": "online-writing-platform",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "node scripts/run-all.mjs dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "test": "npm --prefix backend run test && npm --prefix frontend run test",
+    "check": "npm --prefix backend run prisma:validate && npm run typecheck && npm run lint && npm run test && npm run build",
+    "start": "npm --prefix backend run start"
   }
 }

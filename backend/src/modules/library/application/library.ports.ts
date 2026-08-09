@@ -38,7 +38,10 @@ export interface LibraryStore {
     ): Promise<ReadingListView | null>;
     deleteReadingList(userId: string, listId: string): Promise<boolean>;
     listOwnReadingLists(userId: string): Promise<ReadingListView[]>;
-    listPublicReadingLists(userId: string): Promise<ReadingListView[]>;
+    listPublicReadingLists(
+        userId: string,
+        viewerId?: string,
+    ): Promise<ReadingListView[]>;
     getReadingList(
         listId: string,
         viewerId: string | undefined,
@@ -51,8 +54,14 @@ export interface LibraryStore {
 }
 
 export interface LibraryStoryAccess {
-    findReadableStoryById(storyId: string): Promise<{ id: string } | null>;
-    findReadableChapterById(chapterId: string): Promise<{
+    findReadableStoryById(
+        storyId: string,
+        viewerId?: string,
+    ): Promise<{ id: string } | null>;
+    findReadableChapterById(
+        chapterId: string,
+        viewerId?: string,
+    ): Promise<{
         id: string;
         storyId: string;
     } | null>;

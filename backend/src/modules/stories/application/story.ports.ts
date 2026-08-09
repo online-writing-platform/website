@@ -28,23 +28,22 @@ export interface ReadableChapterReference {
 export interface StoryOwnerState {
     id: string;
     authorId: string;
-
     status: "DRAFT" | "ONGOING" | "COMPLETED" | "HIATUS";
-
     visibility: StoryVisibilityValue;
-
     publishedAt: Date | null;
 }
+
+export type UpdateChapterResult =
+    | { kind: "UPDATED"; chapter: ChapterView }
+    | { kind: "CONFLICT"; current: ChapterView }
+    | null;
 
 export interface StoryStore {
     createStory(
         authorId: string,
         slug: string,
         input: CreateStoryInput,
-        tagNames: Array<{
-            name: string;
-            slug: string;
-        }>,
+        tagNames: Array<{ name: string; slug: string }>,
     ): Promise<StoryDetail>;
 
     findOwnedStory(
@@ -56,10 +55,7 @@ export interface StoryStore {
         authorId: string,
         storyId: string,
         input: UpdateStoryInput,
-        tagNames?: Array<{
-            name: string;
-            slug: string;
-        }>,
+        tagNames?: Array<{ name: string; slug: string }>,
     ): Promise<StoryDetail | null>;
 
     softDeleteStory(
@@ -76,14 +72,16 @@ export interface StoryStore {
 
     unpublishStory(authorId: string, storyId: string): Promise<boolean>;
 
-    getPublicStory(slug: string): Promise<StoryDetail | null>;
+    getPublicStory(slug: string, viewerId?: string): Promise<StoryDetail | null>;
 
     findReadableStoryById(
         storyId: string,
+        viewerId?: string,
     ): Promise<ReadableStoryReference | null>;
 
     findReadableChapterById(
         chapterId: string,
+        viewerId?: string,
     ): Promise<ReadableChapterReference | null>;
 
     getOwnedStory(
@@ -100,6 +98,7 @@ export interface StoryStore {
             language?: string;
             author?: string;
         },
+        viewerId?: string,
     ): Promise<StoryPage>;
 
     listOwnedStories(
@@ -108,13 +107,7 @@ export interface StoryStore {
         limit: number,
     ): Promise<StoryPage>;
 
-    listGenres(): Promise<
-        Array<{
-            slug: string;
-            name: string;
-        }>
-    >;
-
+    listGenres(): Promise<Array<{ slug: string; name: string }>>;
     genreExists(slug: string): Promise<boolean>;
 
     createChapter(
@@ -130,7 +123,7 @@ export interface StoryStore {
         chapterId: string,
         input: UpdateChapterInput,
         wordCount: number | undefined,
-    ): Promise<ChapterView | null>;
+    ): Promise<UpdateChapterResult>;
 
     softDeleteChapter(
         authorId: string,
@@ -161,6 +154,7 @@ export interface StoryStore {
     getPublicChapter(
         storySlug: string,
         chapterId: string,
+        viewerId?: string,
     ): Promise<ChapterView | null>;
 
     getOwnedChapter(

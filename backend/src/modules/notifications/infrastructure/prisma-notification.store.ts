@@ -5,17 +5,101 @@ import type {
     CreateNotificationInput,
     NotificationRecord,
     NotificationStore,
+    NotificationTypeValue,
 } from "../application/notification.ports.js";
 
+const preferenceField: Record<
+    NotificationTypeValue,
+    | "notifyFollow"
+    | "notifyComment"
+    | "notifyReply"
+    | "notifyVote"
+    | "notifyChapterPublished"
+    | "notifyModeration"
+    | "notifySecurity"
+> = {
+    FOLLOW: "notifyFollow",
+    COMMENT: "notifyComment",
+    COMMENT_REPLY: "notifyReply",
+    CHAPTER_VOTE: "notifyVote",
+    CHAPTER_PUBLISHED: "notifyChapterPublished",
+    MODERATION: "notifyModeration",
+    SECURITY: "notifySecurity",
+};
+
 export class PrismaNotificationStore implements NotificationStore {
-    public async create(input: CreateNotificationInput): Promise<void> {
-        await prisma.notification.create({
-            data: {
-                recipientId: input.recipientId,
-                ...(input.actorId ? { actorId: input.actorId } : {}),
-                type: input.type,
-                data: input.data,
+    public async shouldDeliver(input: CreateNotificationInput): Promise<boolean> {
+        const user = await prisma.user.findUnique({
+            where: { id: input.recipientId },
+            select: {
+                status: true,
+                preferences: {
+                    select: {
+                        notifyFollow: true,
+                        notifyComment: true,
+                        notifyReply: true,
+                        notifyVote: true,
+                        notifyChapterPublished: true,
+                        notifyModeration: true,
+                        notifySecurity: true,
+                    },
+                },
             },
+        });
+
+        if (!user || user.status !== "ACTIVE") return false;
+
+        if (
+            user.preferences &&
+            user.preferences[preferenceField[input.type]] === false
+        ) {
+            return false;
+        }
+
+        if (input.actorId) {
+            const block = await prisma.block.findFirst({
+                where: {
+                    OR: [
+                        {
+                            blockerId: input.recipientId,
+                            blockedId: input.actorId,
+                        },
+                        {
+                            blockerId: input.actorId,
+                            blockedId: input.recipientId,
+                        },
+                    ],
+                },
+                select: { blockerId: true },
+            });
+
+            if (block) return false;
+        }
+
+        return true;
+    }
+
+    public async create(input: CreateNotificationInput): Promise<void> {
+        const data = {
+            recipientId: input.recipientId,
+            ...(input.actorId ? { actorId: input.actorId } : {}),
+            type: input.type,
+            data: input.data,
+            ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+        };
+
+        if (input.dedupeKey) {
+            await prisma.notification.upsert({
+                where: { dedupeKey: input.dedupeKey },
+                update: {},
+                create: data,
+                select: { id: true },
+            });
+            return;
+        }
+
+        await prisma.notification.create({
+            data,
             select: { id: true },
         });
     }
@@ -72,7 +156,10 @@ export class PrismaNotificationStore implements NotificationStore {
         return result.count === 1;
     }
 
-    public async markAllRead(recipientId: string, readAt: Date): Promise<number> {
+    public async markAllRead(
+        recipientId: string,
+        readAt: Date,
+    ): Promise<number> {
         const result = await prisma.notification.updateMany({
             where: { recipientId, readAt: null },
             data: { readAt },

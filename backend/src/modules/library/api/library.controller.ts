@@ -161,6 +161,7 @@ export async function listPublicReadingLists(
 ): Promise<void> {
     const lists = await libraryModule.service.listPublicLists(
         request.params.username,
+        request.auth?.userId,
     );
 
     response.status(200).json({ data: { lists } });

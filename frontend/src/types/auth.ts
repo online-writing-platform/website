@@ -1,3 +1,5 @@
+export type UserRole = "USER" | "MODERATOR" | "ADMIN";
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -5,6 +7,8 @@ export interface AuthUser {
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
+  emailVerified: boolean;
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
 }
@@ -12,19 +16,17 @@ export interface AuthUser {
 export interface RegisterInput {
   email: string;
   username: string;
-  displayName: string;
   password: string;
+  birthDate: string;
   acceptTerms: true;
 }
 
 export interface LoginInput {
   identifier: string;
   password: string;
-  rememberMe: boolean;
 }
 
 export interface UpdateProfileInput {
-  username?: string;
   displayName?: string;
   bio?: string | null;
   avatarUrl?: string | null;

@@ -9,18 +9,18 @@ import "./Register.css";
 import "../styles/Form.css";
 
 interface RegisterForm {
-  displayName: string;
   username: string;
   email: string;
+  birthDate: string;
   password: string;
   confirmPassword: string;
   acceptTerms: boolean;
 }
 
 const initialForm: RegisterForm = {
-  displayName: "",
   username: "",
   email: "",
+  birthDate: "",
   password: "",
   confirmPassword: "",
   acceptTerms: false,
@@ -28,35 +28,28 @@ const initialForm: RegisterForm = {
 
 function Register() {
   const navigate = useNavigate();
-
   const { register, status } = useAuth();
-
   const [form, setForm] = useState<RegisterForm>(initialForm);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (status === "authenticated") {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to="/settings" replace />;
   }
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
-
     setErrorMessage(null);
 
     if (form.password !== form.confirmPassword) {
       setErrorMessage("رمز عبور و تکرار آن یکسان نیستند.");
-
       return;
     }
 
     if (!form.acceptTerms) {
       setErrorMessage("برای ثبت‌نام باید قوانین سایت را بپذیرید.");
-
       return;
     }
 
@@ -64,20 +57,14 @@ function Register() {
 
     try {
       await register({
-        displayName: form.displayName.trim(),
-
         username: form.username.trim().toLowerCase(),
-
         email: form.email.trim().toLowerCase(),
-
+        birthDate: form.birthDate,
         password: form.password,
-
         acceptTerms: true,
       });
 
-      navigate("/profile", {
-        replace: true,
-      });
+      navigate("/settings", { replace: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -87,10 +74,14 @@ function Register() {
 
   return (
     <main className="register-page">
-      <section className="form-card">
-        <h1 className="form-title">ثبت‌نام</h1>
+      <section className="form-card" aria-labelledby="register-title">
+        <h1 id="register-title" className="form-title">
+          ثبت‌نام
+        </h1>
 
-        <p className="form-subtitle">به جامعه نویسندگان خوش آمدید.</p>
+        <p className="form-subtitle">
+          حساب نویسندگی و مطالعه خود را بسازید.
+        </p>
 
         <form
           className="form"
@@ -105,30 +96,7 @@ function Register() {
           )}
 
           <div className="form-group">
-            <label htmlFor="displayName">نام نمایشی</label>
-
-            <input
-              id="displayName"
-              name="displayName"
-              type="text"
-              value={form.displayName}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  displayName: event.target.value,
-                }));
-              }}
-              minLength={1}
-              maxLength={80}
-              autoComplete="name"
-              placeholder="مثلاً چنگیز"
-              required
-            />
-          </div>
-
-          <div className="form-group">
             <label htmlFor="username">نام کاربری</label>
-
             <input
               id="username"
               name="username"
@@ -141,21 +109,19 @@ function Register() {
                 }));
               }}
               minLength={3}
-              maxLength={30}
+              maxLength={20}
               pattern="[A-Za-z0-9_]+"
               autoComplete="username"
-              placeholder="changiz"
+              dir="ltr"
               required
             />
-
             <small className="form-help">
-              فقط حروف انگلیسی، عدد و underscore مجاز است.
+              ۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد و underscore.
             </small>
           </div>
 
           <div className="form-group">
             <label htmlFor="email">ایمیل</label>
-
             <input
               id="email"
               name="email"
@@ -168,14 +134,34 @@ function Register() {
                 }));
               }}
               autoComplete="email"
-              placeholder="name@example.com"
+              dir="ltr"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">رمز عبور</label>
+            <label htmlFor="birthDate">تاریخ تولد</label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              value={form.birthDate}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  birthDate: event.target.value,
+                }));
+              }}
+              autoComplete="bday"
+              required
+            />
+            <small className="form-help">
+              برای اعمال سیاست محتوای بزرگسال در سمت سرور استفاده می‌شود.
+            </small>
+          </div>
 
+          <div className="form-group">
+            <label htmlFor="password">رمز عبور</label>
             <input
               id="password"
               name="password"
@@ -190,14 +176,12 @@ function Register() {
               minLength={10}
               maxLength={128}
               autoComplete="new-password"
-              placeholder="حداقل ۱۰ کاراکتر"
               required
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword">تکرار رمز عبور</label>
-
             <input
               id="confirmPassword"
               name="confirmPassword"
@@ -212,7 +196,6 @@ function Register() {
               minLength={10}
               maxLength={128}
               autoComplete="new-password"
-              placeholder="تکرار رمز عبور"
               required
             />
           </div>
@@ -228,9 +211,9 @@ function Register() {
                 }));
               }}
             />
-
             <span>
-              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و می‌پذیرم.
+              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و
+              می‌پذیرم.
             </span>
           </label>
 
@@ -240,8 +223,7 @@ function Register() {
         </form>
 
         <p className="form-footer">
-          حساب کاربری دارید؟
-          <Link to="/login">ورود</Link>
+          حساب کاربری دارید؟ <Link to="/login">ورود</Link>
         </p>
       </section>
     </main>

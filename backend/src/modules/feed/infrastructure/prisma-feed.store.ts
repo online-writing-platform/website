@@ -1,5 +1,6 @@
 import { prisma } from "../../../db/index.js";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
+import { isAtLeastAge } from "../../stories/domain/mature.policy.js";
 
 import type { FeedStore } from "../application/feed.ports.js";
 import type { StorySummary } from "../../stories/index.js";
@@ -11,6 +12,10 @@ interface FeedStoryRow {
     description: string;
     coverUrl: string | null;
     language: string;
+    rights:
+        | "ALL_RIGHTS_RESERVED"
+        | "PUBLIC_DOMAIN"
+        | "CREATIVE_COMMONS";
     status: "DRAFT" | "ONGOING" | "COMPLETED" | "HIATUS";
     visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
     isMature: boolean;
@@ -18,7 +23,11 @@ interface FeedStoryRow {
     publishedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
-    author: { username: string; displayName: string; avatarUrl: string | null };
+    author: {
+        username: string;
+        displayName: string;
+        avatarUrl: string | null;
+    };
     genre: { slug: string; name: string } | null;
     tags: Array<{ tag: { slug: string; name: string } }>;
 }
@@ -31,6 +40,7 @@ function mapStory(row: FeedStoryRow): StorySummary {
         description: row.description,
         coverUrl: row.coverUrl,
         language: row.language,
+        rights: row.rights,
         status: row.status,
         visibility: row.visibility,
         isMature: row.isMature,
@@ -45,7 +55,30 @@ function mapStory(row: FeedStoryRow): StorySummary {
 }
 
 export class PrismaFeedStore implements FeedStore {
-    public async listFollowingFeed(userId: string, cursor: string | undefined, limit: number) {
+    public async listFollowingFeed(
+        userId: string,
+        cursor: string | undefined,
+        limit: number,
+    ) {
+        const viewer = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                birthDate: true,
+                preferences: {
+                    select: { allowMatureContent: true },
+                },
+                mutesCreated: {
+                    select: { mutedId: true },
+                },
+            },
+        });
+
+        const includeMature =
+            viewer?.preferences?.allowMatureContent === true &&
+            isAtLeastAge(viewer.birthDate, 18, new Date());
+
+        const mutedIds = viewer?.mutesCreated.map((mute) => mute.mutedId) ?? [];
+
         const rows: FeedStoryRow[] = await prisma.story.findMany({
             where: {
                 deletedAt: null,
@@ -53,14 +86,20 @@ export class PrismaFeedStore implements FeedStore {
                 visibility: "PUBLIC",
                 publishedAt: { not: null },
                 status: { not: "DRAFT" },
+                ...(includeMature ? {} : { isMature: false }),
                 author: {
                     status: "ACTIVE",
                     followers: { some: { followerId: userId } },
+                    ...(mutedIds.length > 0
+                        ? { id: { notIn: mutedIds } }
+                        : {}),
                 },
             },
             orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
             take: limit + 1,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+            ...(cursor
+                ? { cursor: { id: cursor }, skip: 1 }
+                : {}),
             select: {
                 id: true,
                 slug: true,
@@ -68,6 +107,7 @@ export class PrismaFeedStore implements FeedStore {
                 description: true,
                 coverUrl: true,
                 language: true,
+                rights: true,
                 status: true,
                 visibility: true,
                 isMature: true,
@@ -75,15 +115,30 @@ export class PrismaFeedStore implements FeedStore {
                 publishedAt: true,
                 createdAt: true,
                 updatedAt: true,
-                author: { select: { username: true, displayName: true, avatarUrl: true } },
+                author: {
+                    select: {
+                        username: true,
+                        displayName: true,
+                        avatarUrl: true,
+                    },
+                },
                 genre: { select: { slug: true, name: true } },
                 tags: {
                     orderBy: { createdAt: "asc" },
-                    select: { tag: { select: { slug: true, name: true } } },
+                    select: {
+                        tag: {
+                            select: { slug: true, name: true },
+                        },
+                    },
                 },
             },
         });
+
         const page = buildCursorPage(rows, limit, (row) => row.id);
-        return { stories: page.items.map(mapStory), pagination: page.pagination };
+
+        return {
+            stories: page.items.map(mapStory),
+            pagination: page.pagination,
+        };
     }
 }

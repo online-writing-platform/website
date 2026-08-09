@@ -126,7 +126,10 @@ function AuthProvider({ children }: AuthProviderProps) {
     async (input: LoginInput): Promise<AuthUser> => {
       const response = await apiRequest<AuthResponse>("/api/v1/auth/login", {
         method: "POST",
-        body: JSON.stringify(input),
+        body: JSON.stringify({
+          identifier: input.identifier,
+          password: input.password,
+        }),
       });
 
       applyAuthentication(response);

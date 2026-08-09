@@ -27,7 +27,10 @@ export class ChapterService {
         );
 
         if (!chapter) {
-            throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
+            throw AppError.notFound(
+                "The story was not found.",
+                "STORY_NOT_FOUND",
+            );
         }
 
         return chapter;
@@ -39,22 +42,40 @@ export class ChapterService {
         chapterId: string,
         input: UpdateChapterInput,
     ): Promise<ChapterView> {
-        const chapter = await this.store.updateChapter(
+        const result = await this.store.updateChapter(
             authorId,
             storyId,
             chapterId,
             {
                 ...input,
-                ...(input.title !== undefined ? { title: input.title.trim() } : {}),
+                ...(input.title !== undefined
+                    ? { title: input.title.trim() }
+                    : {}),
             },
-            input.content === undefined ? undefined : countWords(input.content),
+            input.content === undefined
+                ? undefined
+                : countWords(input.content),
         );
 
-        if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+        if (!result) {
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
 
-        return chapter;
+        if (result.kind === "CONFLICT") {
+            throw AppError.conflict(
+                "This chapter was updated by another editor session.",
+                "CHAPTER_EDIT_CONFLICT",
+                {
+                    currentVersion: result.current.version,
+                    updatedAt: result.current.updatedAt,
+                },
+            );
+        }
+
+        return result.chapter;
     }
 
     public async remove(
@@ -70,7 +91,10 @@ export class ChapterService {
         );
 
         if (!deleted) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
     }
 
@@ -87,7 +111,10 @@ export class ChapterService {
         );
 
         if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
 
         if (chapter === "EMPTY") {
@@ -112,21 +139,36 @@ export class ChapterService {
         );
 
         if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
 
         return chapter;
     }
 
-    public async getPublic(storySlug: string, chapterId: string): Promise<ChapterView> {
-        const chapter = await this.store.getPublicChapter(storySlug, chapterId);
+    public async getPublic(
+        storySlug: string,
+        chapterId: string,
+        viewerId?: string,
+    ): Promise<ChapterView> {
+        const chapter = await this.store.getPublicChapter(
+            storySlug,
+            chapterId,
+            viewerId,
+        );
 
         if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found or is not available to this account.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
 
         return chapter;
     }
+
     public async getOwned(
         authorId: string,
         storyId: string,
@@ -139,7 +181,10 @@ export class ChapterService {
         );
 
         if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
 
         return chapter;
@@ -157,7 +202,11 @@ export class ChapterService {
             );
         }
 
-        const chapters = await this.store.reorderChapters(authorId, storyId, chapterIds);
+        const chapters = await this.store.reorderChapters(
+            authorId,
+            storyId,
+            chapterIds,
+        );
         if (!chapters) {
             throw AppError.badRequest(
                 "Chapter order must contain every active chapter exactly once.",
@@ -166,5 +215,4 @@ export class ChapterService {
         }
         return chapters;
     }
-
 }

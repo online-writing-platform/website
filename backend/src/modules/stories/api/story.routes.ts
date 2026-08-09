@@ -8,6 +8,7 @@ import {
 } from "../../../middlewares/validate.middleware.js";
 import {
     authenticate,
+    optionalAuthenticate,
     requireVerifiedEmail,
 } from "../../auth/index.js";
 
@@ -48,22 +49,10 @@ import {
 const router = Router();
 
 router.get("/genres", listGenres);
-router.get("/", validateQuery(listStoriesQuerySchema), listStories);
+router.get("/", optionalAuthenticate, validateQuery(listStoriesQuerySchema), listStories);
 
-router.get(
-    "/mine",
-    authenticate,
-    validateQuery(listOwnedStoriesQuerySchema),
-    listMyStories,
-);
-
-router.get(
-    "/mine/:storyId",
-    authenticate,
-    validateParams(storyIdParamsSchema),
-    getMyStory,
-);
-
+router.get("/mine", authenticate, validateQuery(listOwnedStoriesQuerySchema), listMyStories);
+router.get("/mine/:storyId", authenticate, validateParams(storyIdParamsSchema), getMyStory);
 router.get(
     "/mine/:storyId/chapters/:chapterId",
     authenticate,
@@ -79,7 +68,6 @@ router.post(
     validateBody(createStorySchema),
     createStory,
 );
-
 router.patch(
     "/:storyId",
     contentWriteRateLimiter,
@@ -89,7 +77,6 @@ router.patch(
     validateBody(updateStorySchema),
     updateStory,
 );
-
 router.delete(
     "/:storyId",
     contentWriteRateLimiter,
@@ -98,7 +85,6 @@ router.delete(
     validateParams(storyIdParamsSchema),
     deleteStory,
 );
-
 router.post(
     "/:storyId/publish",
     contentWriteRateLimiter,
@@ -107,7 +93,6 @@ router.post(
     validateParams(storyIdParamsSchema),
     publishStory,
 );
-
 router.post(
     "/:storyId/unpublish",
     contentWriteRateLimiter,
@@ -116,7 +101,6 @@ router.post(
     validateParams(storyIdParamsSchema),
     unpublishStory,
 );
-
 router.patch(
     "/:storyId/chapters/order",
     contentWriteRateLimiter,
@@ -126,7 +110,6 @@ router.patch(
     validateBody(reorderChaptersSchema),
     reorderChapters,
 );
-
 router.post(
     "/:storyId/chapters",
     contentWriteRateLimiter,
@@ -136,7 +119,6 @@ router.post(
     validateBody(createChapterSchema),
     createChapter,
 );
-
 router.patch(
     "/:storyId/chapters/:chapterId",
     contentWriteRateLimiter,
@@ -146,7 +128,6 @@ router.patch(
     validateBody(updateChapterSchema),
     updateChapter,
 );
-
 router.delete(
     "/:storyId/chapters/:chapterId",
     contentWriteRateLimiter,
@@ -155,7 +136,6 @@ router.delete(
     validateParams(storyChapterParamsSchema),
     deleteChapter,
 );
-
 router.post(
     "/:storyId/chapters/:chapterId/publish",
     contentWriteRateLimiter,
@@ -164,7 +144,6 @@ router.post(
     validateParams(storyChapterParamsSchema),
     publishChapter,
 );
-
 router.post(
     "/:storyId/chapters/:chapterId/unpublish",
     contentWriteRateLimiter,
@@ -176,12 +155,13 @@ router.post(
 
 router.get(
     "/:slug/chapters/:chapterId",
+    optionalAuthenticate,
     validateParams(publicChapterParamsSchema),
     getPublicChapter,
 );
-
 router.get(
     "/:slug",
+    optionalAuthenticate,
     validateParams(storySlugParamsSchema),
     getPublicStory,
 );

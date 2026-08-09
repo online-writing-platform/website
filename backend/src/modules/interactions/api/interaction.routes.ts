@@ -2,7 +2,11 @@ import { Router } from "express";
 
 import { socialWriteRateLimiter } from "../../../middlewares/rate-limit.middleware.js";
 import { validateBody, validateParams, validateQuery } from "../../../middlewares/validate.middleware.js";
-import { authenticate, requireVerifiedEmail } from "../../auth/index.js";
+import {
+    authenticate,
+    optionalAuthenticate,
+    requireVerifiedEmail,
+} from "../../auth/index.js";
 import {
     addVote,
     createComment,
@@ -26,37 +30,20 @@ import {
 const chapterRouter = Router();
 const commentRouter = Router();
 
-chapterRouter.get("/:chapterId/votes", validateParams(chapterParamsSchema), getVoteCount);
-chapterRouter.get(
-    "/:chapterId/vote",
-    authenticate,
-    validateParams(chapterParamsSchema),
-    getVoteState,
-);
-chapterRouter.post(
-    "/:chapterId/vote",
-    socialWriteRateLimiter,
-    authenticate,
-    requireVerifiedEmail,
-    validateParams(chapterParamsSchema),
-    addVote,
-);
-chapterRouter.delete(
-    "/:chapterId/vote",
-    socialWriteRateLimiter,
-    authenticate,
-    requireVerifiedEmail,
-    validateParams(chapterParamsSchema),
-    removeVote,
-);
+chapterRouter.get("/:chapterId/votes", optionalAuthenticate, validateParams(chapterParamsSchema), getVoteCount);
+chapterRouter.get("/:chapterId/vote", authenticate, validateParams(chapterParamsSchema), getVoteState);
+chapterRouter.post("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedEmail, validateParams(chapterParamsSchema), addVote);
+chapterRouter.delete("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedEmail, validateParams(chapterParamsSchema), removeVote);
 chapterRouter.get(
     "/:chapterId/comments",
+    optionalAuthenticate,
     validateParams(chapterParamsSchema),
     validateQuery(interactionListQuerySchema),
     listComments,
 );
 chapterRouter.get(
     "/:chapterId/comments/:commentId/replies",
+    optionalAuthenticate,
     validateParams(chapterCommentParamsSchema),
     validateQuery(interactionListQuerySchema),
     listReplies,

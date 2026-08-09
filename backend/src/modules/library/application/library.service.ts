@@ -14,15 +14,21 @@ export class LibraryService {
         private readonly users: LibraryUserDirectory,
     ) {}
 
-    private async requireStory(storyId: string): Promise<void> {
-        const story = await this.stories.findReadableStoryById(storyId);
+    private async requireStory(
+        storyId: string,
+        viewerId: string,
+    ): Promise<void> {
+        const story = await this.stories.findReadableStoryById(
+            storyId,
+            viewerId,
+        );
         if (!story) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
     }
 
     public async add(userId: string, storyId: string): Promise<void> {
-        await this.requireStory(storyId);
+        await this.requireStory(storyId, userId);
         await this.store.addLibraryEntry(userId, storyId);
     }
 
@@ -40,10 +46,13 @@ export class LibraryService {
         chapterId: string | undefined,
         progress: number,
     ) {
-        await this.requireStory(storyId);
+        await this.requireStory(storyId, userId);
 
         if (chapterId) {
-            const chapter = await this.stories.findReadableChapterById(chapterId);
+            const chapter = await this.stories.findReadableChapterById(
+                chapterId,
+                userId,
+            );
             if (!chapter || chapter.storyId !== storyId) {
                 throw AppError.badRequest(
                     "The chapter does not belong to the requested story.",
@@ -127,12 +136,15 @@ export class LibraryService {
         return this.store.listOwnReadingLists(userId);
     }
 
-    public async listPublicLists(username: string) {
+    public async listPublicLists(
+        username: string,
+        viewerId?: string,
+    ) {
         const user = await this.users.findActiveByUsername(username);
         if (!user) {
             throw AppError.notFound("The requested user was not found.", "USER_NOT_FOUND");
         }
-        return this.store.listPublicReadingLists(user.id);
+        return this.store.listPublicReadingLists(user.id, viewerId);
     }
 
     public async getList(listId: string, viewerId: string | undefined) {
@@ -144,7 +156,7 @@ export class LibraryService {
     }
 
     public async addListItem(userId: string, listId: string, storyId: string): Promise<void> {
-        await this.requireStory(storyId);
+        await this.requireStory(storyId, userId);
         const ok = await this.store.addReadingListItem(userId, listId, storyId);
         if (!ok) {
             throw AppError.notFound("The reading list was not found.", "READING_LIST_NOT_FOUND");

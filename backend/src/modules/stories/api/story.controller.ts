@@ -20,11 +20,7 @@ import type {
 
 function requireUserId(request: Request): string {
     const userId = request.auth?.userId;
-
-    if (!userId) {
-        throw AppError.unauthorized();
-    }
-
+    if (!userId) throw AppError.unauthorized();
     return userId;
 }
 
@@ -32,20 +28,12 @@ export async function createStory(
     request: Request<Record<string, never>, unknown, CreateStoryBody>,
     response: Response,
 ): Promise<void> {
-    const story = await storyModule.stories.create(
-        requireUserId(request),
-        request.body,
-    );
-
+    const story = await storyModule.stories.create(requireUserId(request), request.body);
     response.status(201).json({ data: { story } });
 }
 
-export async function listStories(
-    request: Request,
-    response: Response,
-): Promise<void> {
+export async function listStories(request: Request, response: Response): Promise<void> {
     const query = getValidatedQuery<ListStoriesQuery>(request);
-
     const result = await storyModule.stories.listPublic(
         query.cursor,
         query.limit,
@@ -55,32 +43,23 @@ export async function listStories(
             ...(query.language ? { language: query.language } : {}),
             ...(query.author ? { author: query.author } : {}),
         },
+        request.auth?.userId,
     );
-
     response.status(200).json({ data: result });
 }
 
-export async function listMyStories(
-    request: Request,
-    response: Response,
-): Promise<void> {
+export async function listMyStories(request: Request, response: Response): Promise<void> {
     const query = getValidatedQuery<ListOwnedStoriesQuery>(request);
-
     const result = await storyModule.stories.listMine(
         requireUserId(request),
         query.cursor,
         query.limit,
     );
-
     response.status(200).json({ data: result });
 }
 
-export async function listGenres(
-    _request: Request,
-    response: Response,
-): Promise<void> {
+export async function listGenres(_request: Request, response: Response): Promise<void> {
     const genres = await storyModule.stories.listGenres();
-
     response.status(200).json({ data: { genres } });
 }
 
@@ -88,8 +67,10 @@ export async function getPublicStory(
     request: Request<StorySlugParams>,
     response: Response,
 ): Promise<void> {
-    const story = await storyModule.stories.getPublic(request.params.slug);
-
+    const story = await storyModule.stories.getPublic(
+        request.params.slug,
+        request.auth?.userId,
+    );
     response.status(200).json({ data: { story } });
 }
 
@@ -101,7 +82,6 @@ export async function getMyStory(
         requireUserId(request),
         request.params.storyId,
     );
-
     response.status(200).json({ data: { story } });
 }
 
@@ -114,7 +94,6 @@ export async function updateStory(
         request.params.storyId,
         request.body,
     );
-
     response.status(200).json({ data: { story } });
 }
 
@@ -122,11 +101,7 @@ export async function deleteStory(
     request: Request<StoryIdParams>,
     response: Response,
 ): Promise<void> {
-    await storyModule.stories.remove(
-        requireUserId(request),
-        request.params.storyId,
-    );
-
+    await storyModule.stories.remove(requireUserId(request), request.params.storyId);
     response.status(204).send();
 }
 
@@ -134,11 +109,7 @@ export async function publishStory(
     request: Request<StoryIdParams>,
     response: Response,
 ): Promise<void> {
-    await storyModule.stories.publish(
-        requireUserId(request),
-        request.params.storyId,
-    );
-
+    await storyModule.stories.publish(requireUserId(request), request.params.storyId);
     response.status(204).send();
 }
 
@@ -146,11 +117,7 @@ export async function unpublishStory(
     request: Request<StoryIdParams>,
     response: Response,
 ): Promise<void> {
-    await storyModule.stories.unpublish(
-        requireUserId(request),
-        request.params.storyId,
-    );
-
+    await storyModule.stories.unpublish(requireUserId(request), request.params.storyId);
     response.status(204).send();
 }
 
@@ -163,7 +130,6 @@ export async function createChapter(
         request.params.storyId,
         request.body,
     );
-
     response.status(201).json({ data: { chapter } });
 }
 
@@ -176,7 +142,6 @@ export async function getMyChapter(
         request.params.storyId,
         request.params.chapterId,
     );
-
     response.status(200).json({ data: { chapter } });
 }
 
@@ -187,8 +152,8 @@ export async function getPublicChapter(
     const chapter = await storyModule.chapters.getPublic(
         request.params.slug,
         request.params.chapterId,
+        request.auth?.userId,
     );
-
     response.status(200).json({ data: { chapter } });
 }
 
@@ -202,7 +167,6 @@ export async function updateChapter(
         request.params.chapterId,
         request.body,
     );
-
     response.status(200).json({ data: { chapter } });
 }
 
@@ -215,7 +179,6 @@ export async function deleteChapter(
         request.params.storyId,
         request.params.chapterId,
     );
-
     response.status(204).send();
 }
 
@@ -228,7 +191,6 @@ export async function publishChapter(
         request.params.storyId,
         request.params.chapterId,
     );
-
     response.status(200).json({ data: { chapter } });
 }
 
@@ -241,7 +203,6 @@ export async function unpublishChapter(
         request.params.storyId,
         request.params.chapterId,
     );
-
     response.status(200).json({ data: { chapter } });
 }
 
@@ -254,6 +215,5 @@ export async function reorderChapters(
         request.params.storyId,
         request.body.chapterIds,
     );
-
     response.status(200).json({ data: { chapters } });
 }

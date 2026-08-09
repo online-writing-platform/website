@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import multer from "multer";
 
 import env from "../config/env.js";
 import logger from "../config/logger.js";
@@ -21,6 +22,35 @@ function isMalformedJsonError(error: unknown): error is SyntaxError {
     );
 }
 
+function normalizeError(error: unknown): AppError {
+    if (error instanceof AppError) return error;
+
+    if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_SIZE") {
+            return new AppError(413, "Uploaded image is too large.", {
+                code: "UPLOAD_TOO_LARGE",
+            });
+        }
+
+        return AppError.badRequest(
+            "The uploaded file could not be processed.",
+            "INVALID_MULTIPART_UPLOAD",
+        );
+    }
+
+    if (isMalformedJsonError(error)) {
+        return AppError.badRequest(
+            "The request body contains malformed JSON.",
+            "MALFORMED_JSON",
+        );
+    }
+
+    return new AppError(500, "Internal Server Error", {
+        code: "INTERNAL_SERVER_ERROR",
+        cause: error,
+    });
+}
+
 export default function errorHandler(
     error: unknown,
     request: Request,
@@ -32,26 +62,13 @@ export default function errorHandler(
         return;
     }
 
-    let normalizedError: AppError;
-
-    if (error instanceof AppError) {
-        normalizedError = error;
-    } else if (isMalformedJsonError(error)) {
-        normalizedError = AppError.badRequest(
-            "The request body contains malformed JSON.",
-            "MALFORMED_JSON",
-        );
-    } else {
-        normalizedError = new AppError(500, "Internal Server Error", {
-            code: "INTERNAL_SERVER_ERROR",
-            cause: error,
-        });
-    }
+    const normalizedError = normalizeError(error);
 
     if (normalizedError.statusCode >= 500) {
         logger.error(
             {
                 error,
+                requestId: request.get("x-request-id"),
                 method: request.method,
                 path: request.originalUrl,
             },
@@ -61,6 +78,7 @@ export default function errorHandler(
         logger.warn(
             {
                 code: normalizedError.code,
+                requestId: request.get("x-request-id"),
                 method: request.method,
                 path: request.originalUrl,
             },

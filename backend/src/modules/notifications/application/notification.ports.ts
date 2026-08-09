@@ -2,7 +2,10 @@ export type NotificationTypeValue =
     | "FOLLOW"
     | "COMMENT"
     | "COMMENT_REPLY"
-    | "CHAPTER_VOTE";
+    | "CHAPTER_VOTE"
+    | "CHAPTER_PUBLISHED"
+    | "MODERATION"
+    | "SECURITY";
 
 export type NotificationDataValue = string | number | boolean | null;
 export type NotificationData = Record<string, NotificationDataValue>;
@@ -11,6 +14,7 @@ export interface CreateNotificationInput {
     recipientId: string;
     actorId?: string;
     type: NotificationTypeValue;
+    dedupeKey?: string;
     data: NotificationData;
 }
 
@@ -29,6 +33,7 @@ export interface NotificationRecord {
 
 export interface NotificationStore {
     create(input: CreateNotificationInput): Promise<void>;
+    shouldDeliver(input: CreateNotificationInput): Promise<boolean>;
     list(
         recipientId: string,
         cursor: string | undefined,
@@ -38,10 +43,18 @@ export interface NotificationStore {
         hasMore: boolean;
         nextCursor: string | null;
     }>;
-    markRead(recipientId: string, notificationId: string, readAt: Date): Promise<boolean>;
+    markRead(
+        recipientId: string,
+        notificationId: string,
+        readAt: Date,
+    ): Promise<boolean>;
     markAllRead(recipientId: string, readAt: Date): Promise<number>;
 }
 
 export interface NotificationLogger {
-    error(error: unknown, context: Record<string, unknown>, message: string): void;
+    error(
+        error: unknown,
+        context: Record<string, unknown>,
+        message: string,
+    ): void;
 }

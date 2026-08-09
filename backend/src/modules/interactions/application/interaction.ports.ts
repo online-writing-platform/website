@@ -1,4 +1,8 @@
-import type { CommentPage, CommentView } from "../domain/interaction.types.js";
+import type { SocialInteractionPolicy } from "../../social/application/social.ports.js";
+import type {
+    CommentPage,
+    CommentView,
+} from "../domain/interaction.types.js";
 
 export interface InteractionStore {
     addVote(userId: string, chapterId: string): Promise<boolean>;
@@ -19,9 +23,17 @@ export interface InteractionStore {
         parentId: string | undefined,
         content: string,
     ): Promise<CommentView>;
-    updateOwnComment(userId: string, commentId: string, content: string): Promise<CommentView | null>;
+    updateOwnComment(
+        userId: string,
+        commentId: string,
+        content: string,
+    ): Promise<CommentView | null>;
     deleteOwnComment(userId: string, commentId: string): Promise<boolean>;
-    listComments(chapterId: string, cursor: string | undefined, limit: number): Promise<CommentPage>;
+    listComments(
+        chapterId: string,
+        cursor: string | undefined,
+        limit: number,
+    ): Promise<CommentPage>;
     listReplies(
         chapterId: string,
         parentId: string,
@@ -31,7 +43,10 @@ export interface InteractionStore {
 }
 
 export interface InteractionStoryAccess {
-    findReadableChapterById(chapterId: string): Promise<{
+    findReadableChapterById(
+        chapterId: string,
+        viewerId?: string,
+    ): Promise<{
         id: string;
         storyId: string;
         storySlug: string;
@@ -46,6 +61,9 @@ export interface InteractionNotificationPublisher {
         recipientId: string;
         actorId?: string;
         type: "COMMENT" | "COMMENT_REPLY" | "CHAPTER_VOTE";
+        dedupeKey?: string;
         data: Record<string, string | number | boolean | null>;
     }): Promise<void>;
 }
+
+export type InteractionSocialPolicy = SocialInteractionPolicy;

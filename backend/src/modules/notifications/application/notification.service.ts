@@ -13,11 +13,10 @@ export class NotificationPublisher {
     ) {}
 
     public async publish(input: CreateNotificationInput): Promise<void> {
-        if (input.actorId && input.actorId === input.recipientId) {
-            return;
-        }
+        if (input.actorId && input.actorId === input.recipientId) return;
 
         try {
+            if (!(await this.store.shouldDeliver(input))) return;
             await this.store.create(input);
         } catch (error) {
             this.logger.error(
@@ -40,8 +39,15 @@ export class NotificationService {
         return this.store.list(userId, cursor, limit);
     }
 
-    public async markRead(userId: string, notificationId: string): Promise<void> {
-        const updated = await this.store.markRead(userId, notificationId, new Date());
+    public async markRead(
+        userId: string,
+        notificationId: string,
+    ): Promise<void> {
+        const updated = await this.store.markRead(
+            userId,
+            notificationId,
+            new Date(),
+        );
 
         if (!updated) {
             throw AppError.notFound(

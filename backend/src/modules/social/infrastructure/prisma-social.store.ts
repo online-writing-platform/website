@@ -1,5 +1,6 @@
 import { prisma } from "../../../db/index.js";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
+import { isPrismaErrorCode } from "../../../utils/prisma-error.js";
 
 import type { SocialStore } from "../application/social.ports.js";
 import type { SocialUserSummary } from "../domain/social.types.js";
@@ -24,35 +25,38 @@ const profileSelect = {
 } as const;
 
 export class PrismaSocialStore implements SocialStore {
-    public async follow(followerId: string, followingId: string): Promise<"CREATED" | "EXISTS"> {
-        const existing = await prisma.follow.findUnique({
-            where: { followerId_followingId: { followerId, followingId } },
-            select: { followerId: true },
-        });
-        if (existing) return "EXISTS";
-
+    public async follow(
+        followerId: string,
+        followingId: string,
+    ): Promise<"CREATED" | "EXISTS"> {
         try {
             await prisma.follow.create({
                 data: { followerId, followingId },
                 select: { followerId: true },
             });
             return "CREATED";
-        } catch {
-            const raced = await prisma.follow.findUnique({
-                where: { followerId_followingId: { followerId, followingId } },
-                select: { followerId: true },
-            });
-            if (raced) return "EXISTS";
-            throw new Error("Failed to create follow relationship.");
+        } catch (error) {
+            if (isPrismaErrorCode(error, "P2002")) {
+                return "EXISTS";
+            }
+            throw error;
         }
     }
 
-    public async unfollow(followerId: string, followingId: string): Promise<boolean> {
-        const result = await prisma.follow.deleteMany({ where: { followerId, followingId } });
+    public async unfollow(
+        followerId: string,
+        followingId: string,
+    ): Promise<boolean> {
+        const result = await prisma.follow.deleteMany({
+            where: { followerId, followingId },
+        });
         return result.count === 1;
     }
 
-    public async isFollowing(followerId: string, followingId: string): Promise<boolean> {
+    public async isFollowing(
+        followerId: string,
+        followingId: string,
+    ): Promise<boolean> {
         const row = await prisma.follow.findUnique({
             where: { followerId_followingId: { followerId, followingId } },
             select: { followerId: true },
@@ -60,7 +64,116 @@ export class PrismaSocialStore implements SocialStore {
         return row !== null;
     }
 
-    public async listFollowers(userId: string, cursor: string | undefined, limit: number) {
+    public async block(blockerId: string, blockedId: string): Promise<void> {
+        await prisma.$transaction([
+            prisma.block.upsert({
+                where: { blockerId_blockedId: { blockerId, blockedId } },
+                update: {},
+                create: { blockerId, blockedId },
+            }),
+            prisma.follow.deleteMany({
+                where: {
+                    OR: [
+                        { followerId: blockerId, followingId: blockedId },
+                        { followerId: blockedId, followingId: blockerId },
+                    ],
+                },
+            }),
+            prisma.mute.deleteMany({
+                where: {
+                    OR: [
+                        { muterId: blockerId, mutedId: blockedId },
+                        { muterId: blockedId, mutedId: blockerId },
+                    ],
+                },
+            }),
+        ]);
+    }
+
+    public async unblock(blockerId: string, blockedId: string): Promise<void> {
+        await prisma.block.deleteMany({ where: { blockerId, blockedId } });
+    }
+
+    public async mute(muterId: string, mutedId: string): Promise<void> {
+        await prisma.mute.upsert({
+            where: { muterId_mutedId: { muterId, mutedId } },
+            update: {},
+            create: { muterId, mutedId },
+        });
+    }
+
+    public async unmute(muterId: string, mutedId: string): Promise<void> {
+        await prisma.mute.deleteMany({ where: { muterId, mutedId } });
+    }
+
+    public async isBlockedBetween(
+        firstUserId: string,
+        secondUserId: string,
+    ): Promise<boolean> {
+        const count = await prisma.block.count({
+            where: {
+                OR: [
+                    { blockerId: firstUserId, blockedId: secondUserId },
+                    { blockerId: secondUserId, blockedId: firstUserId },
+                ],
+            },
+        });
+        return count > 0;
+    }
+
+    public async relationship(actorId: string, targetId: string) {
+        const [following, blockedByMe, blockedMe, mutedByMe] = await Promise.all([
+            prisma.follow.findUnique({
+                where: {
+                    followerId_followingId: {
+                        followerId: actorId,
+                        followingId: targetId,
+                    },
+                },
+                select: { followerId: true },
+            }),
+            prisma.block.findUnique({
+                where: {
+                    blockerId_blockedId: {
+                        blockerId: actorId,
+                        blockedId: targetId,
+                    },
+                },
+                select: { blockerId: true },
+            }),
+            prisma.block.findUnique({
+                where: {
+                    blockerId_blockedId: {
+                        blockerId: targetId,
+                        blockedId: actorId,
+                    },
+                },
+                select: { blockerId: true },
+            }),
+            prisma.mute.findUnique({
+                where: {
+                    muterId_mutedId: {
+                        muterId: actorId,
+                        mutedId: targetId,
+                    },
+                },
+                select: { muterId: true },
+            }),
+        ]);
+
+        return {
+            following: following !== null,
+            blockedByMe: blockedByMe !== null,
+            blockedMe: blockedMe !== null,
+            mutedByMe: mutedByMe !== null,
+        };
+    }
+
+    public async listFollowers(
+        userId: string,
+        cursor: string | undefined,
+        limit: number,
+    ) {
         const rows: FollowerRow[] = await prisma.follow.findMany({
             where: { followingId: userId, follower: { status: "ACTIVE" } },
             orderBy: [{ createdAt: "desc" }, { followerId: "desc" }],
@@ -68,7 +181,10 @@ export class PrismaSocialStore implements SocialStore {
             ...(cursor
                 ? {
                       cursor: {
-                          followerId_followingId: { followerId: cursor, followingId: userId },
+                          followerId_followingId: {
+                              followerId: cursor,
+                              followingId: userId,
+                          },
                       },
                       skip: 1,
                   }
@@ -87,7 +203,11 @@ export class PrismaSocialStore implements SocialStore {
         };
     }
 
-    public async listFollowing(userId: string, cursor: string | undefined, limit: number) {
+    public async listFollowing(
+        userId: string,
+        cursor: string | undefined,
+        limit: number,
+    ) {
         const rows: FollowingRow[] = await prisma.follow.findMany({
             where: { followerId: userId, following: { status: "ACTIVE" } },
             orderBy: [{ createdAt: "desc" }, { followingId: "desc" }],
@@ -95,7 +215,10 @@ export class PrismaSocialStore implements SocialStore {
             ...(cursor
                 ? {
                       cursor: {
-                          followerId_followingId: { followerId: userId, followingId: cursor },
+                          followerId_followingId: {
+                              followerId: userId,
+                              followingId: cursor,
+                          },
                       },
                       skip: 1,
                   }

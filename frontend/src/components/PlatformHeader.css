@@ -1,0 +1,78 @@
+.platform-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.platform-header-inner {
+  width: min(100% - 2rem, var(--content-max));
+  min-height: 62px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.platform-brand {
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.platform-nav,
+.platform-account {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.platform-nav a {
+  color: var(--text-secondary);
+}
+
+.platform-nav a.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.platform-account {
+  justify-content: flex-end;
+  font-size: 0.92rem;
+}
+
+.header-register {
+  background: var(--primary);
+  color: white;
+  border-radius: 8px;
+  padding: 0.42rem 0.7rem;
+}
+
+.header-text-button {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+@media (max-width: 720px) {
+  .platform-header-inner {
+    width: min(100% - 1rem, var(--content-max));
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+  }
+
+  .platform-nav {
+    order: 3;
+    grid-column: 1 / -1;
+    overflow-x: auto;
+    padding-bottom: 0.55rem;
+  }
+
+  .platform-account {
+    min-width: 0;
+  }
+}

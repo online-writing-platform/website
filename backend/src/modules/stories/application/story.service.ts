@@ -16,23 +16,15 @@ import type {
 import type { StoryStore } from "./story.ports.js";
 
 function normalizeTags(tags: string[] | undefined): Array<{ name: string; slug: string }> {
-    if (!tags) {
-        return [];
-    }
+    if (!tags) return [];
 
     const bySlug = new Map<string, { name: string; slug: string }>();
-
     for (const rawTag of tags) {
         const name = normalizeTagName(rawTag);
-
-        if (name.length === 0) {
-            continue;
-        }
-
+        if (name.length === 0) continue;
         const slug = createTagSlug(name);
         bySlug.set(slug, { name, slug });
     }
-
     return [...bySlug.values()];
 }
 
@@ -62,7 +54,6 @@ export class StoryService {
         input: UpdateStoryInput,
     ): Promise<StoryDetail> {
         const current = await this.store.findOwnedStory(authorId, storyId);
-
         if (!current) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
@@ -104,17 +95,11 @@ export class StoryService {
         if (!story) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
-
         return story;
     }
 
     public async remove(authorId: string, storyId: string): Promise<void> {
-        const deleted = await this.store.softDeleteStory(
-            authorId,
-            storyId,
-            new Date(),
-        );
-
+        const deleted = await this.store.softDeleteStory(authorId, storyId, new Date());
         if (!deleted) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
@@ -122,11 +107,9 @@ export class StoryService {
 
     public async publish(authorId: string, storyId: string): Promise<void> {
         const result = await this.store.publishStory(authorId, storyId, new Date());
-
         if (result === "NOT_FOUND") {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
-
         if (result === "NO_PUBLISHED_CHAPTER") {
             throw AppError.badRequest(
                 "At least one published chapter is required before publishing a story.",
@@ -137,29 +120,24 @@ export class StoryService {
 
     public async unpublish(authorId: string, storyId: string): Promise<void> {
         const updated = await this.store.unpublishStory(authorId, storyId);
-
         if (!updated) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
     }
 
-    public async getPublic(slug: string): Promise<StoryDetail> {
-        const story = await this.store.getPublicStory(slug);
-
+    public async getPublic(slug: string, viewerId?: string): Promise<StoryDetail> {
+        const story = await this.store.getPublicStory(slug, viewerId);
         if (!story) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
-
         return story;
     }
 
     public async getOwned(authorId: string, storyId: string): Promise<StoryDetail> {
         const story = await this.store.getOwnedStory(authorId, storyId);
-
         if (!story) {
             throw AppError.notFound("The story was not found.", "STORY_NOT_FOUND");
         }
-
         return story;
     }
 
@@ -167,11 +145,17 @@ export class StoryService {
         cursor: string | undefined,
         limit: number,
         filters: { genre?: string; tag?: string; language?: string; author?: string },
+        viewerId?: string,
     ): Promise<StoryPage> {
-        return this.store.listPublicStories(cursor, limit, {
-            ...filters,
-            ...(filters.author ? { author: normalizeUsername(filters.author) } : {}),
-        });
+        return this.store.listPublicStories(
+            cursor,
+            limit,
+            {
+                ...filters,
+                ...(filters.author ? { author: normalizeUsername(filters.author) } : {}),
+            },
+            viewerId,
+        );
     }
 
     public listMine(

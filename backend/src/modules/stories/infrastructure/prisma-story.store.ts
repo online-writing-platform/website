@@ -2,6 +2,7 @@ import { prisma } from "../../../db/index.js";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
 import { isPrismaErrorCode } from "../../../utils/prisma-error.js";
 
+import { isAtLeastAge } from "../domain/mature.policy.js";
 import type { StoryStore } from "../application/story.ports.js";
 import type {
     ChapterView,
@@ -19,6 +20,7 @@ interface ChapterRow {
     title: string;
     position: number;
     content?: string;
+    version: number;
     status: "DRAFT" | "PUBLISHED";
     moderationState: "VISIBLE" | "HIDDEN" | "REMOVED";
     wordCount: number;
@@ -34,6 +36,7 @@ interface StoryRow {
     description: string;
     coverUrl: string | null;
     language: string;
+    rights: "ALL_RIGHTS_RESERVED" | "PUBLIC_DOMAIN" | "CREATIVE_COMMONS";
     status: "DRAFT" | "ONGOING" | "COMPLETED" | "HIATUS";
     visibility: "PRIVATE" | "UNLISTED" | "PUBLIC";
     moderationState: "VISIBLE" | "HIDDEN" | "REMOVED";
@@ -69,6 +72,7 @@ const storyBaseSelect = {
     description: true,
     coverUrl: true,
     language: true,
+    rights: true,
     status: true,
     visibility: true,
     moderationState: true,
@@ -110,6 +114,7 @@ const chapterMetadataSelect = {
     id: true,
     title: true,
     position: true,
+    version: true,
     status: true,
     moderationState: true,
     wordCount: true,
@@ -129,6 +134,7 @@ function mapChapter(row: ChapterRow): ChapterView {
         title: row.title,
         position: row.position,
         ...(row.content !== undefined ? { content: row.content } : {}),
+        version: row.version,
         status: row.status,
         moderationState: row.moderationState,
         wordCount: row.wordCount,
@@ -146,6 +152,7 @@ function mapSummary(row: StoryRow): StorySummary {
         description: row.description,
         coverUrl: row.coverUrl,
         language: row.language,
+        rights: row.rights,
         status: row.status,
         visibility: row.visibility,
         moderationState: row.moderationState,
@@ -164,6 +171,33 @@ function mapDetail(row: StoryDetailRow): StoryDetail {
         ...mapSummary(row),
         chapters: row.chapters.map(mapChapter),
     };
+}
+
+async function viewerCanReadMatureContent(
+    viewerId: string | undefined,
+): Promise<boolean> {
+    if (!viewerId) return false;
+
+    const viewer = await prisma.user.findUnique({
+        where: { id: viewerId },
+        select: {
+            birthDate: true,
+            status: true,
+            preferences: {
+                select: { allowMatureContent: true },
+            },
+        },
+    });
+
+    if (
+        !viewer ||
+        viewer.status !== "ACTIVE" ||
+        viewer.preferences?.allowMatureContent !== true
+    ) {
+        return false;
+    }
+
+    return isAtLeastAge(viewer.birthDate, 18, new Date());
 }
 
 export class PrismaStoryStore implements StoryStore {
@@ -189,6 +223,7 @@ export class PrismaStoryStore implements StoryStore {
                     description: input.description,
                     ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}),
                     ...(input.language !== undefined ? { language: input.language } : {}),
+                    ...(input.rights !== undefined ? { rights: input.rights } : {}),
                     ...(input.isMature !== undefined ? { isMature: input.isMature } : {}),
                     ...(genre ? { genreId: genre.id } : {}),
                 },
@@ -268,6 +303,7 @@ export class PrismaStoryStore implements StoryStore {
                         : {}),
                     ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}),
                     ...(input.language !== undefined ? { language: input.language } : {}),
+                    ...(input.rights !== undefined ? { rights: input.rights } : {}),
                     ...(input.isMature !== undefined ? { isMature: input.isMature } : {}),
                     ...(input.status !== undefined ? { status: input.status } : {}),
                     ...(input.visibility !== undefined
@@ -377,7 +413,12 @@ export class PrismaStoryStore implements StoryStore {
         return result.count === 1;
     }
 
-    public findReadableStoryById(storyId: string) {
+    public async findReadableStoryById(
+        storyId: string,
+        viewerId?: string,
+    ) {
+        const canReadMature = await viewerCanReadMatureContent(viewerId);
+
         return prisma.story.findFirst({
             where: {
                 id: storyId,
@@ -386,7 +427,16 @@ export class PrismaStoryStore implements StoryStore {
                 visibility: { in: ["PUBLIC", "UNLISTED"] },
                 publishedAt: { not: null },
                 status: { not: "DRAFT" },
-                author: { status: "ACTIVE" },
+                author: {
+                    status: "ACTIVE",
+                    ...(viewerId
+                        ? {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          }
+                        : {}),
+                },
+                ...(canReadMature ? {} : { isMature: false }),
             },
             select: {
                 id: true,
@@ -397,8 +447,13 @@ export class PrismaStoryStore implements StoryStore {
         });
     }
 
-    public findReadableChapterById(chapterId: string) {
-        return prisma.chapter.findFirst({
+    public async findReadableChapterById(
+        chapterId: string,
+        viewerId?: string,
+    ) {
+        const canReadMature = await viewerCanReadMatureContent(viewerId);
+
+        const row = await prisma.chapter.findFirst({
             where: {
                 id: chapterId,
                 deletedAt: null,
@@ -411,7 +466,16 @@ export class PrismaStoryStore implements StoryStore {
                     visibility: { in: ["PUBLIC", "UNLISTED"] },
                     publishedAt: { not: null },
                     status: { not: "DRAFT" },
-                    author: { status: "ACTIVE" },
+                    author: {
+                        status: "ACTIVE",
+                        ...(viewerId
+                            ? {
+                                  blocksCreated: { none: { blockedId: viewerId } },
+                                  blocksReceived: { none: { blockerId: viewerId } },
+                              }
+                            : {}),
+                    },
+                    ...(canReadMature ? {} : { isMature: false }),
                 },
             },
             select: {
@@ -426,21 +490,25 @@ export class PrismaStoryStore implements StoryStore {
                     },
                 },
             },
-        }).then((row) =>
-            row
-                ? {
-                      id: row.id,
-                      storyId: row.storyId,
-                      storySlug: row.story.slug,
-                      storyTitle: row.story.title,
-                      authorId: row.story.authorId,
-                      title: row.title,
-                  }
-                : null,
-        );
+        });
+
+        return row
+            ? {
+                  id: row.id,
+                  storyId: row.storyId,
+                  storySlug: row.story.slug,
+                  storyTitle: row.story.title,
+                  authorId: row.story.authorId,
+                  title: row.title,
+              }
+            : null;
     }
 
-    public async getPublicStory(slug: string): Promise<StoryDetail | null> {
+    public async getPublicStory(
+        slug: string,
+        viewerId?: string,
+    ): Promise<StoryDetail | null> {
+        const canReadMature = await viewerCanReadMatureContent(viewerId);
         const row: StoryDetailRow | null = await prisma.story.findFirst({
             where: {
                 slug,
@@ -449,7 +517,16 @@ export class PrismaStoryStore implements StoryStore {
                 visibility: { in: ["PUBLIC", "UNLISTED"] },
                 publishedAt: { not: null },
                 status: { not: "DRAFT" },
-                author: { status: "ACTIVE" },
+                ...(canReadMature ? {} : { isMature: false }),
+                author: {
+                    status: "ACTIVE",
+                    ...(viewerId
+                        ? {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          }
+                        : {}),
+                },
             },
             select: {
                 ...storyBaseSelect,
@@ -495,7 +572,9 @@ export class PrismaStoryStore implements StoryStore {
         cursor: string | undefined,
         limit: number,
         filters: { genre?: string; tag?: string; language?: string; author?: string },
+        viewerId?: string,
     ): Promise<StoryPage> {
+        const canReadMature = await viewerCanReadMatureContent(viewerId);
         const rows: StoryRow[] = await prisma.story.findMany({
             where: {
                 deletedAt: null,
@@ -503,9 +582,16 @@ export class PrismaStoryStore implements StoryStore {
                 visibility: "PUBLIC",
                 publishedAt: { not: null },
                 status: { not: "DRAFT" },
+                ...(canReadMature ? {} : { isMature: false }),
                 author: {
                     status: "ACTIVE",
                     ...(filters.author ? { usernameNormalized: filters.author } : {}),
+                    ...(viewerId
+                        ? {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          }
+                        : {}),
                 },
                 ...(filters.genre ? { genre: { slug: filters.genre, isActive: true } } : {}),
                 ...(filters.tag ? { tags: { some: { tag: { slug: filters.tag } } } } : {}),
@@ -629,11 +715,12 @@ export class PrismaStoryStore implements StoryStore {
         chapterId: string,
         input: UpdateChapterInput,
         wordCount: number | undefined,
-    ): Promise<ChapterView | null> {
+    ) {
         const updated = await prisma.chapter.updateMany({
             where: {
                 id: chapterId,
                 storyId,
+                version: input.expectedVersion,
                 deletedAt: null,
                 story: { authorId, deletedAt: null },
             },
@@ -641,19 +728,25 @@ export class PrismaStoryStore implements StoryStore {
                 ...(input.title !== undefined ? { title: input.title } : {}),
                 ...(input.content !== undefined ? { content: input.content } : {}),
                 ...(wordCount !== undefined ? { wordCount } : {}),
+                version: { increment: 1 },
             },
         });
 
-        if (updated.count !== 1) {
-            return null;
-        }
-
-        const row: ChapterRow | null = await prisma.chapter.findUnique({
-            where: { id: chapterId },
+        const row: ChapterRow | null = await prisma.chapter.findFirst({
+            where: {
+                id: chapterId,
+                storyId,
+                deletedAt: null,
+                story: { authorId, deletedAt: null },
+            },
             select: chapterContentSelect,
         });
 
-        return row ? mapChapter(row) : null;
+        if (!row) return null;
+
+        return updated.count === 1
+            ? { kind: "UPDATED" as const, chapter: mapChapter(row) }
+            : { kind: "CONFLICT" as const, current: mapChapter(row) };
     }
 
     public async softDeleteChapter(
@@ -798,7 +891,10 @@ export class PrismaStoryStore implements StoryStore {
     public async getPublicChapter(
         storySlug: string,
         chapterId: string,
+        viewerId?: string,
     ): Promise<ChapterView | null> {
+        const canReadMature = await viewerCanReadMatureContent(viewerId);
+
         const row: ChapterRow | null = await prisma.chapter.findFirst({
             where: {
                 id: chapterId,
@@ -812,7 +908,16 @@ export class PrismaStoryStore implements StoryStore {
                     visibility: { in: ["PUBLIC", "UNLISTED"] },
                     publishedAt: { not: null },
                     status: { not: "DRAFT" },
-                    author: { status: "ACTIVE" },
+                    author: {
+                        status: "ACTIVE",
+                        ...(viewerId
+                            ? {
+                                  blocksCreated: { none: { blockedId: viewerId } },
+                                  blocksReceived: { none: { blockerId: viewerId } },
+                              }
+                            : {}),
+                    },
+                    ...(canReadMature ? {} : { isMature: false }),
                 },
             },
             select: chapterContentSelect,

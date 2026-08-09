@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import "./Error.css";
 import Button from "../components/Button";
 function ErrorPage() {

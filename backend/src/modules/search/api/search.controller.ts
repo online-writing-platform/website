@@ -14,6 +14,8 @@ export async function search(
         query.q,
         query.type,
         query.limit,
+        query.page,
+        request.auth?.userId,
     );
 
     response.status(200).json({ data });

@@ -1,0 +1,75 @@
+.reader {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);
+  padding: 1rem;
+}
+
+.reader--light { background: #fff; color: #241e19; }
+.reader--dark { background: #14110f; color: #f5ede3; }
+.reader--sepia { background: #f2e6cf; color: #33271f; }
+
+.reader__toolbar {
+  position: sticky;
+  top: .75rem;
+  z-index: 5;
+  max-width: 58rem;
+  margin: 0 auto 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  align-items: center;
+  padding: .75rem 1rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: .75rem;
+}
+
+.reader__toolbar > a { margin-inline-end: auto; font-weight: 700; }
+.reader__toolbar label { display: inline-flex; align-items: center; gap: .5rem; font-size: .875rem; }
+.reader__toolbar select { min-height: 2.25rem; }
+
+.reader__paper {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  background: color-mix(in srgb, currentColor 2%, transparent);
+  border-radius: .5rem;
+}
+
+.reader__heading { margin-block-end: 2.5rem; text-align: center; }
+.reader__heading p, .reader__heading span { opacity: .68; }
+.reader__heading h1 { margin: .5rem 0; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+
+.reader__content {
+  font-size: calc(1.05rem * var(--reader-font-scale));
+  line-height: var(--reader-line-height);
+  overflow-wrap: anywhere;
+}
+.reader__content p { margin-block: 0 1.35em; white-space: pre-wrap; }
+
+.reader__navigation,
+.reader__discussion {
+  max-width: 58rem;
+  margin: 1.5rem auto;
+}
+.reader__navigation { display: flex; justify-content: space-between; gap: 1rem; }
+
+.reader-interactions { padding-block: 1.5rem; border-top: 1px solid var(--border); }
+.reader-interactions__summary { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+.comment-form { display: grid; gap: .65rem; margin: 1rem 0 2rem; }
+.comment-form textarea { width: 100%; resize: vertical; }
+.comment-form .button { justify-self: start; }
+.comment-list { display: grid; gap: .75rem; }
+.comment { padding: 1rem; border: 1px solid var(--border); border-radius: .6rem; }
+.comment header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.comment header a { display: flex; gap: .5rem; }
+.comment header span, .comment time, .comment small { color: var(--text-secondary); font-size: .8rem; }
+
+@media (max-width: 720px) {
+  .reader { padding: .5rem; }
+  .reader__toolbar { top: .4rem; }
+  .reader__toolbar > a { width: 100%; }
+  .reader__paper { padding: 1.25rem .9rem; }
+}

@@ -59,6 +59,11 @@ readingListRoutes.delete("/:listId", contentWriteRateLimiter, authenticate, vali
 readingListRoutes.post("/:listId/items", contentWriteRateLimiter, authenticate, validateParams(readingListParamsSchema), validateBody(addReadingListItemSchema), addReadingListItem);
 readingListRoutes.delete("/:listId/items/:storyId", contentWriteRateLimiter, authenticate, validateParams(readingListItemParamsSchema), removeReadingListItem);
 
-publicUserReadingListRoutes.get("/:username/reading-lists", validateParams(publicReadingListsParamsSchema), listPublicReadingLists);
+publicUserReadingListRoutes.get(
+    "/:username/reading-lists",
+    optionalAuthenticate,
+    validateParams(publicReadingListsParamsSchema),
+    listPublicReadingLists,
+);
 
 export { libraryRoutes, progressRoutes, readingListRoutes, publicUserReadingListRoutes };

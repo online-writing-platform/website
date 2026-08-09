@@ -14,58 +14,30 @@ import type {
 
 function requireUserId(request: Request): string {
     const userId = request.auth?.userId;
-
-    if (!userId) {
-        throw AppError.unauthorized();
-    }
-
+    if (!userId) throw AppError.unauthorized();
     return userId;
 }
 
-export async function addVote(
-    request: Request<ChapterParams>,
-    response: Response,
-): Promise<void> {
-    const data = await interactionModule.service.addVote(
-        requireUserId(request),
-        request.params.chapterId,
-    );
-
+export async function addVote(request: Request<ChapterParams>, response: Response): Promise<void> {
+    const data = await interactionModule.service.addVote(requireUserId(request), request.params.chapterId);
     response.status(200).json({ data });
 }
 
-export async function removeVote(
-    request: Request<ChapterParams>,
-    response: Response,
-): Promise<void> {
-    const data = await interactionModule.service.removeVote(
-        requireUserId(request),
-        request.params.chapterId,
-    );
-
+export async function removeVote(request: Request<ChapterParams>, response: Response): Promise<void> {
+    const data = await interactionModule.service.removeVote(requireUserId(request), request.params.chapterId);
     response.status(200).json({ data });
 }
 
-export async function getVoteState(
-    request: Request<ChapterParams>,
-    response: Response,
-): Promise<void> {
-    const data = await interactionModule.service.voteState(
-        requireUserId(request),
-        request.params.chapterId,
-    );
-
+export async function getVoteState(request: Request<ChapterParams>, response: Response): Promise<void> {
+    const data = await interactionModule.service.voteState(requireUserId(request), request.params.chapterId);
     response.status(200).json({ data });
 }
 
-export async function getVoteCount(
-    request: Request<ChapterParams>,
-    response: Response,
-): Promise<void> {
+export async function getVoteCount(request: Request<ChapterParams>, response: Response): Promise<void> {
     const data = await interactionModule.service.publicVoteCount(
         request.params.chapterId,
+        request.auth?.userId,
     );
-
     response.status(200).json({ data });
 }
 
@@ -79,7 +51,6 @@ export async function createComment(
         request.body.content,
         request.body.parentId,
     );
-
     response.status(201).json({ data: { comment } });
 }
 
@@ -92,49 +63,33 @@ export async function updateComment(
         request.params.commentId,
         request.body.content,
     );
-
     response.status(200).json({ data: { comment } });
 }
 
-export async function deleteComment(
-    request: Request<CommentParams>,
-    response: Response,
-): Promise<void> {
-    await interactionModule.service.deleteComment(
-        requireUserId(request),
-        request.params.commentId,
-    );
-
+export async function deleteComment(request: Request<CommentParams>, response: Response): Promise<void> {
+    await interactionModule.service.deleteComment(requireUserId(request), request.params.commentId);
     response.status(204).send();
 }
 
-export async function listComments(
-    request: Request<ChapterParams>,
-    response: Response,
-): Promise<void> {
+export async function listComments(request: Request<ChapterParams>, response: Response): Promise<void> {
     const query = getValidatedQuery<InteractionListQuery>(request);
-
     const data = await interactionModule.service.listComments(
         request.params.chapterId,
         query.cursor,
         query.limit,
+        request.auth?.userId,
     );
-
     response.status(200).json({ data });
 }
 
-export async function listReplies(
-    request: Request<ChapterCommentParams>,
-    response: Response,
-): Promise<void> {
+export async function listReplies(request: Request<ChapterCommentParams>, response: Response): Promise<void> {
     const query = getValidatedQuery<InteractionListQuery>(request);
-
     const data = await interactionModule.service.listReplies(
         request.params.chapterId,
         request.params.commentId,
         query.cursor,
         query.limit,
+        request.auth?.userId,
     );
-
     response.status(200).json({ data });
 }

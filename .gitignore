@@ -147,3 +147,6 @@ dist
 
 # Prisma generated client
 backend/src/generated/prisma/
+
+# Local media storage
+backend/var/media/

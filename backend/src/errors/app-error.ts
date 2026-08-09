@@ -70,9 +70,14 @@ export default class AppError extends Error {
         });
     }
 
-    public static conflict(message: string, code = "CONFLICT"): AppError {
+    public static conflict(
+        message: string,
+        code = "CONFLICT",
+        details?: unknown,
+    ): AppError {
         return new AppError(409, message, {
             code,
+            details,
         });
     }
 

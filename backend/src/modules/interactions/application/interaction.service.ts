@@ -2,6 +2,7 @@ import AppError from "../../../errors/app-error.js";
 
 import type {
     InteractionNotificationPublisher,
+    InteractionSocialPolicy,
     InteractionStore,
     InteractionStoryAccess,
 } from "./interaction.ports.js";
@@ -11,24 +12,37 @@ export class InteractionService {
         private readonly store: InteractionStore,
         private readonly stories: InteractionStoryAccess,
         private readonly notifications: InteractionNotificationPublisher,
+        private readonly socialPolicy: InteractionSocialPolicy,
     ) {}
 
-    private async requireChapter(chapterId: string) {
-        const chapter = await this.stories.findReadableChapterById(chapterId);
+    private async requireChapter(chapterId: string, viewerId?: string) {
+        const chapter = await this.stories.findReadableChapterById(
+            chapterId,
+            viewerId,
+        );
         if (!chapter) {
-            throw AppError.notFound("The chapter was not found.", "CHAPTER_NOT_FOUND");
+            throw AppError.notFound(
+                "The chapter was not found.",
+                "CHAPTER_NOT_FOUND",
+            );
         }
         return chapter;
     }
 
-    public async addVote(userId: string, chapterId: string): Promise<{ votes: number; voted: true }> {
-        const chapter = await this.requireChapter(chapterId);
+    public async addVote(
+        userId: string,
+        chapterId: string,
+    ): Promise<{ votes: number; voted: true }> {
+        const chapter = await this.requireChapter(chapterId, userId);
+        await this.socialPolicy.assertMayInteract(userId, chapter.authorId);
+
         const created = await this.store.addVote(userId, chapterId);
         if (created) {
             await this.notifications.publish({
                 recipientId: chapter.authorId,
                 actorId: userId,
                 type: "CHAPTER_VOTE",
+                dedupeKey: `vote:${userId}:${chapterId}`,
                 data: {
                     chapterId,
                     chapterTitle: chapter.title,
@@ -40,14 +54,19 @@ export class InteractionService {
         return { votes: await this.store.countVotes(chapterId), voted: true };
     }
 
-    public async removeVote(userId: string, chapterId: string): Promise<{ votes: number; voted: false }> {
-        await this.requireChapter(chapterId);
+    public async removeVote(
+        userId: string,
+        chapterId: string,
+    ): Promise<{ votes: number; voted: false }> {
+        const chapter = await this.requireChapter(chapterId, userId);
+        await this.socialPolicy.assertMayInteract(userId, chapter.authorId);
         await this.store.removeVote(userId, chapterId);
         return { votes: await this.store.countVotes(chapterId), voted: false };
     }
 
     public async voteState(userId: string, chapterId: string) {
-        await this.requireChapter(chapterId);
+        const chapter = await this.requireChapter(chapterId, userId);
+        await this.socialPolicy.assertMayInteract(userId, chapter.authorId);
         const [votes, voted] = await Promise.all([
             this.store.countVotes(chapterId),
             this.store.hasVoted(userId, chapterId),
@@ -55,8 +74,8 @@ export class InteractionService {
         return { votes, voted };
     }
 
-    public async publicVoteCount(chapterId: string) {
-        await this.requireChapter(chapterId);
+    public async publicVoteCount(chapterId: string, viewerId?: string) {
+        await this.requireChapter(chapterId, viewerId);
         return { votes: await this.store.countVotes(chapterId) };
     }
 
@@ -66,14 +85,23 @@ export class InteractionService {
         contentInput: string,
         parentId?: string,
     ) {
-        const chapter = await this.requireChapter(chapterId);
+        const chapter = await this.requireChapter(chapterId, userId);
+        await this.socialPolicy.assertMayInteract(userId, chapter.authorId);
+
         const content = contentInput.trim();
 
         let parent: Awaited<ReturnType<InteractionStore["findComment"]>> = null;
         if (parentId) {
             parent = await this.store.findComment(parentId);
-            if (!parent || parent.chapterId !== chapterId || parent.status !== "ACTIVE") {
-                throw AppError.badRequest("The parent comment is invalid.", "INVALID_PARENT_COMMENT");
+            if (
+                !parent ||
+                parent.chapterId !== chapterId ||
+                parent.status !== "ACTIVE"
+            ) {
+                throw AppError.badRequest(
+                    "The parent comment is invalid.",
+                    "INVALID_PARENT_COMMENT",
+                );
             }
             if (parent.parentId !== null) {
                 throw AppError.badRequest(
@@ -81,15 +109,22 @@ export class InteractionService {
                     "COMMENT_NESTING_LIMIT_REACHED",
                 );
             }
+            await this.socialPolicy.assertMayInteract(userId, parent.userId);
         }
 
-        const comment = await this.store.createComment(userId, chapterId, parentId, content);
+        const comment = await this.store.createComment(
+            userId,
+            chapterId,
+            parentId,
+            content,
+        );
 
         if (parent) {
             await this.notifications.publish({
                 recipientId: parent.userId,
                 actorId: userId,
                 type: "COMMENT_REPLY",
+                dedupeKey: `comment-reply:${comment.id}`,
                 data: {
                     commentId: comment.id,
                     parentId: parent.id,
@@ -103,6 +138,7 @@ export class InteractionService {
                 recipientId: chapter.authorId,
                 actorId: userId,
                 type: "COMMENT",
+                dedupeKey: `comment:${comment.id}`,
                 data: {
                     commentId: comment.id,
                     chapterId,
@@ -115,23 +151,45 @@ export class InteractionService {
         return comment;
     }
 
-    public async updateComment(userId: string, commentId: string, content: string) {
-        const updated = await this.store.updateOwnComment(userId, commentId, content.trim());
+    public async updateComment(
+        userId: string,
+        commentId: string,
+        content: string,
+    ) {
+        const updated = await this.store.updateOwnComment(
+            userId,
+            commentId,
+            content.trim(),
+        );
         if (!updated) {
-            throw AppError.notFound("The comment was not found.", "COMMENT_NOT_FOUND");
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
         }
         return updated;
     }
 
-    public async deleteComment(userId: string, commentId: string): Promise<void> {
+    public async deleteComment(
+        userId: string,
+        commentId: string,
+    ): Promise<void> {
         const deleted = await this.store.deleteOwnComment(userId, commentId);
         if (!deleted) {
-            throw AppError.notFound("The comment was not found.", "COMMENT_NOT_FOUND");
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
         }
     }
 
-    public async listComments(chapterId: string, cursor: string | undefined, limit: number) {
-        await this.requireChapter(chapterId);
+    public async listComments(
+        chapterId: string,
+        cursor: string | undefined,
+        limit: number,
+        viewerId?: string,
+    ) {
+        await this.requireChapter(chapterId, viewerId);
         return this.store.listComments(chapterId, cursor, limit);
     }
 
@@ -140,11 +198,15 @@ export class InteractionService {
         parentId: string,
         cursor: string | undefined,
         limit: number,
+        viewerId?: string,
     ) {
-        await this.requireChapter(chapterId);
+        await this.requireChapter(chapterId, viewerId);
         const parent = await this.store.findComment(parentId);
         if (!parent || parent.chapterId !== chapterId || parent.parentId !== null) {
-            throw AppError.notFound("The comment was not found.", "COMMENT_NOT_FOUND");
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
         }
         return this.store.listReplies(chapterId, parentId, cursor, limit);
     }

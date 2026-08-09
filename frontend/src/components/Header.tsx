@@ -1,7 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import LOGO from "../assets/LOGO.webp";
-
-import Button from "./Button";
 import ThemeButton from "./ThemeButton";
 
 import useAuth from "../hooks/useAuth";

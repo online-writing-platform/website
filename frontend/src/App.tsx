@@ -1,77 +1,85 @@
+import { lazy, Suspense, type ReactNode } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "./App.css";
 
-import Footer from "./components/Footer";
-import Header from "./components/Header";
+import PlatformHeader from "./components/PlatformHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleRoute from "./components/RoleRoute";
 
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Dashboard from "./pages/Dashboard";
-import ErrorPage from "./pages/Error";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import Register from "./pages/Register";
-import Search from "./pages/Search";
-import Terms from "./pages/Terms";
-import WriteStory from "./pages/StoryContent";
-import Category from "./pages/Category";
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const StoryPage = lazy(() => import("./pages/StoryPage"));
+const ReaderPage = lazy(() => import("./pages/ReaderPage"));
+const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
+const SocialListPage = lazy(() => import("./pages/SocialListPage"));
+const SearchPage = lazy(() => import("./pages/SearchPage"));
+const BrowsePage = lazy(() => import("./pages/BrowsePage"));
+const LibraryPage = lazy(() => import("./pages/LibraryPage"));
+const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const WriteDashboard = lazy(() => import("./pages/WriteDashboard"));
+const WriterStoryPage = lazy(() => import("./pages/WriterStoryPage"));
+const ChapterEditorPage = lazy(() => import("./pages/ChapterEditorPage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ModerationPage = lazy(() => import("./pages/ModerationPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const ConfirmEmailChangePage = lazy(() => import("./pages/ConfirmEmailChangePage"));
+const Terms = lazy(() => import("./pages/Terms"));
+const ErrorPage = lazy(() => import("./pages/Error"));
+
+function Secure({ children }: { children: ReactNode }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>;
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Header />
+      <PlatformHeader />
+      <Suspense fallback={<main className="page-shell"><p>در حال بارگذاری…</p></main>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/browse/genres/:slug" element={<BrowsePage kind="genre" />} />
+          <Route path="/browse/tags/:slug" element={<BrowsePage kind="tag" />} />
+          <Route path="/stories/:slug" element={<StoryPage />} />
+          <Route path="/stories/:slug/chapters/:chapterId" element={<ReaderPage />} />
+          <Route path="/users/:username" element={<PublicProfilePage />} />
+          <Route path="/users/:username/followers" element={<SocialListPage kind="followers" />} />
+          <Route path="/users/:username/following" element={<SocialListPage kind="following" />} />
+          <Route path="/reading-lists/:listId" element={<ReadingListPage />} />
 
-      <Routes>
-        <Route path="/category" element={<Category />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/confirm-email-change" element={<ConfirmEmailChangePage />} />
+          <Route path="/terms" element={<Terms />} />
 
-        <Route path="/" element={<Home />} />
+          <Route path="/library" element={<Secure><LibraryPage /></Secure>} />
+          <Route path="/notifications" element={<Secure><NotificationsPage /></Secure>} />
+          <Route path="/settings" element={<Secure><SettingsPage /></Secure>} />
+          <Route path="/write" element={<Secure><WriteDashboard /></Secure>} />
+          <Route path="/write/:storyId" element={<Secure><WriterStoryPage /></Secure>} />
+          <Route path="/write/:storyId/chapters/:chapterId" element={<Secure><ChapterEditorPage /></Secure>} />
+          <Route path="/analytics" element={<Secure><AnalyticsPage /></Secure>} />
+          <Route
+            path="/moderation"
+            element={
+              <RoleRoute roles={["MODERATOR", "ADMIN"]}>
+                <ModerationPage />
+              </RoleRoute>
+            }
+          />
 
-        <Route path="/about" element={<About />} />
-
-        <Route path="/terms" element={<Terms />} />
-
-        <Route path="/register" element={<Register />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/search" element={<Search />} />
-
-        <Route path="/contact" element={<Contact />} />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/writestory"
-          element={
-            <ProtectedRoute>
-              <WriteStory />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<ErrorPage />} />
-      </Routes>
-
-      <Footer />
+          <Route path="*" element={<ErrorPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

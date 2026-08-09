@@ -1,22 +1,49 @@
 import AppError from "../../../errors/app-error.js";
 
 import type {
+    SocialInteractionPolicy,
     SocialNotificationPublisher,
     SocialStore,
     SocialUserDirectory,
 } from "./social.ports.js";
+
+export class SocialPolicy implements SocialInteractionPolicy {
+    public constructor(private readonly store: SocialStore) {}
+
+    public async assertMayInteract(
+        actorId: string,
+        targetUserId: string,
+    ): Promise<void> {
+        if (actorId === targetUserId) return;
+
+        if (await this.store.isBlockedBetween(actorId, targetUserId)) {
+            throw AppError.forbidden(
+                "This interaction is not available because of a block relationship.",
+                "INTERACTION_BLOCKED",
+            );
+        }
+    }
+
+    public isBlockedBetween(firstUserId: string, secondUserId: string) {
+        return this.store.isBlockedBetween(firstUserId, secondUserId);
+    }
+}
 
 export class SocialService {
     public constructor(
         private readonly store: SocialStore,
         private readonly users: SocialUserDirectory,
         private readonly notifications: SocialNotificationPublisher,
+        private readonly policy: SocialInteractionPolicy,
     ) {}
 
     private async requireTarget(username: string) {
         const target = await this.users.findActiveByUsername(username);
         if (!target) {
-            throw AppError.notFound("The requested user was not found.", "USER_NOT_FOUND");
+            throw AppError.notFound(
+                "The requested user was not found.",
+                "USER_NOT_FOUND",
+            );
         }
         return target;
     }
@@ -25,8 +52,13 @@ export class SocialService {
         const target = await this.requireTarget(username);
 
         if (actorId === target.id) {
-            throw AppError.badRequest("You cannot follow yourself.", "CANNOT_FOLLOW_SELF");
+            throw AppError.badRequest(
+                "You cannot follow yourself.",
+                "CANNOT_FOLLOW_SELF",
+            );
         }
+
+        await this.policy.assertMayInteract(actorId, target.id);
 
         const result = await this.store.follow(actorId, target.id);
         if (result === "CREATED") {
@@ -34,6 +66,7 @@ export class SocialService {
                 recipientId: target.id,
                 actorId,
                 type: "FOLLOW",
+                dedupeKey: `follow:${actorId}:${target.id}`,
                 data: { username: target.username },
             });
         }
@@ -44,17 +77,65 @@ export class SocialService {
         await this.store.unfollow(actorId, target.id);
     }
 
-    public async relationship(actorId: string, username: string) {
+    public async block(actorId: string, username: string): Promise<void> {
         const target = await this.requireTarget(username);
-        return { following: await this.store.isFollowing(actorId, target.id) };
+        if (actorId === target.id) {
+            throw AppError.badRequest(
+                "You cannot block yourself.",
+                "CANNOT_BLOCK_SELF",
+            );
+        }
+        await this.store.block(actorId, target.id);
     }
 
-    public async listFollowers(username: string, cursor: string | undefined, limit: number) {
+    public async unblock(actorId: string, username: string): Promise<void> {
+        const target = await this.requireTarget(username);
+        await this.store.unblock(actorId, target.id);
+    }
+
+    public async mute(actorId: string, username: string): Promise<void> {
+        const target = await this.requireTarget(username);
+        if (actorId === target.id) {
+            throw AppError.badRequest(
+                "You cannot mute yourself.",
+                "CANNOT_MUTE_SELF",
+            );
+        }
+        await this.policy.assertMayInteract(actorId, target.id);
+        await this.store.mute(actorId, target.id);
+    }
+
+    public async unmute(actorId: string, username: string): Promise<void> {
+        const target = await this.requireTarget(username);
+        await this.store.unmute(actorId, target.id);
+    }
+
+    public async relationship(actorId: string, username: string) {
+        const target = await this.requireTarget(username);
+        const relationship = await this.store.relationship(actorId, target.id);
+
+        return {
+            following: relationship.following,
+            blocked: relationship.blockedByMe,
+            blockedByTarget: relationship.blockedMe,
+            muted: relationship.mutedByMe,
+        };
+    }
+
+    public async listFollowers(
+        username: string,
+        cursor: string | undefined,
+        limit: number,
+    ) {
         const target = await this.requireTarget(username);
         return this.store.listFollowers(target.id, cursor, limit);
     }
 
-    public async listFollowing(username: string, cursor: string | undefined, limit: number) {
+    public async listFollowing(
+        username: string,
+        cursor: string | undefined,
+        limit: number,
+    ) {
         const target = await this.requireTarget(username);
         return this.store.listFollowing(target.id, cursor, limit);
     }
