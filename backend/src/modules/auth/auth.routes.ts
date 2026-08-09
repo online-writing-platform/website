@@ -1,16 +1,31 @@
 import { Router } from "express";
 
 import {
+    emailVerificationRateLimiter,
     loginRateLimiter,
     refreshRateLimiter,
     registrationRateLimiter,
+    verificationEmailResendRateLimiter,
 } from "../../middlewares/rate-limit.middleware.js";
 
 import { validateBody } from "../../middlewares/validate.middleware.js";
 
-import { login, logout, refresh, register } from "./auth.controller.js";
+import {
+    login,
+    logout,
+    refresh,
+    register,
+    resendVerificationEmail,
+    verifyEmail,
+} from "./auth.controller.js";
 
-import { loginSchema, registerSchema } from "./auth.schema.js";
+import { authenticate } from "./auth.middleware.js";
+
+import {
+    loginSchema,
+    registerSchema,
+    verifyEmailSchema,
+} from "./auth.schema.js";
 
 const router = Router();
 
@@ -54,6 +69,26 @@ router.post(
     refreshRateLimiter,
 
     logout,
+);
+
+router.post(
+    "/email-verification/verify",
+
+    emailVerificationRateLimiter,
+
+    validateBody(verifyEmailSchema),
+
+    verifyEmail,
+);
+
+router.post(
+    "/email-verification/resend",
+
+    verificationEmailResendRateLimiter,
+
+    authenticate,
+
+    resendVerificationEmail,
 );
 
 export default router;

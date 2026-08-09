@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "./auth.policy.js";
-
 import { usernameSchema } from "../users/username.schema.js";
+
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "./auth.policy.js";
 
 const emailSchema = z
     .string()
@@ -25,6 +25,12 @@ const passwordSchema = z
 const birthDateSchema = z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Birth date must use YYYY-MM-DD format.");
+
+const emailVerificationTokenSchema = z
+    .string()
+    .trim()
+    .min(32, "Verification token is invalid.")
+    .max(256, "Verification token is invalid.");
 
 export const registerSchema = z
     .object({
@@ -57,6 +63,14 @@ export const loginSchema = z
     })
     .strict();
 
+export const verifyEmailSchema = z
+    .object({
+        token: emailVerificationTokenSchema,
+    })
+    .strict();
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

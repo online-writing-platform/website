@@ -1,11 +1,12 @@
-import { createHash, randomBytes } from "node:crypto";
-
 import { jwtVerify, SignJWT } from "jose";
 
 import env from "../config/env.js";
+
 import AppError from "../errors/app-error.js";
 
 import type { AuthContext } from "../modules/auth/auth.types.js";
+
+import { generateOpaqueToken, hashOpaqueToken } from "./opaque-token.js";
 
 const ACCESS_TOKEN_ISSUER = "writing-platform-api";
 
@@ -25,10 +26,12 @@ export async function createAccessToken(
 ): Promise<string> {
     return new SignJWT({
         type: "access",
+
         sessionId: input.sessionId,
     })
         .setProtectedHeader({
             alg: "HS256",
+
             typ: "JWT",
         })
         .setSubject(input.userId)
@@ -82,11 +85,11 @@ export async function verifyAccessToken(
 }
 
 export function generateRefreshToken(): string {
-    return randomBytes(REFRESH_TOKEN_BYTES).toString("base64url");
+    return generateOpaqueToken(REFRESH_TOKEN_BYTES);
 }
 
 export function hashRefreshToken(refreshToken: string): string {
-    return createHash("sha256").update(refreshToken).digest("hex");
+    return hashOpaqueToken(refreshToken);
 }
 
 export function calculateSessionExpiration(): Date {

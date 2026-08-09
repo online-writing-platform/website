@@ -1,4 +1,5 @@
 import env from "../../config/env.js";
+
 import { prisma } from "../../db/index.js";
 
 import AppError from "../../errors/app-error.js";
@@ -28,6 +29,8 @@ import type {
     AuthenticationResult,
     ClientInformation,
 } from "./auth.types.js";
+
+import { trySendInitialEmailVerification } from "./email-verification.service.js";
 
 type UserStatusValue = "ACTIVE" | "SUSPENDED" | "DELETED";
 
@@ -163,6 +166,7 @@ async function ensureIdentityIsAvailable(
 
         select: {
             email: true,
+
             usernameNormalized: true,
         },
     });
@@ -229,6 +233,7 @@ export async function registerUser(
                     email,
 
                     username,
+
                     usernameNormalized,
 
                     passwordHash,
@@ -263,6 +268,7 @@ export async function registerUser(
 
             return {
                 user,
+
                 sessionId: session.id,
             };
         });
@@ -272,6 +278,11 @@ export async function registerUser(
 
             sessionId: result.sessionId,
         });
+
+        await trySendInitialEmailVerification(
+            result.user.id,
+            result.user.email,
+        );
 
         return {
             user: mapAuthenticatedUser(result.user),

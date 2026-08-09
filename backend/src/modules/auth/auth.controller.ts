@@ -8,7 +8,11 @@ import {
     setRefreshTokenCookie,
 } from "./auth.cookie.js";
 
-import type { LoginInput, RegisterInput } from "./auth.schema.js";
+import type {
+    LoginInput,
+    RegisterInput,
+    VerifyEmailInput,
+} from "./auth.schema.js";
 
 import {
     loginUser,
@@ -18,6 +22,11 @@ import {
 } from "./auth.service.js";
 
 import type { ClientInformation } from "./auth.types.js";
+
+import {
+    resendEmailVerification,
+    verifyEmailAddress,
+} from "./email-verification.service.js";
 
 function getClientInformation(request: Request): ClientInformation {
     const userAgent = request.get("user-agent");
@@ -37,6 +46,16 @@ function getClientInformation(request: Request): ClientInformation {
               }
             : {}),
     };
+}
+
+function getAuthenticatedUserId(request: Request): string {
+    const userId = request.auth?.userId;
+
+    if (!userId) {
+        throw AppError.unauthorized();
+    }
+
+    return userId;
 }
 
 export async function register(
@@ -125,4 +144,30 @@ export async function logout(
     clearRefreshTokenCookie(response);
 
     response.status(204).send();
+}
+
+export async function verifyEmail(
+    request: Request<Record<string, never>, unknown, VerifyEmailInput>,
+    response: Response,
+): Promise<void> {
+    await verifyEmailAddress(request.body.token);
+
+    response.status(200).json({
+        data: {
+            emailVerified: true,
+        },
+    });
+}
+
+export async function resendVerificationEmail(
+    request: Request,
+    response: Response,
+): Promise<void> {
+    await resendEmailVerification(getAuthenticatedUserId(request));
+
+    response.status(202).json({
+        data: {
+            status: "sent",
+        },
+    });
 }

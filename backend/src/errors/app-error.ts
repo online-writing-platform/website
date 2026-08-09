@@ -20,9 +20,13 @@ export default class AppError extends Error {
         });
 
         this.name = "AppError";
+
         this.statusCode = statusCode;
+
         this.code = options.code ?? "APPLICATION_ERROR";
+
         this.details = options.details;
+
         this.isOperational = true;
 
         Error.captureStackTrace(this, AppError);
@@ -69,6 +73,28 @@ export default class AppError extends Error {
     public static conflict(message: string, code = "CONFLICT"): AppError {
         return new AppError(409, message, {
             code,
+        });
+    }
+
+    public static tooManyRequests(
+        message = "Too many requests.",
+        code = "TOO_MANY_REQUESTS",
+        details?: unknown,
+    ): AppError {
+        return new AppError(429, message, {
+            code,
+            details,
+        });
+    }
+
+    public static serviceUnavailable(
+        message = "The service is temporarily unavailable.",
+        code = "SERVICE_UNAVAILABLE",
+        cause?: unknown,
+    ): AppError {
+        return new AppError(503, message, {
+            code,
+            cause,
         });
     }
 }
