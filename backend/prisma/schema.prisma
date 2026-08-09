@@ -9,6 +9,18 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
 enum StoryStatus {
   DRAFT
   ONGOING
@@ -27,83 +39,485 @@ enum ChapterStatus {
   PUBLISHED
 }
 
+enum ModerationState {
+  VISIBLE
+  HIDDEN
+  REMOVED
+}
+
+enum CommentStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum NotificationType {
+  FOLLOW
+  COMMENT
+  COMMENT_REPLY
+  CHAPTER_VOTE
+}
+
+enum ReportTargetType {
+  USER
+  STORY
+  CHAPTER
+  COMMENT
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_OR_ABUSE
+  SEXUAL_CONTENT
+  VIOLENCE
+  COPYRIGHT
+  IMPERSONATION
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+enum ModerationActionType {
+  SUSPEND_USER
+  RESTORE_USER
+  HIDE_STORY
+  RESTORE_STORY
+  HIDE_CHAPTER
+  RESTORE_CHAPTER
+  HIDE_COMMENT
+  RESTORE_COMMENT
+}
+
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique @db.VarChar(320)
-  username        String    @unique @db.VarChar(30)
-  passwordHash    String    @map("password_hash") @db.VarChar(255)
-  displayName     String    @map("display_name") @db.VarChar(80)
-  bio             String?   @db.VarChar(500)
-  avatarUrl       String?   @map("avatar_url") @db.Text
-  termsAcceptedAt DateTime  @default(now()) @map("terms_accepted_at")
-  termsVersion    String    @default("v1") @map("terms_version") @db.VarChar(20)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id String @id @default(uuid()) @db.Uuid
 
-  stories Story[]
-  sessions Session[]
+  email String @unique @db.VarChar(320)
 
+  username           String @db.VarChar(20)
+  usernameNormalized String @unique @map("username_normalized") @db.VarChar(20)
+
+  passwordHash String @map("password_hash") @db.VarChar(255)
+
+  displayName String  @map("display_name") @db.VarChar(80)
+  bio         String? @db.VarChar(500)
+  avatarUrl   String? @map("avatar_url") @db.Text
+
+  birthDate       DateTime  @map("birth_date") @db.Date
+  emailVerifiedAt DateTime? @map("email_verified_at")
+
+  status UserStatus @default(ACTIVE)
+  role   UserRole   @default(USER)
+
+  termsAcceptedAt DateTime @default(now()) @map("terms_accepted_at")
+  termsVersion    String   @map("terms_version") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stories                Story[]
+  sessions               Session[]
+  emailVerificationToken EmailVerificationToken?
+  passwordResetToken     PasswordResetToken?
+  emailChangeToken       EmailChangeToken?
+
+  following Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+
+  libraryEntries  LibraryEntry[]
+  readingProgress ReadingProgress[]
+  readingLists    ReadingList[]
+
+  chapterVotes ChapterVote[]
+  comments     Comment[]
+
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsActed    Notification[] @relation("NotificationActor")
+
+  reportsSubmitted Report[] @relation("ReportReporter")
+  reportsAssigned  Report[] @relation("ReportAssignee")
+
+  moderationActions ModerationAction[] @relation("ModerationActor")
+
+  @@index([status, createdAt])
   @@map("users")
 }
 
 model Session {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  refreshTokenHash String    @unique @map("refresh_token_hash") @db.Char(64)
-  isPersistent     Boolean   @default(false) @map("is_persistent")
-  userAgent        String?   @map("user_agent") @db.VarChar(512)
-  ipAddress        String?   @map("ip_address") @db.VarChar(45)
-  lastUsedAt       DateTime  @default(now()) @map("last_used_at")
-  expiresAt        DateTime  @map("expires_at")
-  revokedAt        DateTime? @map("revoked_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  refreshTokenHash String @unique @map("refresh_token_hash") @db.Char(64)
+
+  userAgent String? @map("user_agent") @db.VarChar(512)
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, revokedAt])
+  @@index([userId, revokedAt, expiresAt])
   @@index([expiresAt])
   @@map("sessions")
 }
 
+model EmailVerificationToken {
+  userId String @id @map("user_id") @db.Uuid
+
+  tokenHash String @unique @map("token_hash") @db.Char(64)
+
+  expiresAt DateTime @map("expires_at")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  userId String @id @map("user_id") @db.Uuid
+
+  tokenHash String @unique @map("token_hash") @db.Char(64)
+
+  expiresAt DateTime @map("expires_at")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model EmailChangeToken {
+  userId String @id @map("user_id") @db.Uuid
+
+  newEmail  String @unique @map("new_email") @db.VarChar(320)
+  tokenHash String @unique @map("token_hash") @db.Char(64)
+
+  expiresAt DateTime @map("expires_at")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("email_change_tokens")
+}
+
+model Genre {
+  id String @id @default(uuid()) @db.Uuid
+
+  slug String @unique @db.VarChar(80)
+  name String @unique @db.VarChar(80)
+
+  description String? @db.VarChar(500)
+
+  isActive  Boolean @default(true) @map("is_active")
+  sortOrder Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stories Story[]
+
+  @@index([isActive, sortOrder])
+  @@map("genres")
+}
+
+model Tag {
+  id String @id @default(uuid()) @db.Uuid
+
+  slug String @unique @db.VarChar(80)
+  name String @db.VarChar(80)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  stories StoryTag[]
+
+  @@map("tags")
+}
+
 model Story {
-  id          String          @id @default(uuid()) @db.Uuid
-  authorId    String          @map("author_id") @db.Uuid
-  title       String          @db.VarChar(200)
-  slug        String          @unique @db.VarChar(220)
-  description String          @db.Text
-  coverUrl    String?         @map("cover_url") @db.Text
-  language    String          @default("fa") @db.VarChar(10)
-  status      StoryStatus     @default(DRAFT)
-  visibility  StoryVisibility @default(PRIVATE)
-  isMature    Boolean         @default(false) @map("is_mature")
-  publishedAt DateTime?       @map("published_at")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id       String  @id @default(uuid()) @db.Uuid
+  authorId String  @map("author_id") @db.Uuid
+  genreId  String? @map("genre_id") @db.Uuid
 
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title       String  @db.VarChar(200)
+  slug        String  @unique @db.VarChar(220)
+  description String  @db.Text
+  coverUrl    String? @map("cover_url") @db.Text
+
+  language String @default("fa") @db.VarChar(10)
+
+  status     StoryStatus     @default(DRAFT)
+  visibility StoryVisibility @default(PRIVATE)
+
+  moderationState ModerationState @default(VISIBLE) @map("moderation_state")
+
+  isMature Boolean @default(false) @map("is_mature")
+
+  publishedAt DateTime? @map("published_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  genre  Genre? @relation(fields: [genreId], references: [id], onDelete: SetNull)
+
   chapters Chapter[]
+  tags     StoryTag[]
 
-  @@index([authorId])
-  @@index([status, visibility])
+  libraryEntries   LibraryEntry[]
+  readingProgress  ReadingProgress[]
+  readingListItems ReadingListItem[]
+
+  @@index([authorId, deletedAt, updatedAt])
+  @@index([visibility, moderationState, publishedAt])
+  @@index([genreId, visibility, publishedAt])
   @@map("stories")
 }
 
+model StoryTag {
+  storyId String @map("story_id") @db.Uuid
+  tagId   String @map("tag_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, tagId])
+  @@index([tagId, createdAt])
+  @@map("story_tags")
+}
+
 model Chapter {
-  id          String        @id @default(uuid()) @db.Uuid
-  storyId     String        @map("story_id") @db.Uuid
-  title       String        @db.VarChar(200)
-  position    Int
-  content     String        @db.Text
-  status      ChapterStatus @default(DRAFT)
-  wordCount   Int           @default(0) @map("word_count")
-  publishedAt DateTime?     @map("published_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id      String @id @default(uuid()) @db.Uuid
+  storyId String @map("story_id") @db.Uuid
+
+  title    String @db.VarChar(200)
+  position Int
+  content  String @db.Text
+
+  status          ChapterStatus   @default(DRAFT)
+  moderationState ModerationState @default(VISIBLE) @map("moderation_state")
+
+  wordCount Int @default(0) @map("word_count")
+
+  publishedAt DateTime? @map("published_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
+  votes           ChapterVote[]
+  comments        Comment[]
+  readingProgress ReadingProgress[]
+
   @@unique([storyId, position])
-  @@index([storyId, status])
+  @@index([storyId, status, position])
+  @@index([storyId, deletedAt])
   @@map("chapters")
+}
+
+model Follow {
+  followerId  String @map("follower_id") @db.Uuid
+  followingId String @map("following_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId, createdAt])
+  @@index([followingId, createdAt])
+  @@map("follows")
+}
+
+model LibraryEntry {
+  userId  String @map("user_id") @db.Uuid
+  storyId String @map("story_id") @db.Uuid
+
+  addedAt DateTime @default(now()) @map("added_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storyId])
+  @@index([userId, addedAt])
+  @@index([storyId, addedAt])
+  @@map("library_entries")
+}
+
+model ReadingProgress {
+  userId    String  @map("user_id") @db.Uuid
+  storyId   String  @map("story_id") @db.Uuid
+  chapterId String? @map("chapter_id") @db.Uuid
+
+  progress Float @default(0)
+
+  lastReadAt DateTime @default(now()) @map("last_read_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story   Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  @@id([userId, storyId])
+  @@index([userId, lastReadAt])
+  @@index([chapterId])
+  @@map("reading_progress")
+}
+
+model ReadingList {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  name        String  @db.VarChar(100)
+  description String? @db.VarChar(500)
+  isPublic    Boolean @default(true) @map("is_public")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items ReadingListItem[]
+
+  @@unique([userId, name])
+  @@index([userId, createdAt])
+  @@map("reading_lists")
+}
+
+model ReadingListItem {
+  readingListId String @map("reading_list_id") @db.Uuid
+  storyId       String @map("story_id") @db.Uuid
+
+  addedAt DateTime @default(now()) @map("added_at")
+
+  readingList ReadingList @relation(fields: [readingListId], references: [id], onDelete: Cascade)
+  story       Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@id([readingListId, storyId])
+  @@index([storyId, addedAt])
+  @@map("reading_list_items")
+}
+
+model ChapterVote {
+  userId    String @map("user_id") @db.Uuid
+  chapterId String @map("chapter_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@id([userId, chapterId])
+  @@index([chapterId, createdAt])
+  @@map("chapter_votes")
+}
+
+model Comment {
+  id        String  @id @default(uuid()) @db.Uuid
+  userId    String  @map("user_id") @db.Uuid
+  chapterId String  @map("chapter_id") @db.Uuid
+  parentId  String? @map("parent_id") @db.Uuid
+
+  content String @db.VarChar(2000)
+
+  status CommentStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([chapterId, createdAt])
+  @@index([parentId, createdAt])
+  @@index([userId, createdAt])
+  @@map("comments")
+}
+
+model Notification {
+  id          String  @id @default(uuid()) @db.Uuid
+  recipientId String  @map("recipient_id") @db.Uuid
+  actorId     String? @map("actor_id") @db.Uuid
+
+  type NotificationType
+  data Json
+
+  readAt DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recipient User  @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, readAt, createdAt])
+  @@index([actorId, createdAt])
+  @@map("notifications")
+}
+
+model Report {
+  id String @id @default(uuid()) @db.Uuid
+
+  reporterId   String  @map("reporter_id") @db.Uuid
+  assignedToId String? @map("assigned_to_id") @db.Uuid
+
+  targetType ReportTargetType @map("target_type")
+  targetId   String           @map("target_id") @db.Uuid
+
+  reason  ReportReason
+  details String?      @db.VarChar(2000)
+
+  status     ReportStatus @default(OPEN)
+  resolution String?      @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("ReportAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([reporterId, createdAt])
+  @@map("reports")
+}
+
+model ModerationAction {
+  id String @id @default(uuid()) @db.Uuid
+
+  moderatorId String @map("moderator_id") @db.Uuid
+
+  targetType ReportTargetType @map("target_type")
+  targetId   String           @map("target_id") @db.Uuid
+
+  action ModerationActionType
+  reason String?              @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  moderator User @relation("ModerationActor", fields: [moderatorId], references: [id], onDelete: Restrict)
+
+  @@index([targetType, targetId, createdAt])
+  @@index([moderatorId, createdAt])
+  @@map("moderation_actions")
 }
