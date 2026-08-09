@@ -8,9 +8,7 @@ import type { DiscoveryResponse } from "../types/story";
 
 function Home() {
   const { status, request } = useAuth();
-  const [data, setData] = useState<DiscoveryResponse["data"] | null>(
-    null,
-  );
+  const [data, setData] = useState<DiscoveryResponse["data"] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,8 +45,8 @@ function Home() {
           داستان‌هایی برای خواندن
         </h1>
         <p className="page-lead">
-          پیشنهادها بر اساس دنبال‌کردن، ژانرها، برچسب‌های مطالعه‌شده،
-          تعامل خوانندگان و تازگی داستان رتبه‌بندی می‌شوند.
+          پیشنهادها بر اساس دنبال‌کردن، ژانرها، برچسب‌های مطالعه‌شده، تعامل
+          خوانندگان و تازگی داستان رتبه‌بندی می‌شوند.
         </p>
       </section>
 
@@ -66,11 +64,7 @@ function Home() {
 
       {data ? (
         <>
-          <StoryShelf
-            title="برای شما"
-            stories={data.recommended}
-            showReason
-          />
+          <StoryShelf title="برای شما" stories={data.recommended} showReason />
           <StoryShelf title="تازه منتشرشده" stories={data.recent} />
           <StoryShelf title="محبوب" stories={data.popular} />
         </>

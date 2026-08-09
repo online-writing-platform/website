@@ -9,6 +9,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
+    "seed": "tsx prisma/seed.ts",
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
