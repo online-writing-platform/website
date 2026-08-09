@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import AppError from "../../../errors/app-error.js";
 
 import { authModule } from "../auth.module.js";
+import type { ClientInformation } from "../domain/auth.types.js";
 
 import {
     clearRefreshTokenCookie,
@@ -11,43 +12,35 @@ import {
 } from "./auth.cookie.js";
 
 import type {
+    ChangePasswordInput,
+    ChangeUsernameInput,
+    ConfirmEmailChangeInput,
+    DeleteAccountInput,
     LoginInput,
     RegisterInput,
+    RequestEmailChangeInput,
     RequestPasswordResetInput,
     ResetPasswordInput,
+    SessionParams,
     VerifyEmailInput,
 } from "./auth.schema.js";
 
-import type { ClientInformation } from "../domain/auth.types.js";
-
 function getClientInformation(request: Request): ClientInformation {
     const userAgent = request.get("user-agent");
-
     const ipAddress = request.ip;
 
     return {
-        ...(userAgent
-            ? {
-                  userAgent,
-              }
-            : {}),
-
-        ...(ipAddress
-            ? {
-                  ipAddress,
-              }
-            : {}),
+        ...(userAgent ? { userAgent } : {}),
+        ...(ipAddress ? { ipAddress } : {}),
     };
 }
 
-function requireUserId(request: Request): string {
-    const userId = request.auth?.userId;
-
-    if (!userId) {
+function requireAuth(request: Request) {
+    if (!request.auth) {
         throw AppError.unauthorized();
     }
 
-    return userId;
+    return request.auth;
 }
 
 export async function register(
@@ -68,7 +61,6 @@ export async function register(
     response.status(201).json({
         data: {
             user: result.user,
-
             accessToken: result.accessToken,
         },
     });
@@ -92,7 +84,6 @@ export async function login(
     response.status(200).json({
         data: {
             user: result.user,
-
             accessToken: result.accessToken,
         },
     });
@@ -122,7 +113,6 @@ export async function refresh(
     response.status(200).json({
         data: {
             user: result.user,
-
             accessToken: result.accessToken,
         },
     });
@@ -133,9 +123,7 @@ export async function logout(
     response: Response,
 ): Promise<void> {
     await authModule.logoutUser.execute(getRefreshTokenCookie(request));
-
     clearRefreshTokenCookie(response);
-
     response.status(204).send();
 }
 
@@ -146,9 +134,7 @@ export async function verifyEmail(
     await authModule.emailVerification.verify(request.body.token);
 
     response.status(200).json({
-        data: {
-            emailVerified: true,
-        },
+        data: { emailVerified: true },
     });
 }
 
@@ -156,12 +142,10 @@ export async function resendVerificationEmail(
     request: Request,
     response: Response,
 ): Promise<void> {
-    await authModule.emailVerification.resend(requireUserId(request));
+    await authModule.emailVerification.resend(requireAuth(request).userId);
 
     response.status(202).json({
-        data: {
-            status: "sent",
-        },
+        data: { status: "sent" },
     });
 }
 
@@ -172,9 +156,7 @@ export async function requestPasswordReset(
     await authModule.requestPasswordReset.execute(request.body.identifier);
 
     response.status(202).json({
-        data: {
-            status: "accepted",
-        },
+        data: { status: "accepted" },
     });
 }
 
@@ -188,6 +170,123 @@ export async function resetPassword(
     );
 
     clearRefreshTokenCookie(response);
+    response.status(204).send();
+}
 
+export async function changePassword(
+    request: Request<Record<string, never>, unknown, ChangePasswordInput>,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+
+    await authModule.changePassword.execute(
+        auth.userId,
+        auth.sessionId,
+        request.body.currentPassword,
+        request.body.newPassword,
+    );
+
+    response.status(204).send();
+}
+
+export async function changeUsername(
+    request: Request<Record<string, never>, unknown, ChangeUsernameInput>,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+
+    await authModule.changeUsername.execute(
+        auth.userId,
+        request.body.currentPassword,
+        request.body.newUsername,
+    );
+
+    response.status(204).send();
+}
+
+export async function requestEmailChange(
+    request: Request<Record<string, never>, unknown, RequestEmailChangeInput>,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+
+    await authModule.requestEmailChange.execute(
+        auth.userId,
+        request.body.currentPassword,
+        request.body.newEmail,
+    );
+
+    response.status(202).json({
+        data: { status: "sent" },
+    });
+}
+
+export async function confirmEmailChange(
+    request: Request<Record<string, never>, unknown, ConfirmEmailChangeInput>,
+    response: Response,
+): Promise<void> {
+    await authModule.confirmEmailChange.execute(request.body.token);
+
+    clearRefreshTokenCookie(response);
+    response.status(204).send();
+}
+
+export async function listSessions(
+    request: Request,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+    const sessions = await authModule.listSessions.execute(
+        auth.userId,
+        auth.sessionId,
+    );
+
+    response.status(200).json({
+        data: { sessions },
+    });
+}
+
+export async function revokeSession(
+    request: Request<SessionParams>,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+
+    await authModule.revokeSession.execute(auth.userId, request.params.sessionId);
+
+    if (request.params.sessionId === auth.sessionId) {
+        clearRefreshTokenCookie(response);
+    }
+
+    response.status(204).send();
+}
+
+export async function revokeOtherSessions(
+    request: Request,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+    const revokedCount = await authModule.revokeOtherSessions.execute(
+        auth.userId,
+        auth.sessionId,
+    );
+
+    response.status(200).json({
+        data: { revokedCount },
+    });
+}
+
+export async function deleteAccount(
+    request: Request<Record<string, never>, unknown, DeleteAccountInput>,
+    response: Response,
+): Promise<void> {
+    const auth = requireAuth(request);
+
+    await authModule.deleteAccount.execute(
+        auth.userId,
+        request.body.currentPassword,
+    );
+
+    clearRefreshTokenCookie(response);
     response.status(204).send();
 }

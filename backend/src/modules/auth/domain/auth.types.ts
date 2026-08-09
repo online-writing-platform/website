@@ -1,8 +1,14 @@
 export type UserStatusValue = "ACTIVE" | "SUSPENDED" | "DELETED";
+export type UserRoleValue = "USER" | "MODERATOR" | "ADMIN";
 
-export interface AuthContext {
+export interface AccessTokenContext {
     userId: string;
     sessionId: string;
+}
+
+export interface AuthContext extends AccessTokenContext {
+    role: UserRoleValue;
+    emailVerified: boolean;
 }
 
 export interface ClientInformation {
@@ -25,19 +31,14 @@ export interface LoginUserInput {
 
 export interface AuthUserRecord {
     id: string;
-
     email: string;
-
     username: string;
     displayName: string;
-
     bio: string | null;
     avatarUrl: string | null;
-
     emailVerifiedAt: Date | null;
-
     status: UserStatusValue;
-
+    role: UserRoleValue;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -48,26 +49,30 @@ export interface AuthUserWithPassword extends AuthUserRecord {
 
 export interface AuthenticatedUser {
     id: string;
-
     email: string;
-
     username: string;
     displayName: string;
-
     bio: string | null;
     avatarUrl: string | null;
-
     emailVerified: boolean;
-
+    role: UserRoleValue;
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface AuthenticationResult {
     user: AuthenticatedUser;
-
     accessToken: string;
     refreshToken: string;
-
     sessionExpiresAt: Date;
+}
+
+export interface SessionView {
+    id: string;
+    userAgent: string | null;
+    ipAddress: string | null;
+    lastUsedAt: Date;
+    expiresAt: Date;
+    createdAt: Date;
+    current: boolean;
 }

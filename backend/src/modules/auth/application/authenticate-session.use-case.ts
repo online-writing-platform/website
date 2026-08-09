@@ -7,15 +7,14 @@ import type { AuthSecurity, AuthStore } from "./auth.ports.js";
 export class AuthenticateSessionUseCase {
     public constructor(
         private readonly store: AuthStore,
-
         private readonly security: AuthSecurity,
     ) {}
 
     public async execute(accessToken: string): Promise<AuthContext> {
-        let context: AuthContext;
+        let tokenContext;
 
         try {
-            context = await this.security.verifyAccessToken(accessToken);
+            tokenContext = await this.security.verifyAccessToken(accessToken);
         } catch {
             throw AppError.unauthorized(
                 "The access token is invalid or expired.",
@@ -23,19 +22,19 @@ export class AuthenticateSessionUseCase {
             );
         }
 
-        const active = await this.store.isSessionActive(
-            context.userId,
-            context.sessionId,
+        const principal = await this.store.getAuthenticatedPrincipal(
+            tokenContext.userId,
+            tokenContext.sessionId,
             new Date(),
         );
 
-        if (!active) {
+        if (!principal) {
             throw AppError.unauthorized(
                 "The session is no longer active.",
                 "INACTIVE_SESSION",
             );
         }
 
-        return context;
+        return principal;
     }
 }
