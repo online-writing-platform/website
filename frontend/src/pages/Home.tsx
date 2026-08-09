@@ -40,16 +40,6 @@ function Home() {
 
   return (
     <main className="app-main">
-      <section aria-labelledby="home-heading">
-        <h1 id="home-heading" className="page-heading">
-          داستان‌هایی برای خواندن
-        </h1>
-        <p className="page-lead">
-          پیشنهادها بر اساس دنبال‌کردن، ژانرها، برچسب‌های مطالعه‌شده، تعامل
-          خوانندگان و تازگی داستان رتبه‌بندی می‌شوند.
-        </p>
-      </section>
-
       {error ? (
         <p className="status-message" data-kind="error" role="alert">
           {error}
