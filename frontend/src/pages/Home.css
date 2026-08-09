@@ -8,8 +8,7 @@
 
 /* Story Sections */
 .story-section {
-  margin-bottom: 50px;
-  margin-top: 50px;
+  margin: 50px 100px;
   font-size: 20px;
 }
 
@@ -18,9 +17,10 @@
   color: var(--text);
 }
 .Story-Container {
-  margin: 0 10%;
+  margin: auto;
 }
 .story-row {
-  display: grid;
-  grid-template-columns: repeat(7, [col-start] 160px [col-end]);
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
 }

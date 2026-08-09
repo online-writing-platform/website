@@ -1,4 +1,4 @@
-import { mockStories } from "@/data/mockStories";
+import { mockStories } from "../data/mockStories";
 import StoryCard from "../components/StoryCard";
 
 interface StorySectionProps {
