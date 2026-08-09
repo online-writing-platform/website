@@ -20,7 +20,7 @@ import notFoundHandler from "./middlewares/notFound.middleware.js";
 
 import { generalApiRateLimiter } from "./middlewares/rate-limit.middleware.js";
 
-import authRoutes from "./modules/auth/auth.routes.js";
+import { authRoutes } from "./modules/auth/index.js";
 
 import healthRoutes from "./modules/health/health.routes.js";
 

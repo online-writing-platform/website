@@ -6,9 +6,9 @@ import {
     refreshRateLimiter,
     registrationRateLimiter,
     verificationEmailResendRateLimiter,
-} from "../../middlewares/rate-limit.middleware.js";
+} from "../../../middlewares/rate-limit.middleware.js";
 
-import { validateBody } from "../../middlewares/validate.middleware.js";
+import { validateBody } from "../../../middlewares/validate.middleware.js";
 
 import {
     login,

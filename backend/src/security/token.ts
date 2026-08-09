@@ -2,10 +2,6 @@ import { jwtVerify, SignJWT } from "jose";
 
 import env from "../config/env.js";
 
-import AppError from "../errors/app-error.js";
-
-import type { AuthContext } from "../modules/auth/auth.types.js";
-
 import { generateOpaqueToken, hashOpaqueToken } from "./opaque-token.js";
 
 const ACCESS_TOKEN_ISSUER = "writing-platform-api";
@@ -16,13 +12,13 @@ const REFRESH_TOKEN_BYTES = 48;
 
 const accessTokenSecret = new TextEncoder().encode(env.accessTokenSecret);
 
-interface CreateAccessTokenInput {
+export interface AccessTokenContext {
     userId: string;
     sessionId: string;
 }
 
 export async function createAccessToken(
-    input: CreateAccessTokenInput,
+    input: AccessTokenContext,
 ): Promise<string> {
     return new SignJWT({
         type: "access",
@@ -46,42 +42,28 @@ export async function createAccessToken(
 
 export async function verifyAccessToken(
     accessToken: string,
-): Promise<AuthContext> {
-    try {
-        const { payload } = await jwtVerify(accessToken, accessTokenSecret, {
-            issuer: ACCESS_TOKEN_ISSUER,
+): Promise<AccessTokenContext> {
+    const { payload } = await jwtVerify(accessToken, accessTokenSecret, {
+        issuer: ACCESS_TOKEN_ISSUER,
 
-            audience: ACCESS_TOKEN_AUDIENCE,
+        audience: ACCESS_TOKEN_AUDIENCE,
 
-            algorithms: ["HS256"],
-        });
+        algorithms: ["HS256"],
+    });
 
-        if (
-            payload.type !== "access" ||
-            typeof payload.sub !== "string" ||
-            typeof payload.sessionId !== "string"
-        ) {
-            throw AppError.unauthorized(
-                "The access token is invalid.",
-                "INVALID_ACCESS_TOKEN",
-            );
-        }
-
-        return {
-            userId: payload.sub,
-
-            sessionId: payload.sessionId,
-        };
-    } catch (error) {
-        if (error instanceof AppError) {
-            throw error;
-        }
-
-        throw AppError.unauthorized(
-            "The access token is invalid or expired.",
-            "INVALID_ACCESS_TOKEN",
-        );
+    if (
+        payload.type !== "access" ||
+        typeof payload.sub !== "string" ||
+        typeof payload.sessionId !== "string"
+    ) {
+        throw new Error("Invalid access token.");
     }
+
+    return {
+        userId: payload.sub,
+
+        sessionId: payload.sessionId,
+    };
 }
 
 export function generateRefreshToken(): string {

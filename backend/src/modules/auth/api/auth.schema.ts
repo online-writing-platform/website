@@ -1,8 +1,11 @@
 import { z } from "zod";
 
-import { usernameSchema } from "../users/username.schema.js";
+import { usernameSchema } from "../../../shared/validation/username.schema.js";
 
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "./auth.policy.js";
+import {
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+} from "../domain/password-policy.js";
 
 const emailSchema = z
     .string()

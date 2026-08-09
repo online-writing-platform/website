@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { usernameSchema } from "./username.schema.js";
+import { usernameSchema } from "../../shared/validation/username.schema.js";
 
 export const usernameParamsSchema = z.object({
     username: usernameSchema,

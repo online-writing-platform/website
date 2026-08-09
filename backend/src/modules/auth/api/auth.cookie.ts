@@ -1,6 +1,6 @@
 import type { CookieOptions, Request, Response } from "express";
 
-import env from "../../config/env.js";
+import env from "../../../config/env.js";
 
 function getBaseRefreshCookieOptions(): CookieOptions {
     return {

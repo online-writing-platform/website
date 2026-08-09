@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 
-import AppError from "../../errors/app-error.js";
+import AppError from "../../../errors/app-error.js";
+
+import { authModule } from "../auth.module.js";
 
 import {
     clearRefreshTokenCookie,
@@ -14,19 +16,7 @@ import type {
     VerifyEmailInput,
 } from "./auth.schema.js";
 
-import {
-    loginUser,
-    logoutUser,
-    refreshAuthentication,
-    registerUser,
-} from "./auth.service.js";
-
-import type { ClientInformation } from "./auth.types.js";
-
-import {
-    resendEmailVerification,
-    verifyEmailAddress,
-} from "./email-verification.service.js";
+import type { ClientInformation } from "../domain/auth.types.js";
 
 function getClientInformation(request: Request): ClientInformation {
     const userAgent = request.get("user-agent");
@@ -48,7 +38,7 @@ function getClientInformation(request: Request): ClientInformation {
     };
 }
 
-function getAuthenticatedUserId(request: Request): string {
+function requireUserId(request: Request): string {
     const userId = request.auth?.userId;
 
     if (!userId) {
@@ -62,7 +52,7 @@ export async function register(
     request: Request<Record<string, never>, unknown, RegisterInput>,
     response: Response,
 ): Promise<void> {
-    const result = await registerUser(
+    const result = await authModule.registerUser.execute(
         request.body,
         getClientInformation(request),
     );
@@ -86,7 +76,10 @@ export async function login(
     request: Request<Record<string, never>, unknown, LoginInput>,
     response: Response,
 ): Promise<void> {
-    const result = await loginUser(request.body, getClientInformation(request));
+    const result = await authModule.loginUser.execute(
+        request.body,
+        getClientInformation(request),
+    );
 
     setRefreshTokenCookie(
         response,
@@ -116,7 +109,7 @@ export async function refresh(
         );
     }
 
-    const result = await refreshAuthentication(refreshToken);
+    const result = await authModule.refreshSession.execute(refreshToken);
 
     setRefreshTokenCookie(
         response,
@@ -137,9 +130,7 @@ export async function logout(
     request: Request,
     response: Response,
 ): Promise<void> {
-    const refreshToken = getRefreshTokenCookie(request);
-
-    await logoutUser(refreshToken);
+    await authModule.logoutUser.execute(getRefreshTokenCookie(request));
 
     clearRefreshTokenCookie(response);
 
@@ -150,7 +141,7 @@ export async function verifyEmail(
     request: Request<Record<string, never>, unknown, VerifyEmailInput>,
     response: Response,
 ): Promise<void> {
-    await verifyEmailAddress(request.body.token);
+    await authModule.emailVerification.verify(request.body.token);
 
     response.status(200).json({
         data: {
@@ -163,7 +154,7 @@ export async function resendVerificationEmail(
     request: Request,
     response: Response,
 ): Promise<void> {
-    await resendEmailVerification(getAuthenticatedUserId(request));
+    await authModule.emailVerification.resend(requireUserId(request));
 
     response.status(202).json({
         data: {

@@ -1,9 +1,8 @@
-import AppError from "../../errors/app-error.js";
-
 export const MIN_PASSWORD_LENGTH = 10;
 export const MAX_PASSWORD_LENGTH = 128;
 
 export const MIN_ACCOUNT_AGE = 13;
+export const MAX_ACCOUNT_AGE = 120;
 
 export type PasswordPolicyViolation =
     | "MIN_LENGTH"
@@ -13,6 +12,16 @@ export type PasswordPolicyViolation =
     | "SPECIAL_CHARACTER_REQUIRED"
     | "CONTAINS_USERNAME";
 
+export type BirthDateValidationResult =
+    | {
+          valid: true;
+          birthDate: Date;
+      }
+    | {
+          valid: false;
+          reason: "INVALID_BIRTH_DATE" | "AGE_REQUIREMENT_NOT_MET";
+      };
+
 function containsAsciiSpecialCharacter(password: string): boolean {
     for (const character of password) {
         const code = character.codePointAt(0);
@@ -21,13 +30,12 @@ function containsAsciiSpecialCharacter(password: string): boolean {
             continue;
         }
 
-        const isAsciiSpecialCharacter =
+        if (
             (code >= 33 && code <= 47) ||
             (code >= 58 && code <= 64) ||
             (code >= 91 && code <= 96) ||
-            (code >= 123 && code <= 126);
-
-        if (isAsciiSpecialCharacter) {
+            (code >= 123 && code <= 126)
+        ) {
             return true;
         }
     }
@@ -35,7 +43,7 @@ function containsAsciiSpecialCharacter(password: string): boolean {
     return false;
 }
 
-function getPasswordPolicyViolations(
+export function getPasswordPolicyViolations(
     password: string,
     username: string,
 ): PasswordPolicyViolation[] {
@@ -73,80 +81,66 @@ function getPasswordPolicyViolations(
     return violations;
 }
 
-export function ensurePasswordMeetsPolicy(
-    password: string,
-    username: string,
-): void {
-    const violations = getPasswordPolicyViolations(password, username);
-
-    if (violations.length === 0) {
-        return;
-    }
-
-    throw AppError.badRequest(
-        "The password does not meet the required policy.",
-        "PASSWORD_POLICY_VIOLATION",
-        {
-            violations,
-        },
-    );
-}
-
-export function parseAndValidateBirthDate(
+export function validateBirthDate(
     value: string,
     today = new Date(),
-): Date {
+): BirthDateValidationResult {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
     if (!match) {
-        throw AppError.badRequest(
-            "Birth date is invalid.",
-            "INVALID_BIRTH_DATE",
-        );
+        return {
+            valid: false,
+            reason: "INVALID_BIRTH_DATE",
+        };
     }
 
     const year = Number(match[1]);
+
     const month = Number(match[2]);
+
     const day = Number(match[3]);
 
     const birthDate = new Date(Date.UTC(year, month - 1, day));
 
-    const isValidDate =
+    const isRealDate =
         birthDate.getUTCFullYear() === year &&
         birthDate.getUTCMonth() === month - 1 &&
         birthDate.getUTCDate() === day;
 
-    if (!isValidDate || birthDate > today) {
-        throw AppError.badRequest(
-            "Birth date is invalid.",
-            "INVALID_BIRTH_DATE",
-        );
+    if (!isRealDate || birthDate.getTime() > today.getTime()) {
+        return {
+            valid: false,
+            reason: "INVALID_BIRTH_DATE",
+        };
     }
 
     let age = today.getUTCFullYear() - birthDate.getUTCFullYear();
 
-    const birthdayHasPassed =
+    const birthdayPassed =
         today.getUTCMonth() > birthDate.getUTCMonth() ||
         (today.getUTCMonth() === birthDate.getUTCMonth() &&
             today.getUTCDate() >= birthDate.getUTCDate());
 
-    if (!birthdayHasPassed) {
+    if (!birthdayPassed) {
         age -= 1;
     }
 
     if (age < MIN_ACCOUNT_AGE) {
-        throw AppError.badRequest(
-            `You must be at least ${MIN_ACCOUNT_AGE} years old to create an account.`,
-            "AGE_REQUIREMENT_NOT_MET",
-        );
+        return {
+            valid: false,
+            reason: "AGE_REQUIREMENT_NOT_MET",
+        };
     }
 
-    if (age > 120) {
-        throw AppError.badRequest(
-            "Birth date is invalid.",
-            "INVALID_BIRTH_DATE",
-        );
+    if (age > MAX_ACCOUNT_AGE) {
+        return {
+            valid: false,
+            reason: "INVALID_BIRTH_DATE",
+        };
     }
 
-    return birthDate;
+    return {
+        valid: true,
+        birthDate,
+    };
 }
