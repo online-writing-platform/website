@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import LOGO from "../assets/LOGO.webp";
 
 import Button from "./Button";
 import ThemeButton from "./ThemeButton";
@@ -27,7 +28,7 @@ function Header() {
     <header className="header">
       <div className="header-container">
         <Link to="/" className="logo">
-          <span>Online Writing Platform</span>
+          <img src={LOGO} alt="LOGO" />
         </Link>
         <SearchBar />
 

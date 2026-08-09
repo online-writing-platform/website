@@ -97,7 +97,6 @@ function Dashboard() {
           image="https://picsum.photos/300/200"
           category="فانتزی"
           title="افسانه آخر"
-          description="داستانی درباره سفر یک قهرمان..."
           views={521}
           likes={84}
           status="درحال انتشار"
@@ -108,7 +107,6 @@ function Dashboard() {
           image="https://picsum.photos/300/200"
           category="وحشت"
           title="خانه خاموش"
-          description="داستانی مرموز در عمارتی قدیمی..."
           views={1850}
           likes={320}
           status="پایان یافته"

@@ -7,28 +7,20 @@
 }
 
 /* Story Sections */
-
 .story-section {
-  margin-bottom: 50px;
+  margin: 50px 100px;
+  font-size: 20px;
 }
 
 .story-section h2 {
   margin-bottom: 20px;
   color: var(--text);
 }
-
+.Story-Container {
+  margin: auto;
+}
 .story-row {
   display: flex;
-
-  gap: 20px;
-
+  gap: 16px;
   overflow-x: auto;
-
-  scroll-behavior: smooth;
-
-  padding-bottom: 10px;
-  padding-top: 10px;
-}
-.story-row::-webkit-scrollbar {
-  display: none;
 }

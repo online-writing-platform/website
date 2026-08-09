@@ -3,6 +3,8 @@
   src: url("./assets/fonts/Estedad-Regular.woff2");
   font-weight: 400;
 }
+
+@import "tailwindcss";
 :root {
   /* Backgrounds */
   --background: #fff; /* کاغذی */
@@ -21,6 +23,7 @@
   --primary: #023b32; /* سبز جنگلی */
   --primary-hover: #012a24;
   --primary-soft: #d7e8e2;
+  --primary-normal: #bcd9cf;
 
   /* Accent */
   --accent: #8b5e3c; /* قهوه‌ای */

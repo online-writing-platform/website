@@ -17,6 +17,7 @@ import Register from "./pages/Register";
 import Search from "./pages/Search";
 import Terms from "./pages/Terms";
 import WriteStory from "./pages/StoryContent";
+import Category from "./pages/Category";
 
 function App() {
   return (
@@ -24,6 +25,8 @@ function App() {
       <Header />
 
       <Routes>
+        <Route path="/category" element={<Category />} />
+
         <Route path="/" element={<Home />} />
 
         <Route path="/about" element={<About />} />

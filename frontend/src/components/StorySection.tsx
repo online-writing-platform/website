@@ -1,19 +1,24 @@
-import StoryCard from "./StoryCard";
-import { StorySectionProps } from "../types/story";
+import { mockStories } from "../data/mockStories";
+import StoryCard from "../components/StoryCard";
 
-function StorySection({ title, stories }: StorySectionProps) {
+interface StorySectionProps {
+  title: string;
+}
+
+function StorySection({ title }: StorySectionProps) {
   return (
     <section className="story-section">
       <h2>{title}</h2>
 
       <div className="story-row">
-        {stories.map((story) => (
+        {mockStories.map((story) => (
           <StoryCard
             key={`${title}-${story.id}`}
             image={story.image}
             category={story.category}
             title={story.title}
             link={story.link}
+            views={1000}
           />
         ))}
       </div>

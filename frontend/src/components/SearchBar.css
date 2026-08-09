@@ -5,8 +5,10 @@
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 99px;
+  border-radius: 6px;
   padding: 8px 12px;
+  height: 44px;
+  min-width: 240px;
 }
 
 .search-icon {
@@ -24,5 +26,5 @@
   background: transparent;
   color: var(--text);
 
-  font-size: 15px;
+  font-size: 12px;
 }
