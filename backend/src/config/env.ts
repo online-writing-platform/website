@@ -57,6 +57,20 @@ const environmentSchema = z
             .max(3600)
             .default(60),
 
+        PASSWORD_RESET_TTL_MINUTES: z.coerce
+            .number()
+            .int()
+            .min(10)
+            .max(1440)
+            .default(30),
+
+        PASSWORD_RESET_RESEND_COOLDOWN_SECONDS: z.coerce
+            .number()
+            .int()
+            .min(30)
+            .max(3600)
+            .default(60),
+
         MAIL_TRANSPORT: z.enum(["console", "smtp"]).default("console"),
 
         MAIL_FROM: z
@@ -130,7 +144,6 @@ const environmentSchema = z
         }
 
         const hasSmtpUser = values.SMTP_USER !== undefined;
-
         const hasSmtpPassword = values.SMTP_PASS !== undefined;
 
         if (hasSmtpUser !== hasSmtpPassword) {
@@ -194,6 +207,11 @@ const env = Object.freeze({
 
     emailVerificationResendCooldownSeconds:
         values.EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
+
+    passwordResetTtlMinutes: values.PASSWORD_RESET_TTL_MINUTES,
+
+    passwordResetResendCooldownSeconds:
+        values.PASSWORD_RESET_RESEND_COOLDOWN_SECONDS,
 
     mailTransport: values.MAIL_TRANSPORT,
 

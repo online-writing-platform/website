@@ -111,3 +111,41 @@ export const verificationEmailResendRateLimiter = rateLimit({
         },
     },
 });
+
+export const passwordResetRequestRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+
+    limit: 5,
+
+    standardHeaders: "draft-8",
+
+    legacyHeaders: false,
+
+    message: {
+        error: {
+            code: "PASSWORD_RESET_REQUEST_RATE_LIMIT_EXCEEDED",
+
+            message:
+                "Too many password reset requests. Please try again later.",
+        },
+    },
+});
+
+export const passwordResetConfirmRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+
+    limit: 20,
+
+    standardHeaders: "draft-8",
+
+    legacyHeaders: false,
+
+    message: {
+        error: {
+            code: "PASSWORD_RESET_CONFIRM_RATE_LIMIT_EXCEEDED",
+
+            message:
+                "Too many password reset attempts. Please try again later.",
+        },
+    },
+});

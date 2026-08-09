@@ -3,6 +3,8 @@ import { Router } from "express";
 import {
     emailVerificationRateLimiter,
     loginRateLimiter,
+    passwordResetConfirmRateLimiter,
+    passwordResetRequestRateLimiter,
     refreshRateLimiter,
     registrationRateLimiter,
     verificationEmailResendRateLimiter,
@@ -15,7 +17,9 @@ import {
     logout,
     refresh,
     register,
+    requestPasswordReset,
     resendVerificationEmail,
+    resetPassword,
     verifyEmail,
 } from "./auth.controller.js";
 
@@ -24,6 +28,8 @@ import { authenticate } from "./auth.middleware.js";
 import {
     loginSchema,
     registerSchema,
+    requestPasswordResetSchema,
+    resetPasswordSchema,
     verifyEmailSchema,
 } from "./auth.schema.js";
 
@@ -89,6 +95,26 @@ router.post(
     authenticate,
 
     resendVerificationEmail,
+);
+
+router.post(
+    "/password-reset/request",
+
+    passwordResetRequestRateLimiter,
+
+    validateBody(requestPasswordResetSchema),
+
+    requestPasswordReset,
+);
+
+router.post(
+    "/password-reset/confirm",
+
+    passwordResetConfirmRateLimiter,
+
+    validateBody(resetPasswordSchema),
+
+    resetPassword,
 );
 
 export default router;

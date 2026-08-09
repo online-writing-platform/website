@@ -7,6 +7,7 @@ const logger = pino({
 
     base: {
         service: "writing-platform-backend",
+
         environment: env.nodeEnv,
     },
 
@@ -15,10 +16,19 @@ const logger = pino({
             "req.headers.authorization",
             "req.headers.cookie",
             "res.headers.set-cookie",
+
+            "req.body.password",
+            "req.body.newPassword",
+            "req.body.token",
+
             "*.password",
+            "*.newPassword",
             "*.passwordHash",
             "*.refreshToken",
+            "*.token",
+            "*.tokenHash",
         ],
+
         censor: "[REDACTED]",
     },
 

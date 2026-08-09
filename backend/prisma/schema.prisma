@@ -61,6 +61,7 @@ model User {
   stories                Story[]
   sessions               Session[]
   emailVerificationToken EmailVerificationToken?
+  passwordResetToken     PasswordResetToken?
 
   @@map("users")
 }
@@ -100,6 +101,20 @@ model EmailVerificationToken {
 
   @@index([expiresAt])
   @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  userId String @id @map("user_id") @db.Uuid
+
+  tokenHash String @unique @map("token_hash") @db.Char(64)
+
+  expiresAt DateTime @map("expires_at")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model Story {

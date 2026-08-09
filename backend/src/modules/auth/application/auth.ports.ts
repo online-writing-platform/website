@@ -77,6 +77,28 @@ export interface EmailVerificationRecord {
     };
 }
 
+export interface PasswordResetUserRecord {
+    id: string;
+
+    email: string;
+    username: string;
+
+    status: UserStatusValue;
+}
+
+export interface PasswordResetRecord {
+    userId: string;
+
+    expiresAt: Date;
+
+    user: {
+        email: string;
+        username: string;
+
+        status: UserStatusValue;
+    };
+}
+
 export interface AuthStore {
     findIdentityConflict(
         email: string,
@@ -146,6 +168,35 @@ export interface AuthStore {
         userId: string,
         verifiedAt: Date,
     ): Promise<void>;
+
+    findPasswordResetUser(
+        email: string,
+        usernameNormalized: string,
+    ): Promise<PasswordResetUserRecord | null>;
+
+    findPasswordResetState(userId: string): Promise<{
+        sentAt: Date;
+    } | null>;
+
+    upsertPasswordResetToken(
+        userId: string,
+        tokenHash: string,
+        expiresAt: Date,
+        sentAt: Date,
+    ): Promise<void>;
+
+    deletePasswordResetToken(userId: string, tokenHash?: string): Promise<void>;
+
+    findPasswordResetByTokenHash(
+        tokenHash: string,
+    ): Promise<PasswordResetRecord | null>;
+
+    resetPasswordAndRevokeSessions(
+        userId: string,
+        tokenHash: string,
+        passwordHash: string,
+        resetAt: Date,
+    ): Promise<boolean>;
 }
 
 export interface AuthSecurity {
@@ -166,10 +217,20 @@ export interface AuthSecurity {
     generateVerificationToken(): string;
 
     hashVerificationToken(token: string): string;
+
+    generatePasswordResetToken(): string;
+
+    hashPasswordResetToken(token: string): string;
 }
 
 export interface VerificationEmailSender {
     send(email: string, token: string): Promise<void>;
+}
+
+export interface PasswordRecoveryEmailSender {
+    sendResetLink(email: string, token: string): Promise<void>;
+
+    sendPasswordChangedNotice(email: string): Promise<void>;
 }
 
 export interface AuthLogger {

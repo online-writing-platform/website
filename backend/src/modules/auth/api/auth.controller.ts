@@ -13,6 +13,8 @@ import {
 import type {
     LoginInput,
     RegisterInput,
+    RequestPasswordResetInput,
+    ResetPasswordInput,
     VerifyEmailInput,
 } from "./auth.schema.js";
 
@@ -161,4 +163,31 @@ export async function resendVerificationEmail(
             status: "sent",
         },
     });
+}
+
+export async function requestPasswordReset(
+    request: Request<Record<string, never>, unknown, RequestPasswordResetInput>,
+    response: Response,
+): Promise<void> {
+    await authModule.requestPasswordReset.execute(request.body.identifier);
+
+    response.status(202).json({
+        data: {
+            status: "accepted",
+        },
+    });
+}
+
+export async function resetPassword(
+    request: Request<Record<string, never>, unknown, ResetPasswordInput>,
+    response: Response,
+): Promise<void> {
+    await authModule.resetPassword.execute(
+        request.body.token,
+        request.body.newPassword,
+    );
+
+    clearRefreshTokenCookie(response);
+
+    response.status(204).send();
 }

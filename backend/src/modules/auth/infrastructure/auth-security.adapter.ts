@@ -18,6 +18,7 @@ import type { AuthSecurity } from "../application/auth.ports.js";
 import type { AuthContext } from "../domain/auth.types.js";
 
 const EMAIL_VERIFICATION_TOKEN_BYTES = 32;
+const PASSWORD_RESET_TOKEN_BYTES = 32;
 
 export class DefaultAuthSecurity implements AuthSecurity {
     public hashPassword(password: string): Promise<string> {
@@ -56,6 +57,14 @@ export class DefaultAuthSecurity implements AuthSecurity {
     }
 
     public hashVerificationToken(token: string): string {
+        return hashOpaqueToken(token);
+    }
+
+    public generatePasswordResetToken(): string {
+        return generateOpaqueToken(PASSWORD_RESET_TOKEN_BYTES);
+    }
+
+    public hashPasswordResetToken(token: string): string {
         return hashOpaqueToken(token);
     }
 }

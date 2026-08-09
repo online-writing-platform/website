@@ -35,6 +35,12 @@ const emailVerificationTokenSchema = z
     .min(32, "Verification token is invalid.")
     .max(256, "Verification token is invalid.");
 
+const passwordResetTokenSchema = z
+    .string()
+    .trim()
+    .min(32, "Password reset token is invalid.")
+    .max(256, "Password reset token is invalid.");
+
 export const registerSchema = z
     .object({
         username: usernameSchema,
@@ -72,8 +78,32 @@ export const verifyEmailSchema = z
     })
     .strict();
 
+export const requestPasswordResetSchema = z
+    .object({
+        identifier: z
+            .string()
+            .trim()
+            .min(1, "Email or username is required.")
+            .max(320),
+    })
+    .strict();
+
+export const resetPasswordSchema = z
+    .object({
+        token: passwordResetTokenSchema,
+
+        newPassword: passwordSchema,
+    })
+    .strict();
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+
+export type RequestPasswordResetInput = z.infer<
+    typeof requestPasswordResetSchema
+>;
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
