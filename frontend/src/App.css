@@ -517,13 +517,7 @@ td {
   place-items: start center;
   padding: 3rem 1rem;
 }
-.form-card {
-  width: min(100%, 32rem);
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 0.75rem;
-}
+
 .status-message--warning {
   border-color: var(--warning);
 }
