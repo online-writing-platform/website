@@ -7,6 +7,13 @@
 
   padding: 40px 20px;
 }
+
+.form-help {
+  font-size: 12px;
+  padding-right: 6px;
+  color: var(--text-secondary);
+}
+
 .birth-date-picker {
   position: relative;
   width: 100%;
