@@ -1,26 +1,53 @@
-import type { FormEvent } from "react";
-import { CiSearch } from "react-icons/ci";
-import "./SearchBar.css";
-function SearchBar() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { Field } from "./ui/field";
+import { Input } from "./ui/input";
+
+type SearchType = "all" | "stories" | "users" | "tags";
+
+interface SearchBoxProps {
+  query?: string;
+  type?: SearchType;
+}
+
+export default function SearchBox({
+  query = "",
+  type = "all",
+}: SearchBoxProps) {
+  const navigate = useNavigate();
+  const [input, setInput] = useState(query);
+
+  function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
+
+    const value = input.trim();
+
+    if (value.length < 2) return;
+
+    navigate(`/search?q=${encodeURIComponent(value)}&type=${type}`);
   }
 
   return (
-    <form className="search-form" onSubmit={handleSubmit}>
-      <div className="search-box" dir="rtl">
-        <CiSearch className="search-icon" />
-
-        <input
-          id="search"
-          name="search"
+    <form className="search-box" role="search" onSubmit={submit}>
+      <label className="sr-only" htmlFor="search-query">
+        عبارت جست‌وجو
+      </label>
+      <Field orientation="horizontal">
+        <Input
           type="search"
-          placeholder="جستجوی داستان، نویسنده یا ژانر..."
-          className="search-input"
+          placeholder="داستان - نویسنده - ژانر"
+          minLength={2}
+          maxLength={100}
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
         />
-      </div>
+        <Button>جستجو</Button>
+      </Field>
+
+      <button className="button" type="submit">
+        جست‌وجو
+      </button>
     </form>
   );
 }
-
-export default SearchBar;
