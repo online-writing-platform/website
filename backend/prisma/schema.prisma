@@ -123,7 +123,7 @@ model User {
   username           String @db.VarChar(20)
   usernameNormalized String @unique @map("username_normalized") @db.VarChar(20)
 
-  passwordHash String @map("password_hash") @db.VarChar(255)
+  passwordHash String? @map("password_hash") @db.VarChar(255)
 
   displayName String  @map("display_name") @db.VarChar(80)
   bio         String? @db.VarChar(500)
@@ -147,6 +147,7 @@ model User {
   passwordResetToken     PasswordResetToken?
   emailChangeToken       EmailChangeToken?
   preferences            UserPreference?
+  identities             AuthIdentity[]
 
   following Follow[] @relation("UserFollowing")
   followers Follow[] @relation("UserFollowers")
@@ -175,6 +176,30 @@ model User {
 
   @@index([status, createdAt])
   @@map("users")
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+model AuthIdentity {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  provider  AuthProvider
+  providerId String     @map("provider_id") @db.VarChar(255)
+  email     String      @db.VarChar(320)
+  emailVerified Boolean @default(false) @map("email_verified")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@index([email])
+  @@map("auth_identities")
 }
 
 model UserPreference {
