@@ -13,7 +13,9 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
+    "@aliasadollahi/jalali-datepicker": "^1.3.0",
     "@tailwindcss/vite": "^4.3.3",
+    "dayjs": "^1.11.21",
     "react": "^19.2.7",
     "react-aria-components": "^1.19.0",
     "react-dom": "^19.2.7",

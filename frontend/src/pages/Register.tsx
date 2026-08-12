@@ -4,6 +4,8 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
+import BirthDatePicker from "../components/BirthDatePicker";
+import "@aliasadollahi/jalali-datepicker/styles.css";
 
 import "./Register.css";
 import "../styles/Form.css";
@@ -79,9 +81,7 @@ function Register() {
           ثبت‌نام
         </h1>
 
-        <p className="form-subtitle">
-          حساب نویسندگی و مطالعه خود را بسازید.
-        </p>
+        <p className="form-subtitle">حساب نویسندگی و مطالعه خود را بسازید.</p>
 
         <form
           className="form"
@@ -141,20 +141,18 @@ function Register() {
 
           <div className="form-group">
             <label htmlFor="birthDate">تاریخ تولد</label>
-            <input
-              id="birthDate"
-              name="birthDate"
-              type="date"
+
+            <BirthDatePicker
               value={form.birthDate}
-              onChange={(event) => {
+              onChange={(birthDate) => {
                 setForm((current) => ({
                   ...current,
-                  birthDate: event.target.value,
+                  birthDate,
                 }));
               }}
-              autoComplete="bday"
               required
             />
+
             <small className="form-help">
               برای اعمال سیاست محتوای بزرگسال در سمت سرور استفاده می‌شود.
             </small>
@@ -212,8 +210,7 @@ function Register() {
               }}
             />
             <span>
-              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و
-              می‌پذیرم.
+              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و می‌پذیرم.
             </span>
           </label>
 

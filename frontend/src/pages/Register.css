@@ -7,3 +7,56 @@
 
   padding: 40px 20px;
 }
+.birth-date-picker {
+  position: relative;
+  width: 100%;
+}
+
+.birth-date-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.birth-date-input-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 3rem;
+}
+
+.birth-date-calendar-button {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2rem;
+  height: 2rem;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  cursor: pointer;
+}
+
+.birth-date-calendar-button:hover {
+  color: var(--primary);
+}
+
+.birth-date-calendar-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.birth-date-calendar {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 1000;
+}
