@@ -114,7 +114,7 @@ function Register() {
               }}
               minLength={3}
               maxLength={20}
-              pattern="[A-Za-z0-9_]+"
+              pattern="[A-Za-z0-9_-]+"
               autoComplete="username"
               dir="ltr"
               required
