@@ -44,10 +44,6 @@ export default function SearchBox({
         />
         <Button>جستجو</Button>
       </Field>
-
-      <button className="button" type="submit">
-        جست‌وجو
-      </button>
     </form>
   );
 }
