@@ -44,6 +44,10 @@ function Register() {
   ): Promise<void> {
     event.preventDefault();
     setErrorMessage(null);
+    if (!form.birthDate) {
+      setErrorMessage("لطفاً تاریخ تولد خود را انتخاب کنید.");
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
       setErrorMessage("رمز عبور و تکرار آن یکسان نیستند.");

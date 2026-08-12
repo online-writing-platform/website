@@ -48,7 +48,7 @@ function BirthDatePicker({
 
   return (
     <div className="birth-date-picker">
-      <div className="birth-date-input-wrapper">
+      <div className="birth-date-input-wrapper" onClick={() => setIsOpen(true)}>
         <input
           id="birthDate"
           name="birthDate"
@@ -63,7 +63,10 @@ function BirthDatePicker({
         <button
           type="button"
           className="birth-date-calendar-button"
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsOpen((current) => !current);
+          }}
           aria-label="انتخاب تاریخ تولد"
           aria-expanded={isOpen}
         >
@@ -72,12 +75,15 @@ function BirthDatePicker({
       </div>
 
       {isOpen && (
-        <div className="birth-date-calendar">
+        <div
+          className="birth-date-calendar"
+          onClick={(event) => event.stopPropagation()}
+        >
           <JalaliDatePicker
             value={selectedDate}
-            onConfirm={handleDateChange}
+            onChange={handleDateChange}
             selectionMode="single"
-            mode="confirm"
+            mode="instant"
           />
         </div>
       )}
