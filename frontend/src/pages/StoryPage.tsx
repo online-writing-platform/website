@@ -15,9 +15,7 @@ function StoryPage() {
   const { status, request } = useAuth();
   const [story, setStory] = useState<Story | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [libraryMessage, setLibraryMessage] = useState<string | null>(
-    null,
-  );
+  const [libraryMessage, setLibraryMessage] = useState<string | null>(null);
 
   useDocumentMeta({
     title: story ? `${story.title} | داستان` : "داستان",
@@ -85,7 +83,11 @@ function StoryPage() {
         <aside className="story-cover-column">
           <div className="story-detail-cover surface">
             {story.coverUrl ? (
-              <img referrerPolicy="no-referrer" src={story.coverUrl} alt={`جلد ${story.title}`} />
+              <img
+                referrerPolicy="no-referrer"
+                src={story.coverUrl}
+                alt={`جلد ${story.title}`}
+              />
             ) : (
               <div className="story-card-placeholder">{story.title}</div>
             )}
@@ -103,7 +105,7 @@ function StoryPage() {
             </button>
           ) : (
             <Link className="primary-action story-action-link" to="/login">
-              ورود برای ذخیره
+              افزودن به کتابخانه
             </Link>
           )}
 
@@ -125,7 +127,9 @@ function StoryPage() {
 
           <div className="story-meta-row">
             {story.genre ? (
-              <Link to={`/browse/genres/${encodeURIComponent(story.genre.slug)}`}>
+              <Link
+                to={`/browse/genres/${encodeURIComponent(story.genre.slug)}`}
+              >
                 {story.genre.name}
               </Link>
             ) : null}
@@ -136,9 +140,8 @@ function StoryPage() {
 
           {story.isMature ? (
             <div className="status-message" data-kind="warning">
-              محتوای این داستان برای حساب‌های بزرگسال است. دسترسی به متن
-              فصل‌ها در سمت سرور با تاریخ تولد و تنظیمات محتوای شما کنترل
-              می‌شود.
+              محتوای این داستان برای حساب‌های بزرگسال است. دسترسی به متن فصل‌ها
+              در سمت سرور با تاریخ تولد و تنظیمات محتوای شما کنترل می‌شود.
             </div>
           ) : null}
 
@@ -149,9 +152,7 @@ function StoryPage() {
             <ul className="tag-list" aria-label="برچسب‌ها">
               {story.tags.map((tag) => (
                 <li key={tag.slug}>
-                  <Link
-                    to={`/browse/tags/${encodeURIComponent(tag.slug)}`}
-                  >
+                  <Link to={`/browse/tags/${encodeURIComponent(tag.slug)}`}>
                     #{tag.name}
                   </Link>
                 </li>
@@ -182,9 +183,7 @@ function StoryPage() {
                 ))}
               </ol>
             ) : (
-              <p className="empty-state surface">
-                فصل منتشرشده‌ای وجود ندارد.
-              </p>
+              <p className="empty-state surface">فصل منتشرشده‌ای وجود ندارد.</p>
             )}
           </section>
         </div>
