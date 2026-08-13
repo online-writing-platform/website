@@ -36,6 +36,7 @@ import {
 } from "./auth.controller.js";
 
 import { authenticate } from "./auth.middleware.js";
+import { requireTrustedOrigin } from "../../../shared/http/origin-policy.js";
 
 import {
     changePasswordSchema,
@@ -72,8 +73,8 @@ router.post(
     login,
 );
 
-router.post("/refresh", refreshRateLimiter, refresh);
-router.post("/logout", refreshRateLimiter, logout);
+router.post("/refresh", refreshRateLimiter, requireTrustedOrigin, refresh);
+router.post("/logout", refreshRateLimiter, requireTrustedOrigin, logout);
 
 router.post(
     "/email-verification/verify",

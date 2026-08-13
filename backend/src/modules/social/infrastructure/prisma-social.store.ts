@@ -28,13 +28,28 @@ export class PrismaSocialStore implements SocialStore {
     public async follow(
         followerId: string,
         followingId: string,
-    ): Promise<"CREATED" | "EXISTS"> {
+    ): Promise<"CREATED" | "EXISTS" | "BLOCKED"> {
         try {
-            await prisma.follow.create({
-                data: { followerId, followingId },
-                select: { followerId: true },
+            return await prisma.$transaction(async (transaction) => {
+                const relationshipKey = [followerId, followingId].sort().join(":");
+                await transaction.$queryRaw`
+                    SELECT pg_advisory_xact_lock(hashtextextended(${relationshipKey}, 3))
+                `;
+                const blocked = await transaction.block.count({
+                    where: {
+                        OR: [
+                            { blockerId: followerId, blockedId: followingId },
+                            { blockerId: followingId, blockedId: followerId },
+                        ],
+                    },
+                });
+                if (blocked > 0) return "BLOCKED" as const;
+                await transaction.follow.create({
+                    data: { followerId, followingId },
+                    select: { followerId: true },
+                });
+                return "CREATED" as const;
             });
-            return "CREATED";
         } catch (error) {
             if (isPrismaErrorCode(error, "P2002")) {
                 return "EXISTS";
@@ -65,29 +80,25 @@ export class PrismaSocialStore implements SocialStore {
     }
 
     public async block(blockerId: string, blockedId: string): Promise<void> {
-        await prisma.$transaction([
-            prisma.block.upsert({
+        await prisma.$transaction(async (transaction) => {
+            const relationshipKey = [blockerId, blockedId].sort().join(":");
+            await transaction.$queryRaw`
+                SELECT pg_advisory_xact_lock(hashtextextended(${relationshipKey}, 3))
+            `;
+            await transaction.block.upsert({
                 where: { blockerId_blockedId: { blockerId, blockedId } },
                 update: {},
                 create: { blockerId, blockedId },
-            }),
-            prisma.follow.deleteMany({
+            });
+            await transaction.follow.deleteMany({
                 where: {
                     OR: [
                         { followerId: blockerId, followingId: blockedId },
                         { followerId: blockedId, followingId: blockerId },
                     ],
                 },
-            }),
-            prisma.mute.deleteMany({
-                where: {
-                    OR: [
-                        { muterId: blockerId, mutedId: blockedId },
-                        { muterId: blockedId, mutedId: blockerId },
-                    ],
-                },
-            }),
-        ]);
+            });
+        });
     }
 
     public async unblock(blockerId: string, blockedId: string): Promise<void> {

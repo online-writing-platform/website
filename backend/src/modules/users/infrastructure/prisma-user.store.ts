@@ -73,7 +73,7 @@ export class PrismaUserProfileStore implements UserProfileStore {
                     moderationState: "VISIBLE",
                     visibility: "PUBLIC",
                     publishedAt: { not: null },
-                    status: { not: "DRAFT" },
+                    status: { in: ["ONGOING", "COMPLETED", "HIATUS"] },
                 },
             }),
         ]);

@@ -1,27 +1,41 @@
 import { prisma } from "../../../db/index.js";
+import { createHash } from "node:crypto";
 import { buildCursorPage } from "../../../shared/pagination/page.js";
-import { isAtLeastAge } from "../../stories/domain/mature.policy.js";
+import { isAtLeastAge } from "../../content/policy/mature.policy.js";
 
 import type { AnalyticsStore } from "../application/analytics.ports.js";
+import { readSignalBucket } from "../../reading/domain/reading-events.js";
 
 export class PrismaAnalyticsStore implements AnalyticsStore {
     public async recordRead(
-        userId: string,
+        userId: string | null,
+        visitorKey: string,
         storyId: string,
         chapterId: string,
         at: Date,
     ): Promise<void> {
-        await prisma.chapterRead.upsert({
-            where: { userId_chapterId: { userId, chapterId } },
+        const dedupeKey = userId
+            ? createHash("sha256").update(`user:${userId}`).digest("hex")
+            : visitorKey;
+        await prisma.readSignal.upsert({
+            where: {
+                visitorKey_chapterId_bucketStart: {
+                    visitorKey: dedupeKey,
+                    chapterId,
+                    bucketStart: new Date(readSignalBucket(at, 60)),
+                },
+            },
             create: {
                 userId,
                 storyId,
                 chapterId,
-                firstReadAt: at,
-                lastReadAt: at,
+                actorType: userId ? "AUTHENTICATED" : "ANONYMOUS",
+                visitorKey: dedupeKey,
+                bucketStart: new Date(readSignalBucket(at, 60)),
+                qualifiedAt: at,
             },
-            update: { lastReadAt: at },
-            select: { userId: true },
+            update: {},
+            select: { id: true },
         });
     }
 
@@ -46,7 +60,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
             viewer.preferences?.allowMatureContent === true &&
             isAtLeastAge(viewer.birthDate, 18, new Date());
 
-        const rows = await prisma.chapterRead.findMany({
+        const rows = await prisma.readingHistory.findMany({
             where: {
                 userId,
                 chapter: {
@@ -59,7 +73,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
                     moderationState: "VISIBLE",
                     visibility: { in: ["PUBLIC", "UNLISTED"] },
                     publishedAt: { not: null },
-                    status: { not: "DRAFT" },
+                    status: { in: ["ONGOING", "COMPLETED", "HIATUS"] },
                     ...(includeMature ? {} : { isMature: false }),
                     author: {
                         status: "ACTIVE",
@@ -68,19 +82,17 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
                     },
                 },
             },
-            orderBy: [{ lastReadAt: "desc" }, { chapterId: "desc" }],
+            orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
             take: limit + 1,
             ...(cursor
                 ? {
-                      cursor: {
-                          userId_chapterId: { userId, chapterId: cursor },
-                      },
+                      cursor: { id: cursor },
                       skip: 1,
                   }
                 : {}),
             select: {
-                chapterId: true,
-                lastReadAt: true,
+                id: true,
+                occurredAt: true,
                 chapter: { select: { id: true, title: true } },
                 story: {
                     select: {
@@ -100,10 +112,12 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
             },
         });
 
-        const page = buildCursorPage(rows, limit, (row) => row.chapterId);
+        const page = buildCursorPage(rows, limit, (row) => row.id);
 
         return {
-            items: page.items.map(({ chapterId: _chapterId, ...item }) => item),
+            items: page.items
+                .filter((item): item is typeof item & { chapter: NonNullable<typeof item.chapter> } => item.chapter !== null)
+                .map(({ id: _id, occurredAt, ...item }) => ({ ...item, lastReadAt: occurredAt })),
             pagination: page.pagination,
         };
     }
@@ -133,7 +147,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
                         position: true,
                         _count: {
                             select: {
-                                reads: true,
+                                readSignals: true,
                                 votes: true,
                                 comments: true,
                             },
@@ -147,7 +161,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
 
         const uniqueReaderRows = await prisma.$queryRaw<Array<{ count: number }>>`
             SELECT COUNT(DISTINCT "user_id")::int AS "count"
-            FROM "chapter_reads"
+            FROM "read_signals"
             WHERE "story_id" = ${storyId}::uuid
         `;
         const uniqueReaders = uniqueReaderRows.at(0)?.count ?? 0;
@@ -165,7 +179,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
                 id: chapter.id,
                 title: chapter.title,
                 position: chapter.position,
-                uniqueReaders: chapter._count.reads,
+                uniqueReaders: chapter._count.readSignals,
                 votes: chapter._count.votes,
                 comments: chapter._count.comments,
             })),

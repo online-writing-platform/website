@@ -20,16 +20,86 @@ interface ReportRow {
 }
 
 export class PrismaModerationStore implements ModerationStore {
-    public async targetExists(targetType: ReportTargetTypeValue, targetId: string): Promise<boolean> {
+    public async targetVisibleToReporter(
+        reporterId: string,
+        targetType: ReportTargetTypeValue,
+        targetId: string,
+    ): Promise<boolean> {
         switch (targetType) {
             case "USER":
-                return (await prisma.user.findFirst({ where: { id: targetId, status: { not: "DELETED" } }, select: { id: true } })) !== null;
+                return (await prisma.user.findFirst({
+                    where: {
+                        id: targetId,
+                        status: { not: "DELETED" },
+                        blocksCreated: { none: { blockedId: reporterId } },
+                        blocksReceived: { none: { blockerId: reporterId } },
+                    },
+                    select: { id: true },
+                })) !== null;
             case "STORY":
-                return (await prisma.story.findFirst({ where: { id: targetId, deletedAt: null }, select: { id: true } })) !== null;
+                return (await prisma.story.findFirst({
+                    where: {
+                        id: targetId,
+                        deletedAt: null,
+                        OR: [
+                            { authorId: reporterId },
+                            {
+                                visibility: { in: ["PUBLIC", "UNLISTED"] },
+                                publishedAt: { not: null },
+                                moderationState: "VISIBLE",
+                                author: {
+                                    status: "ACTIVE",
+                                    blocksCreated: { none: { blockedId: reporterId } },
+                                    blocksReceived: { none: { blockerId: reporterId } },
+                                },
+                            },
+                        ],
+                    },
+                    select: { id: true },
+                })) !== null;
             case "CHAPTER":
-                return (await prisma.chapter.findFirst({ where: { id: targetId, deletedAt: null }, select: { id: true } })) !== null;
+                return (await prisma.chapter.findFirst({
+                    where: {
+                        id: targetId,
+                        deletedAt: null,
+                        OR: [
+                            { story: { authorId: reporterId, deletedAt: null } },
+                            {
+                                status: "PUBLISHED",
+                                moderationState: "VISIBLE",
+                                story: {
+                                    deletedAt: null,
+                                    visibility: { in: ["PUBLIC", "UNLISTED"] },
+                                    publishedAt: { not: null },
+                                    moderationState: "VISIBLE",
+                                    author: {
+                                        status: "ACTIVE",
+                                        blocksCreated: { none: { blockedId: reporterId } },
+                                        blocksReceived: { none: { blockerId: reporterId } },
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    select: { id: true },
+                })) !== null;
             case "COMMENT":
-                return (await prisma.comment.findFirst({ where: { id: targetId, status: { not: "DELETED" } }, select: { id: true } })) !== null;
+                return (await prisma.comment.findFirst({
+                    where: {
+                        id: targetId,
+                        status: { not: "DELETED" },
+                        chapter: {
+                            status: "PUBLISHED",
+                            moderationState: "VISIBLE",
+                            story: {
+                                visibility: { in: ["PUBLIC", "UNLISTED"] },
+                                publishedAt: { not: null },
+                                moderationState: "VISIBLE",
+                            },
+                        },
+                    },
+                    select: { id: true },
+                })) !== null;
         }
     }
 
@@ -106,7 +176,8 @@ export class PrismaModerationStore implements ModerationStore {
         moderatorId: string,
         input: Parameters<ModerationStore["updateReport"]>[2],
     ) {
-        const result = await prisma.report.updateMany({
+        return prisma.$transaction(async (transaction) => {
+        const result = await transaction.report.updateMany({
             where: { id: reportId },
             data: {
                 ...(input.status ? { status: input.status } : {}),
@@ -115,7 +186,19 @@ export class PrismaModerationStore implements ModerationStore {
                 ...(input.assignToSelf === false ? { assignedToId: null } : {}),
             },
         });
+        if (result.count === 1) {
+            await transaction.auditLog.create({
+                data: {
+                    actorId: moderatorId,
+                    action: "REPORT_UPDATED",
+                    targetType: "REPORT",
+                    targetId: reportId,
+                    metadata: input,
+                },
+            });
+        }
         return result.count === 1;
+        });
     }
 
     public async getModerationTarget(targetType: ReportTargetTypeValue, targetId: string) {
@@ -155,6 +238,40 @@ export class PrismaModerationStore implements ModerationStore {
 
     public async applyAction(input: Parameters<ModerationStore["applyAction"]>[0]): Promise<boolean> {
         return prisma.$transaction(async (transaction) => {
+            await transaction.$queryRaw`
+                SELECT pg_advisory_xact_lock(hashtextextended(${input.targetId}, 4))
+            `;
+            const currentModerator = await transaction.user.findUnique({
+                where: { id: input.moderatorId },
+                select: { role: true, status: true },
+            });
+            if (
+                !currentModerator ||
+                currentModerator.status !== "ACTIVE" ||
+                currentModerator.role !== input.moderatorRole
+            ) return false;
+
+            const currentOwner = input.targetType === "USER"
+                ? await transaction.user.findUnique({
+                    where: { id: input.targetId }, select: { id: true, role: true },
+                })
+                : input.targetType === "STORY"
+                  ? (await transaction.story.findUnique({
+                    where: { id: input.targetId }, select: { author: { select: { id: true, role: true } } },
+                }))?.author ?? null
+                  : input.targetType === "CHAPTER"
+                    ? (await transaction.chapter.findUnique({
+                    where: { id: input.targetId },
+                    select: { story: { select: { author: { select: { id: true, role: true } } } } },
+                }))?.story.author ?? null
+                    : (await transaction.comment.findUnique({
+                    where: { id: input.targetId }, select: { user: { select: { id: true, role: true } } },
+                }))?.user ?? null;
+            if (
+                !currentOwner ||
+                currentOwner.id === input.moderatorId ||
+                (currentModerator.role === "MODERATOR" && currentOwner.role !== "USER")
+            ) return false;
             let changed = 0;
             const action: ModerationActionValue = input.action;
 
@@ -227,6 +344,15 @@ export class PrismaModerationStore implements ModerationStore {
                     createdAt: input.at,
                 },
                 select: { id: true },
+            });
+            await transaction.auditLog.create({
+                data: {
+                    actorId: input.moderatorId,
+                    action: input.action,
+                    targetType: input.targetType,
+                    targetId: input.targetId,
+                    metadata: input.reason ? { reason: input.reason } : undefined,
+                },
             });
             return true;
         });

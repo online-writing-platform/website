@@ -45,6 +45,12 @@ export interface SessionWithUserRecord {
     user: AuthUserRecord;
 }
 
+export interface ConsumedRefreshSessionRecord {
+    sessionId: string;
+    expiresAt: Date;
+    revokedAt: Date | null;
+}
+
 export interface VerificationUserRecord {
     email: string;
     emailVerifiedAt: Date | null;
@@ -116,6 +122,10 @@ export interface AuthStore {
     findSessionByRefreshTokenHash(
         refreshTokenHash: string,
     ): Promise<SessionWithUserRecord | null>;
+
+    findConsumedSessionByRefreshTokenHash(
+        refreshTokenHash: string,
+    ): Promise<ConsumedRefreshSessionRecord | null>;
 
     revokeSessionById(sessionId: string, revokedAt: Date): Promise<void>;
 

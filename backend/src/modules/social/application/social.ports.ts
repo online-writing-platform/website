@@ -1,7 +1,7 @@
 import type { FollowPage } from "../domain/social.types.js";
 
 export interface SocialStore {
-    follow(followerId: string, followingId: string): Promise<"CREATED" | "EXISTS">;
+    follow(followerId: string, followingId: string): Promise<"CREATED" | "EXISTS" | "BLOCKED">;
     unfollow(followerId: string, followingId: string): Promise<boolean>;
     isFollowing(followerId: string, followingId: string): Promise<boolean>;
 

@@ -12,6 +12,8 @@ export const recordReadSchema = z
     .object({
         storyId: uuidSchema,
         chapterId: uuidSchema,
+        engagedSeconds: z.number().int().min(10).max(3_600),
+        progressDelta: z.number().min(0.05).max(1),
     })
     .strict();
 

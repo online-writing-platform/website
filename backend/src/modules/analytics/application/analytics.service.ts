@@ -12,7 +12,8 @@ export class AnalyticsService {
     ) {}
 
     public async recordRead(
-        userId: string,
+        userId: string | undefined,
+        visitorKey: string,
         storyId: string,
         chapterId: string,
     ): Promise<void> {
@@ -27,12 +28,13 @@ export class AnalyticsService {
             );
         }
 
-        if (chapter.authorId === userId) {
+        if (userId && chapter.authorId === userId) {
             return;
         }
 
         await this.store.recordRead(
-            userId,
+            userId ?? null,
+            visitorKey,
             storyId,
             chapterId,
             new Date(),

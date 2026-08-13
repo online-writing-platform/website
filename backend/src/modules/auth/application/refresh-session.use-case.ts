@@ -24,6 +24,24 @@ export class RefreshSessionUseCase {
         const session =
             await this.store.findSessionByRefreshTokenHash(currentTokenHash);
 
+        if (!session) {
+            const consumed =
+                await this.store.findConsumedSessionByRefreshTokenHash(
+                    currentTokenHash,
+                );
+            if (
+                consumed &&
+                consumed.revokedAt === null &&
+                consumed.expiresAt > now
+            ) {
+                await this.store.revokeSessionById(consumed.sessionId, now);
+                throw AppError.conflict(
+                    "Refresh token replay was detected and this session was revoked.",
+                    "REFRESH_TOKEN_REPLAY",
+                );
+            }
+        }
+
         if (
             !session ||
             session.revokedAt !== null ||
@@ -61,10 +79,18 @@ export class RefreshSessionUseCase {
         );
 
         if (!rotated) {
-            throw AppError.unauthorized(
-                "The session has already been refreshed or revoked.",
-                "SESSION_ROTATION_FAILED",
-            );
+            const consumed =
+                await this.store.findConsumedSessionByRefreshTokenHash(
+                    currentTokenHash,
+                );
+            if (consumed && consumed.sessionId === session.id) {
+                await this.store.revokeSessionById(session.id, now);
+                throw AppError.conflict(
+                    "Refresh token replay was detected and this session was revoked.",
+                    "REFRESH_TOKEN_REPLAY",
+                );
+            }
+            throw AppError.unauthorized("The session is no longer active.", "INVALID_SESSION");
         }
 
         const accessToken = await this.security.createAccessToken({

@@ -190,7 +190,7 @@ export class InteractionService {
         viewerId?: string,
     ) {
         await this.requireChapter(chapterId, viewerId);
-        return this.store.listComments(chapterId, cursor, limit);
+        return this.store.listComments(chapterId, cursor, limit, viewerId);
     }
 
     public async listReplies(
@@ -208,6 +208,21 @@ export class InteractionService {
                 "COMMENT_NOT_FOUND",
             );
         }
-        return this.store.listReplies(chapterId, parentId, cursor, limit);
+        if (
+            viewerId &&
+            (await this.socialPolicy.isBlockedBetween(viewerId, parent.userId))
+        ) {
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
+        }
+        return this.store.listReplies(
+            chapterId,
+            parentId,
+            cursor,
+            limit,
+            viewerId,
+        );
     }
 }

@@ -23,9 +23,11 @@ enum UserRole {
 
 enum StoryStatus {
   DRAFT
+  SCHEDULED
   ONGOING
   COMPLETED
   HIATUS
+  ARCHIVED
 }
 
 enum StoryVisibility {
@@ -42,7 +44,43 @@ enum StoryRights {
 
 enum ChapterStatus {
   DRAFT
+  SCHEDULED
   PUBLISHED
+}
+
+enum RevisionReason {
+  CHECKPOINT
+  PUBLISH
+  UNPUBLISH
+  RESTORE_SOURCE
+  RESTORED
+}
+
+enum ReadingHistoryType {
+  STARTED
+  CHAPTER_CHANGED
+  RESUMED
+  COMPLETED
+}
+
+enum ReadActorType {
+  AUTHENTICATED
+  ANONYMOUS
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  DEAD
+  CANCELLED
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DISPATCHED
+  DEAD
 }
 
 enum ModerationState {
@@ -159,7 +197,8 @@ model User {
   libraryEntries  LibraryEntry[]
   readingProgress ReadingProgress[]
   readingLists    ReadingList[]
-  chapterReads    ChapterRead[]
+  readingHistory  ReadingHistory[]
+  readSignals     ReadSignal[]
 
   chapterVotes ChapterVote[]
   comments     Comment[]
@@ -171,7 +210,10 @@ model User {
   reportsAssigned  Report[] @relation("ReportAssignee")
 
   moderationActions ModerationAction[] @relation("ModerationActor")
+  revisionsCreated  ChapterRevision[]  @relation("RevisionCreator")
+  auditLogs         AuditLog[]          @relation("AuditActor")
   mediaAssets       MediaAsset[]
+  stats             UserStats?
 
   @@index([status, createdAt])
   @@map("users")
@@ -218,10 +260,26 @@ model Session {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consumedTokens ConsumedRefreshToken[]
 
   @@index([userId, revokedAt, expiresAt])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+model ConsumedRefreshToken {
+  tokenHash String @id @map("token_hash") @db.Char(64)
+  sessionId String @map("session_id") @db.Uuid
+
+  consumedAt DateTime @default(now()) @map("consumed_at")
+  expiresAt  DateTime @map("expires_at")
+  replayedAt DateTime? @map("replayed_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, consumedAt])
+  @@index([expiresAt])
+  @@map("consumed_refresh_tokens")
 }
 
 model EmailVerificationToken {
@@ -322,7 +380,11 @@ model Story {
   isMature Boolean @default(false) @map("is_mature")
 
   publishedAt DateTime? @map("published_at")
+  scheduledAt DateTime? @map("scheduled_at")
   deletedAt   DateTime? @map("deleted_at")
+
+  orderingVersion Int    @default(1) @map("ordering_version")
+  searchText      String @default("") @map("search_text") @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -337,11 +399,15 @@ model Story {
   libraryEntries   LibraryEntry[]
   readingProgress  ReadingProgress[]
   readingListItems ReadingListItem[]
-  chapterReads     ChapterRead[]
+  readingHistory   ReadingHistory[]
+  readSignals      ReadSignal[]
+  stats            StoryStats?
+  dailyMetrics     DailyStoryMetric[]
 
   @@index([authorId, deletedAt, updatedAt])
   @@index([visibility, moderationState, publishedAt])
   @@index([genreId, visibility, publishedAt])
+  @@index([status, scheduledAt])
   @@index([coverAssetId])
   @@map("stories")
 }
@@ -375,7 +441,10 @@ model Chapter {
   wordCount Int @default(0) @map("word_count")
 
   publishedAt DateTime? @map("published_at")
+  scheduledAt DateTime? @map("scheduled_at")
   deletedAt   DateTime? @map("deleted_at")
+
+  contentHash String @default("") @map("content_hash") @db.Char(64)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -385,12 +454,41 @@ model Chapter {
   votes           ChapterVote[]
   comments        Comment[]
   readingProgress ReadingProgress[]
-  reads           ChapterRead[]
+  revisions       ChapterRevision[]
+  readingHistory  ReadingHistory[]
+  readSignals     ReadSignal[]
 
   @@unique([storyId, position])
   @@index([storyId, status, position])
   @@index([storyId, deletedAt])
+  @@index([status, scheduledAt])
   @@map("chapters")
+}
+
+model ChapterRevision {
+  id        String @id @default(uuid()) @db.Uuid
+  chapterId String @map("chapter_id") @db.Uuid
+  createdBy String @map("created_by") @db.Uuid
+
+  revisionNumber Int            @map("revision_number")
+  sourceVersion  Int            @map("source_version")
+  title          String         @db.VarChar(200)
+  content        String         @db.Text
+  contentHash    String         @map("content_hash") @db.Char(64)
+  wordCount      Int            @map("word_count")
+  reason         RevisionReason
+  protected      Boolean        @default(false)
+  restoredFromId String?        @map("restored_from_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  chapter     Chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  creator     User             @relation("RevisionCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  restoredFrom ChapterRevision? @relation("RevisionRestore", fields: [restoredFromId], references: [id], onDelete: SetNull)
+  restores     ChapterRevision[] @relation("RevisionRestore")
+
+  @@unique([chapterId, revisionNumber])
+  @@index([chapterId, createdAt])
+  @@map("chapter_revisions")
 }
 
 model Follow {
@@ -457,6 +555,8 @@ model ReadingProgress {
   chapterId String? @map("chapter_id") @db.Uuid
 
   progress Float @default(0)
+  anchor    String? @db.VarChar(200)
+  completedAt DateTime? @map("completed_at")
 
   lastReadAt DateTime @default(now()) @map("last_read_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -471,22 +571,44 @@ model ReadingProgress {
   @@map("reading_progress")
 }
 
-model ChapterRead {
+model ReadingHistory {
+  id        String @id @default(uuid()) @db.Uuid
   userId    String @map("user_id") @db.Uuid
   storyId   String @map("story_id") @db.Uuid
+  chapterId String? @map("chapter_id") @db.Uuid
+
+  type       ReadingHistoryType
+  progress   Float
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story   Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt, id])
+  @@index([storyId, occurredAt])
+  @@map("reading_history")
+}
+
+model ReadSignal {
+  id        String @id @default(uuid()) @db.Uuid
+  storyId   String @map("story_id") @db.Uuid
   chapterId String @map("chapter_id") @db.Uuid
+  userId    String? @map("user_id") @db.Uuid
 
-  firstReadAt DateTime @default(now()) @map("first_read_at")
-  lastReadAt  DateTime @default(now()) @map("last_read_at")
+  actorType   ReadActorType @map("actor_type")
+  visitorKey  String        @map("visitor_key") @db.Char(64)
+  bucketStart DateTime      @map("bucket_start")
+  qualifiedAt DateTime      @default(now()) @map("qualified_at")
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   story   Story   @relation(fields: [storyId], references: [id], onDelete: Cascade)
   chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
-  @@id([userId, chapterId])
-  @@index([storyId, lastReadAt])
-  @@index([chapterId, lastReadAt])
-  @@map("chapter_reads")
+  @@unique([visitorKey, chapterId, bucketStart])
+  @@index([storyId, qualifiedAt])
+  @@index([userId, storyId])
+  @@map("read_signals")
 }
 
 model ReadingList {
@@ -496,6 +618,7 @@ model ReadingList {
   name        String  @db.VarChar(100)
   description String? @db.VarChar(500)
   isPublic    Boolean @default(true) @map("is_public")
+  orderingVersion Int @default(1) @map("ordering_version")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -513,11 +636,13 @@ model ReadingListItem {
   storyId       String @map("story_id") @db.Uuid
 
   addedAt DateTime @default(now()) @map("added_at")
+  position Int
 
   readingList ReadingList @relation(fields: [readingListId], references: [id], onDelete: Cascade)
   story       Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   @@id([readingListId, storyId])
+  @@unique([readingListId, position])
   @@index([storyId, addedAt])
   @@map("reading_list_items")
 }
@@ -651,4 +776,106 @@ model MediaAsset {
   @@index([ownerId, createdAt])
   @@index([deletedAt])
   @@map("media_assets")
+}
+
+model StoryStats {
+  storyId String @id @map("story_id") @db.Uuid
+
+  voteCount          Int @default(0) @map("vote_count")
+  commentCount       Int @default(0) @map("comment_count")
+  libraryCount       Int @default(0) @map("library_count")
+  authenticatedReaders Int @default(0) @map("authenticated_readers")
+  qualifiedViews     Int @default(0) @map("qualified_views")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@map("story_stats")
+}
+
+model UserStats {
+  userId String @id @map("user_id") @db.Uuid
+
+  followerCount       Int @default(0) @map("follower_count")
+  followingCount      Int @default(0) @map("following_count")
+  publishedStoryCount Int @default(0) @map("published_story_count")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+model DailyStoryMetric {
+  storyId String   @map("story_id") @db.Uuid
+  day     DateTime @db.Date
+
+  qualifiedViews Int @default(0) @map("qualified_views")
+  uniqueReaders  Int @default(0) @map("unique_readers")
+  votes          Int @default(0)
+  comments       Int @default(0)
+  libraryAdds    Int @default(0) @map("library_adds")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, day])
+  @@index([day, qualifiedViews])
+  @@map("daily_story_metrics")
+}
+
+model OutboxMessage {
+  id          String       @id @default(uuid()) @db.Uuid
+  eventType   String       @map("event_type") @db.VarChar(120)
+  aggregateType String     @map("aggregate_type") @db.VarChar(80)
+  aggregateId String       @map("aggregate_id") @db.VarChar(120)
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  occurredAt  DateTime     @default(now()) @map("occurred_at")
+  availableAt DateTime     @default(now()) @map("available_at")
+  leaseUntil  DateTime?    @map("lease_until")
+  attempts    Int          @default(0)
+  lastError   String?      @map("last_error") @db.VarChar(2000)
+  dispatchedAt DateTime?   @map("dispatched_at")
+
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId, occurredAt])
+  @@map("outbox_messages")
+}
+
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String    @db.VarChar(120)
+  dedupeKey   String    @unique @map("dedupe_key") @db.VarChar(240)
+  payload     Json
+  status      JobStatus @default(PENDING)
+  availableAt DateTime  @default(now()) @map("available_at")
+  leaseUntil  DateTime? @map("lease_until")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(10) @map("max_attempts")
+  lastError   String?   @map("last_error") @db.VarChar(2000)
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@index([leaseUntil])
+  @@map("jobs")
+}
+
+model AuditLog {
+  id          String  @id @default(uuid()) @db.Uuid
+  actorId     String? @map("actor_id") @db.Uuid
+  action      String  @db.VarChar(120)
+  targetType  String  @map("target_type") @db.VarChar(80)
+  targetId    String? @map("target_id") @db.VarChar(120)
+  requestId   String? @map("request_id") @db.VarChar(128)
+  ipHash      String? @map("ip_hash") @db.Char(64)
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@map("audit_logs")
 }

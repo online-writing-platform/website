@@ -12,7 +12,8 @@
     "seed": "tsx prisma/seed.ts",
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
-    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "worker": "tsx src/worker.ts",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "start": "node dist/server.js",
     "lint": "eslint .",
     "check": "npm run prisma:validate && npm run typecheck && npm run lint && npm run test && npm run build",
@@ -23,18 +24,21 @@
     "prisma:seed": "prisma generate && prisma db seed",
     "prisma:studio": "prisma studio",
     "admin:set-role": "tsx scripts/set-user-role.ts",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "test:integration:prepare": "node scripts/assert-test-database-safe.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
+    "@asteasolutions/zod-to-openapi": "9.1.0",
     "@prisma/adapter-pg": "7.9.1",
     "@prisma/client": "7.9.1",
     "argon2": "^0.44.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "dotenv": "17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.1",
     "helmet": "^8.3.0",
@@ -43,6 +47,10 @@
     "nodemailer": "^9.0.5",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
+    "pg": "8.23.0",
+    "rate-limit-redis": "6.0.1",
+    "redis": "6.2.1",
+    "sharp": "0.35.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

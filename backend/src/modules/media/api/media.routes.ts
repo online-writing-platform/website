@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 
 import env from "../../../config/env.js";
-import { contentWriteRateLimiter } from "../../../middlewares/rate-limit.middleware.js";
+import { uploadRateLimiter } from "../../../middlewares/rate-limit.middleware.js";
 import { validateParams } from "../../../middlewares/validate.middleware.js";
 import {
     authenticate,
@@ -36,7 +36,7 @@ router.get(
 
 router.post(
     "/story-covers/:storyId",
-    contentWriteRateLimiter,
+    uploadRateLimiter,
     authenticate,
     requireVerifiedEmail,
     validateParams(storyCoverParamsSchema),

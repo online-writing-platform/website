@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import AppError from "../../../errors/app-error.js";
 import logger from "../../../config/logger.js";
-import { inspectImage } from "../domain/image.js";
+import { decodeAndSanitizeImage } from "./image-processor.js";
 
 import type {
     MediaStorageProvider,
@@ -32,12 +32,12 @@ export class MediaService {
             );
         }
 
-        const image = inspectImage(bytes);
+        const image = await decodeAndSanitizeImage(bytes);
         const assetId = randomUUID();
 
         const stored = await this.provider.put({
             assetId,
-            bytes,
+            bytes: image.bytes,
             mimeType: image.mimeType,
             extension: image.extension,
         });
@@ -51,7 +51,7 @@ export class MediaService {
                 objectKey: stored.objectKey,
                 publicUrl: stored.publicUrl,
                 mimeType: image.mimeType,
-                byteSize: bytes.length,
+                byteSize: image.bytes.length,
                 width: image.width,
                 height: image.height,
             });

@@ -8,7 +8,7 @@ COPY backend/prisma.config.ts ./
 RUN ./node_modules/.bin/prisma generate
 
 FROM dependencies AS build
-COPY backend/tsconfig.json backend/eslint.config.js ./
+COPY backend/tsconfig.json backend/eslint.config.mjs ./
 COPY backend/src ./src
 COPY backend/scripts ./scripts
 RUN npm run build

@@ -61,6 +61,12 @@ export class SocialService {
         await this.policy.assertMayInteract(actorId, target.id);
 
         const result = await this.store.follow(actorId, target.id);
+        if (result === "BLOCKED") {
+            throw AppError.forbidden(
+                "This interaction is not available because of a block relationship.",
+                "INTERACTION_BLOCKED",
+            );
+        }
         if (result === "CREATED") {
             await this.notifications.publish({
                 recipientId: target.id,

@@ -10,6 +10,7 @@ interface ErrorResponse {
         code: string;
         message: string;
         details?: unknown;
+        requestId: string;
     };
 }
 
@@ -93,6 +94,10 @@ export default function errorHandler(
                 normalizedError.statusCode >= 500 && env.isProduction
                     ? "Internal Server Error"
                     : normalizedError.message,
+            requestId:
+                typeof request.id === "string"
+                    ? request.id
+                    : (request.get("x-request-id") ?? "unknown"),
         },
     };
 

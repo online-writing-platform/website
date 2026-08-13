@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
+import { createHmac } from "node:crypto";
 
 import AppError from "../../../errors/app-error.js";
+import env from "../../../config/env.js";
 import { getValidatedQuery } from "../../../middlewares/validate.middleware.js";
 import { analyticsModule } from "../analytics.module.js";
 import type {
@@ -19,8 +21,28 @@ export async function recordRead(
     request: Request<Record<string, never>, unknown, RecordReadBody>,
     response: Response,
 ): Promise<void> {
+    const authenticatedUserId = request.auth?.userId;
+    const anonymousVisitor = request.get("x-reader-visitor")?.trim();
+    if (
+        !authenticatedUserId &&
+        (!anonymousVisitor || !/^[A-Za-z0-9_-]{32,128}$/u.test(anonymousVisitor))
+    ) {
+        throw AppError.validation(
+            "Anonymous qualified reads require a valid X-Reader-Visitor identifier.",
+            "ANONYMOUS_VISITOR_REQUIRED",
+        );
+    }
+    const day = new Date().toISOString().slice(0, 10);
+    const visitorKey = createHmac("sha256", env.cursorSecret)
+        .update(
+            authenticatedUserId
+                ? `user:${authenticatedUserId}`
+                : `anonymous:${anonymousVisitor}:${day}`,
+        )
+        .digest("hex");
     await analyticsModule.service.recordRead(
-        requireUserId(request),
+        authenticatedUserId,
+        visitorKey,
         request.body.storyId,
         request.body.chapterId,
     );

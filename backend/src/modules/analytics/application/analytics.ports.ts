@@ -1,6 +1,7 @@
 export interface AnalyticsStore {
     recordRead(
-        userId: string,
+        userId: string | null,
+        visitorKey: string,
         storyId: string,
         chapterId: string,
         at: Date,

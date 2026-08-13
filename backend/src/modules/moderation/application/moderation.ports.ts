@@ -7,7 +7,11 @@ import type {
 } from "../domain/moderation.types.js";
 
 export interface ModerationStore {
-    targetExists(targetType: ReportTargetTypeValue, targetId: string): Promise<boolean>;
+    targetVisibleToReporter(
+        reporterId: string,
+        targetType: ReportTargetTypeValue,
+        targetId: string,
+    ): Promise<boolean>;
     hasOpenReport(
         reporterId: string,
         targetType: ReportTargetTypeValue,
@@ -56,6 +60,7 @@ export interface ModerationStore {
     } | null>;
     applyAction(input: {
         moderatorId: string;
+        moderatorRole: AccountRoleValue;
         targetType: ReportTargetTypeValue;
         targetId: string;
         action: ModerationActionValue;

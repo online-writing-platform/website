@@ -18,7 +18,7 @@ import { analyticsRoutes } from "./modules/analytics/index.js";
 import { authRoutes } from "./modules/auth/index.js";
 import { discoveryRoutes } from "./modules/discovery/index.js";
 import healthRoutes from "./modules/health/health.routes.js";
-import { feedRoutes } from "./modules/feed/index.js";
+import { feedRoutes } from "./modules/discovery/index.js";
 import { entitlementRoutes } from "./modules/entitlements/index.js";
 import { interactionChapterRoutes, commentRoutes } from "./modules/interactions/index.js";
 import {
@@ -26,15 +26,16 @@ import {
     progressRoutes,
     publicUserReadingListRoutes,
     readingListRoutes,
-} from "./modules/library/index.js";
+} from "./modules/reading/index.js";
 import { mediaRoutes } from "./modules/media/index.js";
 import { moderationRoutes, reportRoutes } from "./modules/moderation/index.js";
 import { notificationRoutes } from "./modules/notifications/index.js";
 import { preferenceRoutes } from "./modules/preferences/index.js";
-import { searchRoutes } from "./modules/search/index.js";
+import { searchRoutes } from "./modules/discovery/index.js";
 import { socialUserRoutes } from "./modules/social/index.js";
-import { storyRoutes } from "./modules/stories/index.js";
+import { contentRoutes } from "./modules/content/index.js";
 import { userRoutes } from "./modules/users/index.js";
+import openApiRoutes from "./openapi/routes.js";
 
 const app = express();
 
@@ -105,12 +106,13 @@ app.use(express.urlencoded({ extended: false, limit: "256kb" }));
 
 app.use("/health", healthRoutes);
 app.use("/api/v1", generalApiRateLimiter);
+app.use("/api/v1", openApiRoutes);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/users", socialUserRoutes);
 app.use("/api/v1/users", publicUserReadingListRoutes);
-app.use("/api/v1/stories", storyRoutes);
+app.use("/api/v1/stories", contentRoutes);
 app.use("/api/v1/chapters", interactionChapterRoutes);
 app.use("/api/v1/comments", commentRoutes);
 app.use("/api/v1/library", libraryRoutes);

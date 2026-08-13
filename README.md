@@ -4,19 +4,20 @@ A TypeScript modular-monolith writing and reading platform built with Express, P
 
 ## Architecture
 
-The project intentionally remains a **modular monolith**. Product capabilities are separated into backend modules with API, application, domain-policy and infrastructure layers where those boundaries reduce coupling. The database remains the transaction boundary; no Redis, queue, search cluster or microservice is required for the current product scale.
+The project intentionally remains a **modular monolith**. Product capabilities are separated into backend modules with API, application, domain-policy and infrastructure layers where those boundaries reduce coupling. PostgreSQL remains the domain transaction boundary. Redis supplies distributed production security limits; durable jobs and outbox events remain in PostgreSQL.
 
 Important backend modules include:
 
 - `auth`, `users`, `preferences` — identity, sessions, account lifecycle and reader preferences.
-- `stories` — story/chapter lifecycle, publication policies and optimistic chapter editing.
+- `content` — catalog, manuscripts, deterministic revisions, publishing schedules, visibility policies and bounded queries.
 - `social`, `interactions` — follow/block/mute, votes and comments.
-- `library` — library, reading progress and public/private reading lists.
+- `reading` — current progress, bounded meaningful history, qualified read signals, library and ordered reading lists.
 - `notifications` — deduplicated, preference-aware notifications.
-- `discovery`, `feed`, `search` — bounded discovery and deterministic heuristic ranking.
+- `discovery` — internally separated PostgreSQL search, feed, rankings, signals and explainable recommendations.
 - `moderation` — reports, role-protected actions and audit records.
-- `analytics` — unique chapter reads and author-facing aggregate metrics.
-- `media` — validated image uploads behind local/S3 storage providers.
+- `analytics` — authenticated unique readers, separately deduplicated anonymous signals and repairable author metrics.
+- `jobs` — idempotent PostgreSQL outbox and leased durable scheduled/background work.
+- `media` — fully decoded, resource-bounded and canonically re-encoded images behind local/S3 storage providers.
 
 The React application consumes `/api/v1`, keeps short-lived access tokens in memory, and uses the HttpOnly refresh-cookie flow already implemented by the backend. Public story/reader/profile routes are shareable; writer, library, settings, analytics and moderation routes are protected.
 
@@ -24,13 +25,13 @@ The React application consumes `/api/v1`, keeps short-lived access tokens in mem
 
 - Node.js `>=20.19`
 - npm
-- PostgreSQL 17 (the local Compose file provides it)
+- PostgreSQL 17 and Redis 8 (the local Compose file provides both)
 - Docker/Compose only if you want containerized PostgreSQL or production images
 
 ## Local setup
 
 ```bash
-docker compose up -d database
+docker compose up -d database redis
 
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
@@ -48,7 +49,7 @@ The default frontend is `http://localhost:5173`; the default API is `http://loca
 
 ## Environment
 
-`backend/.env.example` is authoritative. Production requires strong access/refresh-token secrets, an explicit client origin, a public API URL, a real mail transport, and secure cookies. Media can use:
+`backend/.env.example` is authoritative. Production requires strong access/cursor secrets, Redis, an explicit client origin, a public API URL, a real mail transport, and secure cookies. Media can use:
 
 - `MEDIA_PROVIDER=local` for a single-host deployment with a persistent media volume.
 - `MEDIA_PROVIDER=s3` with an S3-compatible bucket. Objects may stay private because media is served through an authorization-aware application route.
@@ -101,7 +102,7 @@ A containerized reference deployment is provided in `docker-compose.production.y
 ## Health and operations
 
 - `GET /health/live` — process liveness; no database dependency.
-- `GET /health/ready` — readiness including database connectivity.
+- `GET /health/ready` — readiness including PostgreSQL and required Redis connectivity, without dependency details.
 - Requests receive/propagate `X-Request-Id`.
 - Production errors do not expose stack traces or database internals.
 - Sensitive auth tokens and passwords are not logged.
@@ -119,7 +120,11 @@ Use privileged roles sparingly and audit moderation actions.
 
 The server is authoritative for ownership, publication state, mature-content access, block relationships and privileged actions. Access tokens travel in `Authorization`; refresh tokens remain HttpOnly cookies with production `Secure` and `SameSite=Lax`. Sensitive endpoints are rate-limited. Votes/follows/library memberships rely on uniqueness/idempotency constraints; chapter autosave uses an explicit version precondition and returns `409 CHAPTER_EDIT_CONFLICT` rather than overwriting a newer edit.
 
-Uploads accept only bounded JPEG/PNG images whose magic bytes and dimensions are validated. The application never exposes local filesystem paths.
+Uploads fully decode bounded JPEG/PNG input, enforce encoded-byte, dimension, decoded-pixel, frame and memory limits, strip metadata, and re-encode canonical JPEG output. The application never exposes local filesystem paths.
+
+## Destructive integration-test safety
+
+Integration database reset/truncation is disabled unless `TEST_DATABASE_URL` is distinct from `DATABASE_URL`, `NODE_ENV` is not production, `ALLOW_DESTRUCTIVE_TEST_DATABASE=true`, and connected server/port/database identities are different. Run `npm --prefix backend run test:integration:prepare` before any destructive integration setup. Database-name heuristics are not used as the safety boundary.
 
 ## Recommendation model
 

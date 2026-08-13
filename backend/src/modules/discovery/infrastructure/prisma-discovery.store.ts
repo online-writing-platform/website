@@ -1,5 +1,5 @@
 import { prisma } from "../../../db/index.js";
-import { isAtLeastAge } from "../../stories/domain/mature.policy.js";
+import { isAtLeastAge } from "../../content/policy/mature.policy.js";
 
 import type {
     DiscoveryCandidate,
@@ -113,7 +113,7 @@ export class PrismaDiscoveryStore implements DiscoveryStore {
                 moderationState: "VISIBLE",
                 visibility: "PUBLIC",
                 publishedAt: { not: null },
-                status: { not: "DRAFT" },
+                status: { in: ["ONGOING", "COMPLETED", "HIATUS"] },
                 author: { status: "ACTIVE" },
                 ...(signals.includeMature ? {} : { isMature: false }),
                 ...(signals.blockedUserIds.size > 0

@@ -1,12 +1,18 @@
 import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hash } from "argon2";
+import { createHash } from "node:crypto";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to seed the database.");
+}
+
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_PRODUCTION_SEED !== "true") {
+  throw new Error("Production seed is disabled. Set ALLOW_PRODUCTION_SEED=true only for an intentional demo environment.");
 }
 
 const adapter = new PrismaPg({
@@ -682,6 +688,10 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+function contentHash(title: string, content: string): string {
+  return createHash("sha256").update(title).update("\0").update(content).digest("hex");
+}
+
 /* --------------------------------------------------
  * Seed
  * -------------------------------------------------- */
@@ -726,6 +736,13 @@ async function main(): Promise<void> {
    */
 
   const authorIds: string[] = [];
+  const developmentPasswordHash = await hash("Development1!", {
+    type: 2,
+    memoryCost: 19_456,
+    timeCost: 2,
+    parallelism: 1,
+    salt: Buffer.alloc(16, 7),
+  });
 
   for (const author of authors) {
     const user = await prisma.user.upsert({
@@ -737,6 +754,7 @@ async function main(): Promise<void> {
         usernameNormalized: author.username.toLowerCase(),
         displayName: author.displayName,
         bio: author.bio,
+        passwordHash: developmentPasswordHash,
         status: "ACTIVE",
         role: "USER",
       },
@@ -744,7 +762,7 @@ async function main(): Promise<void> {
         email: author.email,
         username: author.username,
         usernameNormalized: author.username.toLowerCase(),
-        passwordHash: "$2b$10$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuvwxyz",
+        passwordHash: developmentPasswordHash,
         displayName: author.displayName,
         bio: author.bio,
         birthDate: new Date("2000-01-01"),
@@ -756,6 +774,16 @@ async function main(): Promise<void> {
     });
 
     authorIds.push(user.id);
+    await prisma.userPreference.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, allowMatureContent: false },
+      update: {},
+    });
+    await prisma.userStats.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id },
+      update: {},
+    });
   }
 
   console.log(`✓ ${authors.length} fake authors seeded.`);
@@ -765,6 +793,9 @@ async function main(): Promise<void> {
    * 3. Stories
    * --------------------------------------------------
    */
+
+  const storyIds: string[] = [];
+  const chapterIds: string[] = [];
 
   for (const [storyIndex, storyData] of stories.entries()) {
     const authorId = authorIds[storyIndex];
@@ -816,6 +847,12 @@ async function main(): Promise<void> {
         isMature: false,
         publishedAt: new Date(),
       },
+    });
+    storyIds.push(story.id);
+    await prisma.storyStats.upsert({
+      where: { storyId: story.id },
+      create: { storyId: story.id },
+      update: {},
     });
 
     /*
@@ -876,33 +913,62 @@ async function main(): Promise<void> {
     for (const [chapterIndex, chapterData] of storyData.chapters.entries()) {
       const position = chapterIndex + 1;
 
-      await prisma.chapter.upsert({
+      const chapterContent = chapterData.content.trim();
+      const existingChapter = await prisma.chapter.findUnique({
         where: {
           storyId_position: {
             storyId: story.id,
             position,
           },
         },
-        update: {
-          title: chapterData.title,
-          content: chapterData.content.trim(),
-          version: 1,
-          status: "PUBLISHED",
-          moderationState: "VISIBLE",
-          wordCount: countWords(chapterData.content),
-          publishedAt: new Date(),
+        select: { id: true },
+      });
+      const chapter = existingChapter
+        ? await prisma.chapter.update({
+            where: { id: existingChapter.id },
+            data: {
+              title: chapterData.title,
+              content: chapterContent,
+              contentHash: contentHash(chapterData.title, chapterContent),
+              version: 1,
+              status: "PUBLISHED",
+              moderationState: "VISIBLE",
+              wordCount: countWords(chapterData.content),
+              publishedAt: new Date(),
+            },
+          })
+        : await prisma.chapter.create({
+            data: {
+              storyId: story.id,
+              title: chapterData.title,
+              position,
+              content: chapterContent,
+              contentHash: contentHash(chapterData.title, chapterContent),
+              version: 1,
+              status: "PUBLISHED",
+              moderationState: "VISIBLE",
+              wordCount: countWords(chapterData.content),
+              publishedAt: new Date(),
+            },
+          });
+      chapterIds.push(chapter.id);
+      await prisma.chapterRevision.upsert({
+        where: {
+          chapterId_revisionNumber: { chapterId: chapter.id, revisionNumber: 1 },
         },
         create: {
-          storyId: story.id,
-          title: chapterData.title,
-          position,
-          content: chapterData.content.trim(),
-          version: 1,
-          status: "PUBLISHED",
-          moderationState: "VISIBLE",
-          wordCount: countWords(chapterData.content),
-          publishedAt: new Date(),
+          chapterId: chapter.id,
+          createdBy: authorId,
+          revisionNumber: 1,
+          sourceVersion: chapter.version,
+          title: chapter.title,
+          content: chapterContent,
+          contentHash: contentHash(chapter.title, chapterContent),
+          wordCount: chapter.wordCount,
+          reason: "PUBLISH",
+          protected: true,
         },
+        update: {},
       });
     }
 
@@ -912,6 +978,130 @@ async function main(): Promise<void> {
   console.log("✓ 7 stories seeded.");
   console.log("✓ 21 chapters seeded.");
   console.log("✓ Story tags connected.");
+  const firstAuthorId = authorIds.at(0);
+  const secondAuthorId = authorIds.at(1);
+  const firstStoryId = storyIds.at(0);
+  const secondStoryId = storyIds.at(1);
+  const firstChapterId = chapterIds.at(0);
+  if (!firstAuthorId || !secondAuthorId || !firstStoryId || !secondStoryId || !firstChapterId) {
+    throw new Error("Expected deterministic seed fixtures were not created.");
+  }
+
+  await prisma.follow.createMany({
+    data: [
+      { followerId: firstAuthorId, followingId: secondAuthorId },
+      { followerId: secondAuthorId, followingId: firstAuthorId },
+    ],
+    skipDuplicates: true,
+  });
+  await prisma.libraryEntry.createMany({
+    data: [
+      { userId: firstAuthorId, storyId: secondStoryId },
+      { userId: secondAuthorId, storyId: firstStoryId },
+    ],
+    skipDuplicates: true,
+  });
+  const list = await prisma.readingList.upsert({
+    where: { userId_name: { userId: firstAuthorId, name: "Development favorites" } },
+    create: {
+      userId: firstAuthorId,
+      name: "Development favorites",
+      description: "Deterministic fake reading list for local development.",
+      isPublic: true,
+    },
+    update: { description: "Deterministic fake reading list for local development." },
+  });
+  await prisma.readingListItem.upsert({
+    where: { readingListId_storyId: { readingListId: list.id, storyId: secondStoryId } },
+    create: { readingListId: list.id, storyId: secondStoryId, position: 1 },
+    update: { position: 1 },
+  });
+  await prisma.readingProgress.upsert({
+    where: { userId_storyId: { userId: firstAuthorId, storyId: secondStoryId } },
+    create: {
+      userId: firstAuthorId,
+      storyId: secondStoryId,
+      chapterId: chapterIds.at(3),
+      progress: 0.35,
+      anchor: "paragraph:3",
+    },
+    update: { progress: 0.35, anchor: "paragraph:3" },
+  });
+  const visitorKey = createHash("sha256").update(`user:${firstAuthorId}`).digest("hex");
+  const signalBucket = new Date("2026-08-13T00:00:00.000Z");
+  await prisma.readingHistory.deleteMany({
+    where: { userId: firstAuthorId, storyId: firstStoryId, occurredAt: signalBucket },
+  });
+  await prisma.readingHistory.create({
+    data: {
+      userId: firstAuthorId,
+      storyId: firstStoryId,
+      chapterId: firstChapterId,
+      type: "STARTED",
+      progress: 0.1,
+      occurredAt: signalBucket,
+    },
+  });
+  await prisma.readSignal.upsert({
+    where: {
+      visitorKey_chapterId_bucketStart: { visitorKey, chapterId: firstChapterId, bucketStart: signalBucket },
+    },
+    create: {
+      storyId: firstStoryId,
+      chapterId: firstChapterId,
+      userId: firstAuthorId,
+      actorType: "AUTHENTICATED",
+      visitorKey,
+      bucketStart: signalBucket,
+      qualifiedAt: signalBucket,
+    },
+    update: {},
+  });
+  const anonymousVisitorKey = createHash("sha256").update("seed:anonymous-reader").digest("hex");
+  await prisma.readSignal.upsert({
+    where: {
+      visitorKey_chapterId_bucketStart: {
+        visitorKey: anonymousVisitorKey,
+        chapterId: firstChapterId,
+        bucketStart: signalBucket,
+      },
+    },
+    create: {
+      storyId: firstStoryId,
+      chapterId: firstChapterId,
+      actorType: "ANONYMOUS",
+      visitorKey: anonymousVisitorKey,
+      bucketStart: signalBucket,
+      qualifiedAt: signalBucket,
+    },
+    update: {},
+  });
+  await prisma.chapterVote.upsert({
+    where: { userId_chapterId: { userId: secondAuthorId, chapterId: firstChapterId } },
+    create: { userId: secondAuthorId, chapterId: firstChapterId },
+    update: {},
+  });
+  const existingComment = await prisma.comment.findFirst({
+    where: { userId: secondAuthorId, chapterId: firstChapterId, content: "A deterministic development comment." },
+    select: { id: true },
+  });
+  if (!existingComment) {
+    await prisma.comment.create({
+      data: { userId: secondAuthorId, chapterId: firstChapterId, content: "A deterministic development comment." },
+    });
+  }
+  await prisma.notification.upsert({
+    where: { dedupeKey: "seed:development-follow" },
+    create: {
+      recipientId: firstAuthorId,
+      actorId: secondAuthorId,
+      dedupeKey: "seed:development-follow",
+      type: "FOLLOW",
+      data: { seeded: true },
+    },
+    update: {},
+  });
+  console.log("✓ Social, reading, revision, and notification fixtures seeded.");
   console.log("Database seed completed successfully.");
 }
 

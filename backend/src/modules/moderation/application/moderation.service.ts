@@ -15,7 +15,7 @@ export class ModerationService {
             details?: string;
         },
     ) {
-        if (!(await this.store.targetExists(input.targetType, input.targetId))) {
+        if (!(await this.store.targetVisibleToReporter(reporterId, input.targetType, input.targetId))) {
             throw AppError.notFound("The reported resource was not found.", "REPORT_TARGET_NOT_FOUND");
         }
 
@@ -83,6 +83,7 @@ export class ModerationService {
 
         const applied = await this.store.applyAction({
             moderatorId: actor.userId,
+            moderatorRole: actor.role,
             targetType,
             targetId,
             action,

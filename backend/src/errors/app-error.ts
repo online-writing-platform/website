@@ -52,6 +52,22 @@ export default class AppError extends Error {
         });
     }
 
+    public static validation(
+        message = "The request contains invalid data.",
+        code = "VALIDATION_ERROR",
+        details?: unknown,
+    ): AppError {
+        return new AppError(422, message, { code, details });
+    }
+
+    public static domainRule(
+        message: string,
+        code = "DOMAIN_RULE_VIOLATION",
+        details?: unknown,
+    ): AppError {
+        return new AppError(422, message, { code, details });
+    }
+
     public static forbidden(
         message = "You do not have permission to perform this action.",
         code = "FORBIDDEN",
@@ -90,6 +106,14 @@ export default class AppError extends Error {
             code,
             details,
         });
+    }
+
+    public static tooLarge(
+        message = "The request payload is too large.",
+        code = "PAYLOAD_TOO_LARGE",
+        details?: unknown,
+    ): AppError {
+        return new AppError(413, message, { code, details });
     }
 
     public static serviceUnavailable(

@@ -144,6 +144,25 @@ export class PrismaAuthStore implements AuthStore {
         });
     }
 
+    public findConsumedSessionByRefreshTokenHash(refreshTokenHash: string) {
+        return prisma.consumedRefreshToken.findUnique({
+            where: { tokenHash: refreshTokenHash },
+            select: {
+                sessionId: true,
+                expiresAt: true,
+                session: { select: { revokedAt: true } },
+            },
+        }).then((record) =>
+            record
+                ? {
+                      sessionId: record.sessionId,
+                      expiresAt: record.expiresAt,
+                      revokedAt: record.session.revokedAt,
+                  }
+                : null,
+        );
+    }
+
     public async revokeSessionById(
         sessionId: string,
         revokedAt: Date,
@@ -163,32 +182,67 @@ export class PrismaAuthStore implements AuthStore {
         nextRefreshTokenHash: string,
         usedAt: Date,
     ): Promise<boolean> {
-        const result = await prisma.session.updateMany({
-            where: {
-                id: sessionId,
-                refreshTokenHash: currentRefreshTokenHash,
-                revokedAt: null,
-                expiresAt: { gt: usedAt },
-            },
-            data: {
-                refreshTokenHash: nextRefreshTokenHash,
-                lastUsedAt: usedAt,
-            },
-        });
+        try {
+            return await prisma.$transaction(async (transaction) => {
+                const current = await transaction.session.findFirst({
+                    where: {
+                        id: sessionId,
+                        refreshTokenHash: currentRefreshTokenHash,
+                        revokedAt: null,
+                        expiresAt: { gt: usedAt },
+                    },
+                    select: { expiresAt: true },
+                });
+                if (!current) return false;
 
-        return result.count === 1;
+                await transaction.consumedRefreshToken.create({
+                    data: {
+                        tokenHash: currentRefreshTokenHash,
+                        sessionId,
+                        expiresAt: current.expiresAt,
+                    },
+                });
+                const result = await transaction.session.updateMany({
+                    where: {
+                        id: sessionId,
+                        refreshTokenHash: currentRefreshTokenHash,
+                        revokedAt: null,
+                    },
+                    data: {
+                        refreshTokenHash: nextRefreshTokenHash,
+                        lastUsedAt: usedAt,
+                    },
+                });
+                return result.count === 1;
+            });
+        } catch (error) {
+            if (isPrismaErrorCode(error, "P2002")) return false;
+            throw error;
+        }
     }
 
     public async revokeSessionByRefreshTokenHash(
         refreshTokenHash: string,
         revokedAt: Date,
     ): Promise<void> {
-        await prisma.session.updateMany({
-            where: {
-                refreshTokenHash,
-                revokedAt: null,
-            },
-            data: { revokedAt },
+        await prisma.$transaction(async (transaction) => {
+            const active = await transaction.session.findUnique({
+                where: { refreshTokenHash },
+                select: { id: true },
+            });
+            const consumed = active
+                ? null
+                : await transaction.consumedRefreshToken.findUnique({
+                      where: { tokenHash: refreshTokenHash },
+                      select: { sessionId: true },
+                  });
+            const sessionId = active?.id ?? consumed?.sessionId;
+            if (sessionId) {
+                await transaction.session.updateMany({
+                    where: { id: sessionId, revokedAt: null },
+                    data: { revokedAt },
+                });
+            }
         });
     }
 

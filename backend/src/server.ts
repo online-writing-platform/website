@@ -8,12 +8,15 @@ import {
     closeDatabaseConnection,
     connectDatabase,
 } from "./db/index.js";
+import { closeRedis, connectRedis } from "./infrastructure/redis/redis.js";
+import { runWorker, stopWorker } from "./modules/jobs/application/worker.js";
 
 let server: Server | undefined;
 let shutdownPromise: Promise<void> | undefined;
 
 async function startServer(): Promise<void> {
     await connectDatabase();
+    await connectRedis();
 
     const databaseTime = await checkDatabaseConnection();
 
@@ -33,6 +36,13 @@ async function startServer(): Promise<void> {
             "HTTP server started",
         );
     });
+
+    if (env.jobWorkerEnabled) {
+        void runWorker().catch((error: unknown) => {
+            logger.fatal({ error }, "Background worker failed");
+            void shutdown("WORKER_ERROR", 1);
+        });
+    }
 
     server.on("error", (error) => {
         logger.fatal(
@@ -83,7 +93,9 @@ async function performShutdown(
     forceShutdownTimer.unref();
 
     try {
+        stopWorker();
         await closeHttpServer();
+        await closeRedis();
         await closeDatabaseConnection();
 
         logger.info("HTTP server and database connections closed");

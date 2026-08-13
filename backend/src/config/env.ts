@@ -17,6 +17,7 @@ const environmentSchema = z
 
         PORT: z.coerce.number().int().min(1).max(65_535).default(5000),
         DATABASE_URL: z.string().trim().min(1),
+        REDIS_URL: optionalEnvironmentString,
         CLIENT_ORIGINS: z.string().trim().default("http://localhost:5173"),
         WEB_APP_URL: z
             .string()
@@ -119,6 +120,12 @@ const environmentSchema = z
             .min(100_000)
             .max(20_000_000)
             .default(5_000_000),
+        MEDIA_MAX_PIXELS: z.coerce
+            .number()
+            .int()
+            .min(1_000_000)
+            .max(80_000_000)
+            .default(40_000_000),
         S3_ENDPOINT: optionalEnvironmentString,
         S3_REGION: z.string().trim().min(1).default("us-east-1"),
         S3_BUCKET: optionalEnvironmentString,
@@ -155,8 +162,28 @@ const environmentSchema = z
             ])
             .default("info"),
         TERMS_VERSION: z.string().trim().min(1).max(20).default("v1"),
+        CURSOR_SECRET: optionalEnvironmentString,
+        JOB_WORKER_ENABLED: z.enum(["true", "false"]).default("true"),
     })
     .superRefine((values, context) => {
+        if (values.NODE_ENV === "production" && !values.REDIS_URL) {
+            context.addIssue({
+                code: "custom",
+                path: ["REDIS_URL"],
+                message: "REDIS_URL is required for production security controls.",
+            });
+        }
+
+        if (
+            values.NODE_ENV === "production" &&
+            (!values.CURSOR_SECRET || values.CURSOR_SECRET.length < 32)
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["CURSOR_SECRET"],
+                message: "CURSOR_SECRET must contain at least 32 characters in production.",
+            });
+        }
         if (
             values.NODE_ENV === "production" &&
             values.MAIL_TRANSPORT !== "smtp"
@@ -250,6 +277,7 @@ const env = Object.freeze({
     isProduction: values.NODE_ENV === "production",
     port: values.PORT,
     databaseUrl: values.DATABASE_URL,
+    redisUrl: values.REDIS_URL,
     clientOrigins,
     webAppUrl: values.WEB_APP_URL,
     publicApiUrl: values.PUBLIC_API_URL.replace(/\/+$/u, ""),
@@ -278,6 +306,7 @@ const env = Object.freeze({
     mediaProvider: values.MEDIA_PROVIDER,
     mediaLocalRoot: values.MEDIA_LOCAL_ROOT,
     mediaMaxBytes: values.MEDIA_MAX_BYTES,
+    mediaMaxPixels: values.MEDIA_MAX_PIXELS,
     s3Endpoint: values.S3_ENDPOINT,
     s3Region: values.S3_REGION,
     s3Bucket: values.S3_BUCKET ?? "",
@@ -289,6 +318,8 @@ const env = Object.freeze({
     trustProxy: values.TRUST_PROXY === "true",
     logLevel: values.LOG_LEVEL,
     termsVersion: values.TERMS_VERSION,
+    cursorSecret: values.CURSOR_SECRET ?? values.ACCESS_TOKEN_SECRET,
+    jobWorkerEnabled: values.JOB_WORKER_ENABLED === "true",
 });
 
 export default env;

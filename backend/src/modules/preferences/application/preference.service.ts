@@ -1,5 +1,5 @@
 import AppError from "../../../errors/app-error.js";
-import { isAtLeastAge } from "../../stories/domain/mature.policy.js";
+import { isAtLeastAge } from "../../content/policy/mature.policy.js";
 
 import type { UpdatePreferencesInput } from "../domain/preference.types.js";
 import type { PreferenceStore } from "./preference.ports.js";

@@ -33,12 +33,14 @@ export interface InteractionStore {
         chapterId: string,
         cursor: string | undefined,
         limit: number,
+        viewerId?: string,
     ): Promise<CommentPage>;
     listReplies(
         chapterId: string,
         parentId: string,
         cursor: string | undefined,
         limit: number,
+        viewerId?: string,
     ): Promise<CommentPage>;
 }
 

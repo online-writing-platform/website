@@ -6,7 +6,7 @@ import {
     validateParams,
     validateQuery,
 } from "../../../middlewares/validate.middleware.js";
-import { authenticate } from "../../auth/index.js";
+import { authenticate, optionalAuthenticate } from "../../auth/index.js";
 import {
     getReadingHistory,
     getStoryAnalytics,
@@ -20,20 +20,22 @@ import {
 
 const router = Router();
 
-router.use(authenticate);
 router.get(
     "/history",
+    authenticate,
     validateQuery(readingHistoryQuerySchema),
     getReadingHistory,
 );
 router.post(
     "/reads",
     contentWriteRateLimiter,
+    optionalAuthenticate,
     validateBody(recordReadSchema),
     recordRead,
 );
 router.get(
     "/stories/:storyId",
+    authenticate,
     validateParams(storyAnalyticsParamsSchema),
     getStoryAnalytics,
 );

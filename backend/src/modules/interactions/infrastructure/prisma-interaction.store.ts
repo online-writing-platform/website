@@ -144,9 +144,26 @@ export class PrismaInteractionStore implements InteractionStore {
         return result.count === 1;
     }
 
-    public async listComments(chapterId: string, cursor: string | undefined, limit: number) {
+    public async listComments(
+        chapterId: string,
+        cursor: string | undefined,
+        limit: number,
+        viewerId?: string,
+    ) {
         const rows: CommentRow[] = await prisma.comment.findMany({
-            where: { chapterId, parentId: null, status: { not: "HIDDEN" } },
+            where: {
+                chapterId,
+                parentId: null,
+                status: { not: "HIDDEN" },
+                ...(viewerId
+                    ? {
+                          user: {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          },
+                      }
+                    : {}),
+            },
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             take: limit + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -161,9 +178,22 @@ export class PrismaInteractionStore implements InteractionStore {
         parentId: string,
         cursor: string | undefined,
         limit: number,
+        viewerId?: string,
     ) {
         const rows: CommentRow[] = await prisma.comment.findMany({
-            where: { chapterId, parentId, status: { not: "HIDDEN" } },
+            where: {
+                chapterId,
+                parentId,
+                status: { not: "HIDDEN" },
+                ...(viewerId
+                    ? {
+                          user: {
+                              blocksCreated: { none: { blockedId: viewerId } },
+                              blocksReceived: { none: { blockerId: viewerId } },
+                          },
+                      }
+                    : {}),
+            },
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
             take: limit + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

@@ -1,154 +1,71 @@
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, type Options } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
 
-function rateLimitMessage(code: string, message: string): { error: { code: string; message: string } } {
-    return {
-        error: {
-            code,
-            message,
-        },
-    };
+import env from "../config/env.js";
+import { getRedisClient } from "../infrastructure/redis/redis.js";
+
+interface LimitPolicy {
+    name: string;
+    windowMs: number;
+    limit: number;
+    code: string;
+    message: string;
+    skipSuccessfulRequests?: boolean;
 }
 
-export const generalApiRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 300,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "RATE_LIMIT_EXCEEDED",
-        "Too many requests. Please try again later.",
-    ),
-});
+function createLimiter(policy: LimitPolicy) {
+    const redis = getRedisClient();
+    const options: Partial<Options> = {
+        windowMs: policy.windowMs,
+        limit: policy.limit,
+        standardHeaders: "draft-8",
+        legacyHeaders: false,
+        passOnStoreError: false,
+        skipSuccessfulRequests: policy.skipSuccessfulRequests ?? false,
+        message: {
+            error: {
+                code: policy.code,
+                message: policy.message,
+                requestId: "rate-limited",
+            },
+        },
+    };
 
-export const registrationRateLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    limit: 5,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "REGISTRATION_RATE_LIMIT_EXCEEDED",
-        "Too many registration attempts. Please try again later.",
-    ),
-});
+    if (redis) {
+        options.store = new RedisStore({
+            prefix: `writing-platform:rate:${policy.name}:`,
+            sendCommand: (...args: string[]) => redis.sendCommand(args),
+        });
+    } else if (env.isProduction) {
+        throw new Error(`Redis is required for production rate limiter ${policy.name}.`);
+    }
 
-export const loginRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 15,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    skipSuccessfulRequests: true,
-    message: rateLimitMessage(
-        "LOGIN_RATE_LIMIT_EXCEEDED",
-        "Too many login attempts. Please try again later.",
-    ),
-});
+    return rateLimit(options);
+}
 
-export const refreshRateLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000,
-    limit: 60,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "REFRESH_RATE_LIMIT_EXCEEDED",
-        "Too many token refresh requests. Please try again later.",
-    ),
-});
+function policy(
+    name: string,
+    windowMs: number,
+    limit: number,
+    code: string,
+    message: string,
+    skipSuccessfulRequests = false,
+) {
+    return createLimiter({ name, windowMs, limit, code, message, skipSuccessfulRequests });
+}
 
-export const emailVerificationRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 30,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "EMAIL_VERIFICATION_RATE_LIMIT_EXCEEDED",
-        "Too many email verification attempts. Please try again later.",
-    ),
-});
-
-export const verificationEmailResendRateLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    limit: 5,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "VERIFICATION_EMAIL_RESEND_RATE_LIMIT_EXCEEDED",
-        "Too many verification email requests. Please try again later.",
-    ),
-});
-
-export const passwordResetRequestRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 5,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "PASSWORD_RESET_REQUEST_RATE_LIMIT_EXCEEDED",
-        "Too many password reset requests. Please try again later.",
-    ),
-});
-
-export const passwordResetConfirmRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "PASSWORD_RESET_CONFIRM_RATE_LIMIT_EXCEEDED",
-        "Too many password reset attempts. Please try again later.",
-    ),
-});
-
-export const sensitiveAccountRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 10,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "SENSITIVE_ACCOUNT_RATE_LIMIT_EXCEEDED",
-        "Too many account security requests. Please try again later.",
-    ),
-});
-
-export const contentWriteRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 120,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "CONTENT_WRITE_RATE_LIMIT_EXCEEDED",
-        "Too many content changes. Please try again later.",
-    ),
-});
-
-export const socialWriteRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 120,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "SOCIAL_WRITE_RATE_LIMIT_EXCEEDED",
-        "Too many social actions. Please try again later.",
-    ),
-});
-
-export const reportRateLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    limit: 10,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "REPORT_RATE_LIMIT_EXCEEDED",
-        "Too many reports. Please try again later.",
-    ),
-});
-
-export const moderationRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 120,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: rateLimitMessage(
-        "MODERATION_RATE_LIMIT_EXCEEDED",
-        "Too many moderation actions. Please try again later.",
-    ),
-});
+export const generalApiRateLimiter = policy("api", 15 * 60_000, 600, "RATE_LIMIT_EXCEEDED", "Too many requests. Please try again later.");
+export const registrationRateLimiter = policy("register", 60 * 60_000, 5, "REGISTRATION_RATE_LIMIT_EXCEEDED", "Too many registration attempts. Please try again later.");
+export const loginRateLimiter = policy("login", 15 * 60_000, 15, "LOGIN_RATE_LIMIT_EXCEEDED", "Too many login attempts. Please try again later.", true);
+export const refreshRateLimiter = policy("refresh", 5 * 60_000, 60, "REFRESH_RATE_LIMIT_EXCEEDED", "Too many token refresh requests. Please try again later.");
+export const emailVerificationRateLimiter = policy("verify-email", 15 * 60_000, 30, "EMAIL_VERIFICATION_RATE_LIMIT_EXCEEDED", "Too many email verification attempts. Please try again later.");
+export const verificationEmailResendRateLimiter = policy("resend-verification", 60 * 60_000, 5, "VERIFICATION_EMAIL_RESEND_RATE_LIMIT_EXCEEDED", "Too many verification email requests. Please try again later.");
+export const passwordResetRequestRateLimiter = policy("request-reset", 15 * 60_000, 5, "PASSWORD_RESET_REQUEST_RATE_LIMIT_EXCEEDED", "Too many password reset requests. Please try again later.");
+export const passwordResetConfirmRateLimiter = policy("confirm-reset", 15 * 60_000, 20, "PASSWORD_RESET_CONFIRM_RATE_LIMIT_EXCEEDED", "Too many password reset attempts. Please try again later.");
+export const sensitiveAccountRateLimiter = policy("account", 15 * 60_000, 10, "SENSITIVE_ACCOUNT_RATE_LIMIT_EXCEEDED", "Too many account security requests. Please try again later.");
+export const contentWriteRateLimiter = policy("content-write", 15 * 60_000, 120, "CONTENT_WRITE_RATE_LIMIT_EXCEEDED", "Too many content changes. Please try again later.");
+export const socialWriteRateLimiter = policy("social-write", 15 * 60_000, 120, "SOCIAL_WRITE_RATE_LIMIT_EXCEEDED", "Too many social actions. Please try again later.");
+export const searchRateLimiter = policy("search", 60_000, 60, "SEARCH_RATE_LIMIT_EXCEEDED", "Too many searches. Please try again shortly.");
+export const uploadRateLimiter = policy("upload", 60 * 60_000, 30, "UPLOAD_RATE_LIMIT_EXCEEDED", "Too many uploads. Please try again later.");
+export const reportRateLimiter = policy("report", 60 * 60_000, 10, "REPORT_RATE_LIMIT_EXCEEDED", "Too many reports. Please try again later.");
+export const moderationRateLimiter = policy("moderation", 15 * 60_000, 120, "MODERATION_RATE_LIMIT_EXCEEDED", "Too many moderation actions. Please try again later.");
