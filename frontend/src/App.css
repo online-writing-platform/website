@@ -5,10 +5,8 @@
 }
 
 .app-main {
-  width: min(100% - 2rem, var(--content-max));
   margin-inline: auto;
   flex: 1;
-  padding-block: 1.5rem 3rem;
 }
 
 .page-heading {
