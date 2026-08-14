@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "Home",
+    "stories": "Stories",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register"
+  },
+  "home": {
+    "latest": "Latest",
+    "popular": "Popular",
+    "recommended": "Recommended for you"
+  }
+}

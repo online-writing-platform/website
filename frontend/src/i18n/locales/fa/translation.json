@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "خانه",
+    "stories": "داستان‌ها",
+    "profile": "پروفایل",
+    "login": "ورود",
+    "register": "ثبت نام"
+  },
+  "home": {
+    "latest": "تازه‌ها",
+    "popular": "محبوب‌ها",
+    "recommended": "مطابق با سلیقه شما"
+  }
+}

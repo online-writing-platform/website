@@ -2,7 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 
 import useAuth from "../hooks/useAuth";
 import ThemeButton from "./ThemeButton";
-
+import LanguageSwitcher from "./LanguageSwitcher";
 import "./PlatformHeader.css";
 
 function PlatformHeader() {
@@ -32,6 +32,7 @@ function PlatformHeader() {
 
         <div className="platform-account">
           <ThemeButton />
+          <LanguageSwitcher />
           {status === "authenticated" && user ? (
             <>
               <Link to={`/users/${encodeURIComponent(user.username)}`}>
