@@ -17,47 +17,47 @@
      Base
      ========================= */
 
-  --background: #fff;
-  --surface: #f7f3ed;
-  --surface-hover: #f0e9df;
+  --background: #f8f8fb;
+  --surface: #ffffff;
+  --surface-hover: #f1f1f6;
 
-  --text: #3d0c02;
-  --text2: #f7f3ed;
-  --text-secondary: #592720;
-  --text-muted: #9f8170;
+  --text: #18181b;
+  --text2: #f2f2f5;
+  --text-secondary: #686872;
+  --text-muted: #9696a0;
 
-  --border: #d9c9bd;
-
-  /* =========================
-     Primary - Forest Green
-     ========================= */
-
-  --primary: #013220;
-  --primary-hover: #00401a;
-  --primary-soft: #dff2e2;
-  --primary-normal: #50c878;
+  --border: #e3e3ea;
 
   /* =========================
-     Accent - Warm Brown
+     Primary - Purple
      ========================= */
 
-  --accent: #79443b;
-  --accent-soft: #eadbd4;
-  --accent-foreground: #fffdf9;
+  --primary: #6750d8;
+  --primary-hover: #5943c5;
+  --primary-soft: #efecff;
+  --primary-normal: #6750d8;
+
+  /* =========================
+     Accent - Orange
+     ========================= */
+
+  --accent: #f97345;
+  --accent-soft: #fff0ea;
+  --accent-foreground: #ffffff;
 
   /* =========================
      Status
      ========================= */
 
-  --success: #50c878;
-  --warning: #9f8170;
-  --danger: #a34b3f;
+  --success: #16a36a;
+  --warning: #d99000;
+  --danger: #dc3e4f;
 
   /* =========================
      Effects
      ========================= */
 
-  --shadow: 0 4px 12px rgb(61 12 2 / 12%);
+  --shadow: 0 4px 12px rgb(24 24 27 / 10%);
 
   /* =========================
      Layout
@@ -70,37 +70,37 @@
      shadcn / UI
      ========================= */
 
-  --foreground: #3d0c02;
+  --foreground: #18181b;
 
-  --card: #fffdf9;
-  --card-foreground: #3d0c02;
+  --card: #ffffff;
+  --card-foreground: #18181b;
 
-  --popover: #fffdf9;
-  --popover-foreground: #3d0c02;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
 
-  --primary-foreground: #f7f3ed;
+  --primary-foreground: #ffffff;
 
-  --secondary: #eadbd4;
-  --secondary-foreground: #592720;
+  --secondary: #f1f1f6;
+  --secondary-foreground: #18181b;
 
-  --muted: #eee6dc;
-  --muted-foreground: #79443b;
+  --muted: #f1f1f6;
+  --muted-foreground: #686872;
 
-  --destructive: #a34b3f;
+  --destructive: #dc3e4f;
 
-  --input: #d9c9bd;
+  --input: #e3e3ea;
 
-  --ring: #50c878;
+  --ring: #6750d8;
 
   /* =========================
      Charts
      ========================= */
 
-  --chart-1: #013220;
-  --chart-2: #50c878;
-  --chart-3: #79443b;
-  --chart-4: #9f8170;
-  --chart-5: #00401a;
+  --chart-1: #6750d8;
+  --chart-2: #f97345;
+  --chart-3: #16a36a;
+  --chart-4: #d99000;
+  --chart-5: #dc3e4f;
 
   /* =========================
      Misc
@@ -112,17 +112,17 @@
      Sidebar
      ========================= */
 
-  --sidebar: #fffdf9;
-  --sidebar-foreground: #3d0c02;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #18181b;
 
-  --sidebar-primary: #013220;
-  --sidebar-primary-foreground: #f7f3ed;
+  --sidebar-primary: #6750d8;
+  --sidebar-primary-foreground: #ffffff;
 
-  --sidebar-accent: #eadbd4;
-  --sidebar-accent-foreground: #592720;
+  --sidebar-accent: #f1f1f6;
+  --sidebar-accent-foreground: #18181b;
 
-  --sidebar-border: #d9c9bd;
-  --sidebar-ring: #50c878;
+  --sidebar-border: #e3e3ea;
+  --sidebar-ring: #6750d8;
 }
 
 .dark {
@@ -130,41 +130,41 @@
      Base
      ========================= */
 
-  --background: #000;
-  --surface: #241512;
-  --surface-hover: #30201b;
+  --background: #101014;
+  --surface: #18181d;
+  --surface-hover: #202026;
 
-  --text: #f7eee7;
-  --text2: #241512;
-  --text-secondary: #d0bdb2;
-  --text-muted: #9f8170;
+  --text: #f2f2f5;
+  --text2: #18181d;
+  --text-secondary: #aeadb7;
+  --text-muted: #777680;
 
-  --border: #4a332c;
-
-  /* =========================
-     Primary - Forest Green
-     ========================= */
-
-  --primary: #50c878;
-  --primary-hover: #ace1af;
-  --primary-soft: #183b2b;
-  --primary-normal: #2f8f5b;
+  --border: #303038;
 
   /* =========================
-     Accent - Warm Brown
+     Primary - Purple
      ========================= */
 
-  --accent: #9f8170;
-  --accent-soft: #3d2721;
-  --accent-foreground: #160c09;
+  --primary: #8c7af0;
+  --primary-hover: #9d8df5;
+  --primary-soft: #292348;
+  --primary-normal: #8c7af0;
+
+  /* =========================
+     Accent - Orange
+     ========================= */
+
+  --accent: #ff895f;
+  --accent-soft: #3a2118;
+  --accent-foreground: #ffffff;
 
   /* =========================
      Status
      ========================= */
 
-  --success: #50c878;
-  --warning: #ace1af;
-  --danger: #d87567;
+  --success: #40c991;
+  --warning: #f0b84d;
+  --danger: #f06472;
 
   /* =========================
      Effects
@@ -176,55 +176,54 @@
      shadcn / UI
      ========================= */
 
-  --foreground: #f7eee7;
+  --foreground: #f2f2f5;
 
-  --card: #241512;
-  --card-foreground: #f7eee7;
+  --card: #18181d;
+  --card-foreground: #f2f2f5;
 
-  --popover: #241512;
-  --popover-foreground: #f7eee7;
+  --popover: #18181d;
+  --popover-foreground: #f2f2f5;
 
-  --primary-foreground: #160c09;
+  --primary-foreground: #ffffff;
 
-  --secondary: #3d2721;
-  --secondary-foreground: #f7eee7;
+  --secondary: #202026;
+  --secondary-foreground: #f2f2f5;
 
-  --muted: #30201b;
-  --muted-foreground: #bda99e;
+  --muted: #202026;
+  --muted-foreground: #aeadb7;
 
-  --destructive: #d87567;
+  --destructive: #f06472;
 
-  --input: #4a332c;
+  --input: #303038;
 
-  --ring: #50c878;
+  --ring: #8c7af0;
 
   /* =========================
      Charts
      ========================= */
 
-  --chart-1: #50c878;
-  --chart-2: #ace1af;
-  --chart-3: #9f8170;
-  --chart-4: #79443b;
-  --chart-5: #00401a;
+  --chart-1: #8c7af0;
+  --chart-2: #ff895f;
+  --chart-3: #40c991;
+  --chart-4: #f0b84d;
+  --chart-5: #f06472;
 
   /* =========================
      Sidebar
      ========================= */
 
-  --sidebar: #1c100d;
-  --sidebar-foreground: #f7eee7;
+  --sidebar: #18181d;
+  --sidebar-foreground: #f2f2f5;
 
-  --sidebar-primary: #50c878;
-  --sidebar-primary-foreground: #160c09;
+  --sidebar-primary: #8c7af0;
+  --sidebar-primary-foreground: #ffffff;
 
-  --sidebar-accent: #3d2721;
-  --sidebar-accent-foreground: #f7eee7;
+  --sidebar-accent: #202026;
+  --sidebar-accent-foreground: #f2f2f5;
 
-  --sidebar-border: #4a332c;
-  --sidebar-ring: #50c878;
+  --sidebar-border: #303038;
+  --sidebar-ring: #8c7af0;
 }
-
 * {
   box-sizing: border-box;
 }
