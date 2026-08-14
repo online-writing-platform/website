@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
+import { LuEyeClosed, LuEye } from "react-icons/lu";
 import Button from "../components/Button";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
@@ -34,6 +35,7 @@ function Register() {
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (status === "authenticated") {
     return <Navigate to="/settings" replace />;
@@ -164,42 +166,68 @@ function Register() {
 
           <div className="form-group">
             <label htmlFor="password">رمز عبور</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  password: event.target.value,
-                }));
-              }}
-              minLength={10}
-              maxLength={128}
-              autoComplete="new-password"
-              required
-            />
+
+            <div className="password-input-wrapper">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    password: event.target.value,
+                  }));
+                }}
+                minLength={10}
+                maxLength={128}
+                autoComplete="new-password"
+                required
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={
+                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+                }
+              >
+                {showPassword ? <LuEye /> : <LuEyeClosed />}{" "}
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword">تکرار رمز عبور</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={form.confirmPassword}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  confirmPassword: event.target.value,
-                }));
-              }}
-              minLength={10}
-              maxLength={128}
-              autoComplete="new-password"
-              required
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                value={form.confirmPassword}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    confirmPassword: event.target.value,
+                  }));
+                }}
+                minLength={10}
+                maxLength={128}
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={
+                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+                }
+              >
+                {showPassword ? <LuEye /> : <LuEyeClosed />}{" "}
+              </button>
+            </div>
           </div>
 
           <label className="form-checkbox">
