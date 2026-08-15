@@ -1,0 +1,21 @@
+{
+  "navigation": {
+    "home": "Home",
+    "stories": "Stories",
+    "profile": "Profile",
+    "login": "Login",
+    "register": "Register"
+  },
+  "hero": {
+    "tagline": "Where Stories Come Alive",
+    "title": "Discover Your Next Favorite Story",
+    "subtitle": "Read millions of stories for free, write your own, and connect with readers and writers around the world.",
+    "cta": "Start Reading",
+    "ctaWrite": "Start Writing"
+  },
+  "home": {
+    "latest": "Latest",
+    "popular": "Popular",
+    "recommended": "Recommended for you"
+  }
+}
