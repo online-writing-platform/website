@@ -9,6 +9,7 @@ import {
     createReadingList,
     deleteProgress,
     deleteReadingList,
+    getLibraryStatus,
     getReadingList,
     listLibrary,
     listOwnReadingLists,
@@ -40,6 +41,7 @@ const publicUserReadingListRoutes = Router();
 
 libraryRoutes.use(authenticate);
 libraryRoutes.get("/", validateQuery(libraryListQuerySchema), listLibrary);
+libraryRoutes.get("/:storyId", validateParams(storyIdParamsSchema), getLibraryStatus);
 libraryRoutes.post("/:storyId", contentWriteRateLimiter, validateParams(storyIdParamsSchema), addLibrary);
 libraryRoutes.delete("/:storyId", contentWriteRateLimiter, validateParams(storyIdParamsSchema), removeLibrary);
 
