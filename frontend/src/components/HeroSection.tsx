@@ -9,8 +9,16 @@ export function HeroSection() {
   const { t } = useTranslation();
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-rose-50 to-amber-50 dark:from-orange-950/20 dark:via-rose-950/20 dark:to-amber-950/20">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <section
+      className="relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, var(--background) 0%, var(--primary-soft) 55%, var(--accent-soft) 100%)",
+      }}
+    >
+      {/* Decorative animated blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Purple glow */}
         <motion.div
           animate={{
             y: [0, -20, 0],
@@ -21,9 +29,14 @@ export function HeroSection() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute top-20 left-[10%] h-16 w-16 rounded-full bg-orange-200/40 blur-xl dark:bg-orange-800/20"
+          className="absolute left-[10%] top-20 h-16 w-16 rounded-full blur-2xl"
+          style={{
+            backgroundColor: "var(--primary)",
+            opacity: 0.14,
+          }}
         />
 
+        {/* Orange glow */}
         <motion.div
           animate={{
             y: [0, 15, 0],
@@ -34,9 +47,14 @@ export function HeroSection() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute top-40 right-[15%] h-24 w-24 rounded-full bg-rose-200/40 blur-xl dark:bg-rose-800/20"
+          className="absolute right-[15%] top-40 h-24 w-24 rounded-full blur-2xl"
+          style={{
+            backgroundColor: "var(--accent)",
+            opacity: 0.14,
+          }}
         />
 
+        {/* Another purple glow */}
         <motion.div
           animate={{
             y: [0, -10, 0],
@@ -46,12 +64,17 @@ export function HeroSection() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute bottom-20 left-[20%] h-20 w-20 rounded-full bg-amber-200/40 blur-xl dark:bg-amber-800/20"
+          className="absolute bottom-20 left-[20%] h-20 w-20 rounded-full blur-2xl"
+          style={{
+            backgroundColor: "var(--primary)",
+            opacity: 0.1,
+          }}
         />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-32">
         <div className="flex flex-col items-center gap-6 text-center">
+          {/* Tagline */}
           <motion.div
             initial={{
               opacity: 0,
@@ -64,7 +87,10 @@ export function HeroSection() {
             transition={{
               duration: 0.6,
             }}
-            className="flex items-center gap-2 text-orange-600 dark:text-orange-400"
+            className="flex items-center gap-2"
+            style={{
+              color: "var(--primary)",
+            }}
           >
             <Sparkles className="h-5 w-5" />
 
@@ -73,6 +99,7 @@ export function HeroSection() {
             </span>
           </motion.div>
 
+          {/* Main title */}
           <motion.h1
             initial={{
               opacity: 0,
@@ -86,11 +113,16 @@ export function HeroSection() {
               duration: 0.6,
               delay: 0.1,
             }}
-            className="max-w-4xl bg-gradient-to-r from-orange-600 via-rose-600 to-amber-600 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-6xl lg:text-7xl"
+            className="max-w-4xl bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-6xl lg:text-7xl"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, var(--primary) 0%, var(--primary-hover) 55%, var(--accent) 100%)",
+            }}
           >
             {t("hero.title")}
           </motion.h1>
 
+          {/* Subtitle */}
           <motion.p
             initial={{
               opacity: 0,
@@ -109,6 +141,7 @@ export function HeroSection() {
             {t("hero.subtitle")}
           </motion.p>
 
+          {/* CTA Buttons */}
           <motion.div
             initial={{
               opacity: 0,
@@ -124,21 +157,33 @@ export function HeroSection() {
             }}
             className="mt-4 flex flex-col gap-3 sm:flex-row"
           >
+            {/* Primary CTA */}
             <Link to="/stories">
               <Button
                 size="lg"
-                className="gap-2 bg-gradient-to-r from-orange-500 to-rose-500 text-white"
+                className="gap-2 text-white shadow-md transition-all hover:-translate-y-0.5"
+                style={{
+                  background:
+                    "linear-gradient(90deg, var(--primary), var(--primary-hover))",
+                }}
               >
                 <BookOpen className="h-5 w-5" />
 
                 {t("hero.cta")}
               </Button>
             </Link>
+
+            {/* Secondary CTA */}
             <Link to="/write">
               <Button
                 size="lg"
                 variant="outline"
-                className="gap-2 border-orange-300 text-orange-600"
+                className="gap-2 transition-all hover:-translate-y-0.5"
+                style={{
+                  borderColor: "var(--accent)",
+                  color: "var(--accent)",
+                  backgroundColor: "transparent",
+                }}
               >
                 <PenTool className="h-5 w-5" />
 
@@ -147,6 +192,7 @@ export function HeroSection() {
             </Link>
           </motion.div>
 
+          {/* Stats */}
           <motion.div
             initial={{
               opacity: 0,
@@ -161,19 +207,34 @@ export function HeroSection() {
             className="mt-8 flex flex-wrap justify-center gap-8 text-sm text-muted-foreground"
           >
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-foreground">2.4M+</span>
+              <span
+                className="text-2xl font-bold"
+                style={{ color: "var(--foreground)" }}
+              >
+                2.4M+
+              </span>
 
               <span>{t("stats.stories")}</span>
             </div>
 
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-foreground">94M+</span>
+              <span
+                className="text-2xl font-bold"
+                style={{ color: "var(--foreground)" }}
+              >
+                94M+
+              </span>
 
               <span>{t("stats.readers")}</span>
             </div>
 
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-foreground">680K+</span>
+              <span
+                className="text-2xl font-bold"
+                style={{ color: "var(--foreground)" }}
+              >
+                680K+
+              </span>
 
               <span>{t("stats.writers")}</span>
             </div>
