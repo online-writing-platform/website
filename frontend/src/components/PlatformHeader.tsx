@@ -4,7 +4,6 @@ import {
   BookOpen,
   PenTool,
   Search,
-  Globe,
   Menu,
   X,
   Compass,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 
 import useAuth from "../hooks/useAuth";
+import LanguageSwitcher from "./LanguageSwitcher";
 import ThemeButton from "./ThemeButton";
 import "./PlatformHeader.css";
 
@@ -110,14 +110,7 @@ function PlatformHeader() {
         <div className="platform-account">
           <ThemeButton />
 
-          <button
-            type="button"
-            className="platform-language-button"
-            aria-label="تغییر زبان"
-          >
-            <Globe className="platform-account-icon" />
-            <span>FA</span>
-          </button>
+          <LanguageSwitcher />
 
           {status === "authenticated" && user ? (
             <>
