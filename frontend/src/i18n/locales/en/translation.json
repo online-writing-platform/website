@@ -1,10 +1,16 @@
 {
-  "navigation": {
-    "home": "Home",
-    "stories": "Stories",
-    "profile": "Profile",
-    "login": "Login",
-    "register": "Register"
+  "language": {
+    "switchTo": {
+      "fa": "Switch language to Persian",
+      "en": "Switch language to English"
+    }
+  },
+  "PlatformHeader": {
+    "discover": "Discover",
+    " browse": "Browse",
+    " write": "Write",
+    " profile": "Profile",
+    "search": "Search stories..."
   },
   "hero": {
     "tagline": "Where Stories Come Alive",

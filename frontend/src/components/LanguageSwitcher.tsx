@@ -3,7 +3,9 @@ import { Globe } from "lucide-react";
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
+
   const currentLanguage = i18n.resolvedLanguage?.startsWith("en") ? "en" : "fa";
+
   const nextLanguage = currentLanguage === "fa" ? "en" : "fa";
 
   function changeLanguage(): void {
@@ -19,7 +21,7 @@ export default function LanguageSwitcher() {
       title={t(`language.switchTo.${nextLanguage}`)}
     >
       <Globe className="platform-account-icon" aria-hidden="true" />
-      <span>{currentLanguage.toUpperCase()}</span>
+      <span>{t(`language.names.${nextLanguage}`)}</span>{" "}
     </button>
   );
 }
