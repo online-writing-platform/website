@@ -15,10 +15,10 @@ import {
   Search,
   Skull,
   Smile,
-  Users,
   Wand2,
   Zap,
 } from "lucide-react";
+import { GiStarSwirl } from "react-icons/gi";
 
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
@@ -92,6 +92,12 @@ const genrePresentations: Record<string, GenrePresentation> = {
       "bg-beige-100 text-emerald-700 dark:bg-beige-800 dark:text-emerald-300",
   },
 
+  "fan-fiction": {
+    icon: GiStarSwirl,
+    className:
+      "bg-[linear-gradient(135deg,#fecdd3_0%,#fed7aa_16%,#fef08a_32%,#bbf7d0_48%,#bae6fd_64%,#ddd6fe_80%,#fbcfe8_100%)] text-slate-900 dark:bg-[linear-gradient(135deg,#9f1239_0%,#9a3412_16%,#854d0e_32%,#166534_48%,#075985_64%,#5b21b6_80%,#9d174d_100%)] dark:text-white",
+  },
+
   "historical-fiction": {
     icon: Landmark,
     className:
@@ -114,12 +120,6 @@ const genrePresentations: Record<string, GenrePresentation> = {
     icon: Feather,
     className:
       "bg-apricot-cream-50 text-pink-700 dark:bg-apricot-cream-700 dark:text-pink-300",
-  },
-
-  "fan-fiction": {
-    icon: Users,
-    className:
-      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
   },
 
   "non-fiction": {
