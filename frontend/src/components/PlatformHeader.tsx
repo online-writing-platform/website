@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   BookOpen,
   PenTool,
@@ -21,6 +22,7 @@ import ThemeButton from "./ThemeButton";
 import "./PlatformHeader.css";
 
 function PlatformHeader() {
+  const { t } = useTranslation();
   const { status, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +54,7 @@ function PlatformHeader() {
         <nav className="platform-nav" aria-label="ناوبری اصلی">
           <NavLink to="/discover" className="platform-nav-link">
             <Compass className="platform-nav-icon" />
-            <span>کشف</span>
+            <span>{t(`discover`)}</span>
           </NavLink>
 
           <NavLink to="/search" className="platform-nav-link">
@@ -100,7 +102,7 @@ function PlatformHeader() {
             type="search"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="جستجوی داستان..."
+            placeholder={t(`search`)}
             aria-label="جستجوی داستان"
             dir="rtl"
           />
@@ -182,7 +184,7 @@ function PlatformHeader() {
           <nav className="platform-mobile-nav" aria-label="ناوبری موبایل">
             <NavLink to="/discover" onClick={closeMobileMenu}>
               <Compass />
-              <span>کشف</span>
+              <span>{t(`discover`)}</span>
             </NavLink>
 
             <NavLink to="/search" onClick={closeMobileMenu}>

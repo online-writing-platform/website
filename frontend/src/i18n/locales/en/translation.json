@@ -5,12 +5,12 @@
       "en": "Switch language to English"
     }
   },
-  "navigation": {
-    "home": "Home",
-    "stories": "Stories",
-    "profile": "Profile",
-    "login": "Login",
-    "register": "Register"
+  "PlatformHeader": {
+    "discover": "Discover",
+    " browse": "Browse",
+    " write": "Write",
+    " profile": "Profile",
+    "search": "Search stories..."
   },
   "hero": {
     "tagline": "Where Stories Come Alive",

@@ -5,12 +5,12 @@
       "en": "تغییر زبان به انگلیسی"
     }
   },
-  "navigation": {
-    "home": "خانه",
-    "stories": "داستان‌ها",
+  "PlatformHeader": {
+    "discover": "کاوش",
+    "browse": "مرور",
+    "write": "نوشتن",
     "profile": "پروفایل",
-    "login": "ورود",
-    "register": "ثبت نام"
+    "search": "جستجوی داستان..."
   },
   "hero": {
     "tagline": "جایی که داستان‌ها دیده ‌می‌شوند",
