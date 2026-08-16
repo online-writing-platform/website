@@ -53,30 +53,31 @@ const genrePresentations: Record<string, GenrePresentation> = {
   romance: {
     icon: Heart,
     className:
-      "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+      "bg-rose-kiss-100 text-rose-700 dark:bg-rose-kiss-700 dark:text-rose-300",
   },
 
   fantasy: {
     icon: Wand2,
     className:
-      "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+      "bg-electric-aqua-100 text-electric-aqua-300 dark:bg-electric-aqua-800 dark:text-violet-300",
   },
 
   "science-fiction": {
     icon: Rocket,
     className:
-      "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
+      "bg-tea-green-100 text-cyan-700 dark:bg-tea-green-800 dark:text-cyan-300",
   },
 
   mystery: {
     icon: Search,
     className:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+      "bg-baby-blue-ice-100 text-amber-700 dark:bg-baby-blue-ice-800 dark:text-amber-300",
   },
 
   thriller: {
     icon: Zap,
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    className:
+      "bg-vibrant-coral-100 text-red-700 dark:bg-vibrant-coral-800 dark:text-red-300",
   },
 
   horror: {
@@ -88,13 +89,13 @@ const genrePresentations: Record<string, GenrePresentation> = {
   adventure: {
     icon: Compass,
     className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+      "bg-beige-100 text-emerald-700 dark:bg-beige-800 dark:text-emerald-300",
   },
 
   "historical-fiction": {
     icon: Landmark,
     className:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+      "bg-powder-petal-100 text-orange-700 dark:bg-powder-petal-800 dark:text-orange-300",
   },
 
   "young-adult": {
@@ -106,13 +107,13 @@ const genrePresentations: Record<string, GenrePresentation> = {
   humor: {
     icon: Smile,
     className:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+      "bg-porcelain-100 text-yellow-700 dark:bg-porcelain-800 dark:text-yellow-300",
   },
 
   poetry: {
     icon: Feather,
     className:
-      "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
+      "bg-apricot-cream-50 text-pink-700 dark:bg-apricot-cream-700 dark:text-pink-300",
   },
 
   "fan-fiction": {
@@ -124,13 +125,13 @@ const genrePresentations: Record<string, GenrePresentation> = {
   "non-fiction": {
     icon: FileText,
     className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      "bg-dusty-olive-100 text-blue-700 dark:bg-dusty-olive-800 dark:text-blue-300",
   },
 
   "short-story": {
     icon: Drama,
     className:
-      "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+      "bg-cream-100 text-teal-700 dark:bg-cream-800 dark:text-teal-300",
   },
 };
 
@@ -194,7 +195,7 @@ export function GenreSection() {
         ) : genres.length === 0 ? (
           <p className="empty-state surface">{t("genres.empty")}</p>
         ) : (
-          <ul className="grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <ul className="grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
             {genres.map((genre, index) => {
               const presentation =
                 genrePresentations[genre.slug] ?? defaultPresentation;
