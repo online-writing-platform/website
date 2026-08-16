@@ -1,16 +1,61 @@
 {
   "language": {
+    "names": {
+      "fa": "فارسی",
+      "en": "English"
+    },
     "switchTo": {
       "fa": "تغییر زبان به فارسی",
       "en": "تغییر زبان به انگلیسی"
     }
   },
+  "genres": {
+    "title": "مرور بر اساس ژانر",
+    "loading": "در حال دریافت ژانرها...",
+    "error": "دریافت ژانرها ناموفق بود: {{message}}",
+    "retry": "تلاش دوباره",
+    "empty": "هنوز ژانری برای نمایش وجود ندارد.",
+    "browseAriaLabel": "مشاهده داستان‌های ژانر {{genre}}",
+    "items": {
+      "romance": "عاشقانه",
+      "fantasy": "فانتزی",
+      "science-fiction": "علمی-تخیلی",
+      "mystery": "معمایی",
+      "thriller": "هیجان‌انگیز",
+      "horror": "ترسناک",
+      "adventure": "ماجراجویی",
+      "historical-fiction": "داستان تاریخی",
+      "young-adult": "نوجوان",
+      "humor": "طنز",
+      "poetry": "شعر",
+      "fan-fiction": "فن‌فیکشن",
+      "non-fiction": "غیرداستانی",
+      "short-story": "داستان کوتاه"
+    }
+  },
   "PlatformHeader": {
+    "brand": "داستان",
+    "home": "صفحه اصلی",
+    "mainNavigation": "ناوبری اصلی",
+    "mobileNavigation": "ناوبری موبایل",
     "discover": "کاوش",
     "browse": "مرور",
+    "search": "جستجو",
+    "searchPlaceholder": "جستجوی داستان...",
+    "searchAriaLabel": "جستجوی داستان",
+    "library": "کتابخانه",
     "write": "نوشتن",
+    "notifications": "اعلان‌ها",
+    "analytics": "آمار",
+    "moderation": "مدیریت",
     "profile": "پروفایل",
-    "search": "جستجوی داستان..."
+    "settings": "تنظیمات",
+    "logout": "خروج",
+    "login": "ورود",
+    "register": "ثبت‌نام",
+    "openMenu": "باز کردن منو",
+    "closeMenu": "بستن منو",
+    "toggleTheme": "تغییر پوسته"
   },
   "hero": {
     "tagline": "جایی که داستان‌ها دیده ‌می‌شوند",

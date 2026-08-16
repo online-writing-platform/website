@@ -21,7 +21,7 @@ export default function LanguageSwitcher() {
       title={t(`language.switchTo.${nextLanguage}`)}
     >
       <Globe className="platform-account-icon" aria-hidden="true" />
-      <span>{t(`language.names.${nextLanguage}`)}</span>{" "}
+      <span>{t(`language.names.${nextLanguage}`)}</span>
     </button>
   );
 }
