@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 
+import { GenreSection } from "../components/GenreSection";
 import StoryShelf from "../components/StoryShelf";
+import { HeroSection } from "@/components/HeroSection";
 
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 import type { DiscoveryResponse } from "../types/story";
-import { HeroSection } from "@/components/HeroSection";
 
 function Home() {
   const { status, request } = useAuth();
@@ -43,6 +44,7 @@ function Home() {
   return (
     <main className="app-main">
       <HeroSection />
+      <GenreSection />
       {error ? (
         <p className="status-message" data-kind="error" role="alert">
           {error}
