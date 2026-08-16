@@ -9,6 +9,30 @@
       "en": "تغییر زبان به انگلیسی"
     }
   },
+  "genres": {
+    "title": "مرور بر اساس ژانر",
+    "loading": "در حال دریافت ژانرها...",
+    "error": "دریافت ژانرها ناموفق بود: {{message}}",
+    "retry": "تلاش دوباره",
+    "empty": "هنوز ژانری برای نمایش وجود ندارد.",
+    "browseAriaLabel": "مشاهده داستان‌های ژانر {{genre}}",
+    "items": {
+      "romance": "عاشقانه",
+      "fantasy": "فانتزی",
+      "science-fiction": "علمی-تخیلی",
+      "mystery": "معمایی",
+      "thriller": "هیجان‌انگیز",
+      "horror": "ترسناک",
+      "adventure": "ماجراجویی",
+      "historical-fiction": "داستان تاریخی",
+      "young-adult": "نوجوان",
+      "humor": "طنز",
+      "poetry": "شعر",
+      "fan-fiction": "فن‌فیکشن",
+      "non-fiction": "غیرداستانی",
+      "short-story": "داستان کوتاه"
+    }
+  },
   "PlatformHeader": {
     "brand": "داستان",
     "home": "صفحه اصلی",

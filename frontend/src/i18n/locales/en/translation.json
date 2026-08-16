@@ -9,6 +9,30 @@
       "en": "Switch language to English"
     }
   },
+  "genres": {
+    "title": "Browse by Genre",
+    "loading": "Loading genres...",
+    "error": "Could not load genres: {{message}}",
+    "retry": "Try again",
+    "empty": "There are no genres to display yet.",
+    "browseAriaLabel": "Browse {{genre}} stories",
+    "items": {
+      "romance": "Romance",
+      "fantasy": "Fantasy",
+      "science-fiction": "Sci-Fi",
+      "mystery": "Mystery",
+      "thriller": "Thriller",
+      "horror": "Horror",
+      "adventure": "Adventure",
+      "historical-fiction": "Historical Fiction",
+      "young-adult": "Young Adult",
+      "humor": "Humor",
+      "poetry": "Poetry",
+      "fan-fiction": "Fan Fiction",
+      "non-fiction": "Non-fiction",
+      "short-story": "Short Story"
+    }
+  },
   "PlatformHeader": {
     "brand": "Story",
     "home": "Home page",
