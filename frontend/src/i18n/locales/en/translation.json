@@ -1,4 +1,10 @@
 {
+  "language": {
+    "switchTo": {
+      "fa": "Switch language to Persian",
+      "en": "Switch language to English"
+    }
+  },
   "navigation": {
     "home": "Home",
     "stories": "Stories",
