@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
+  fromGregorian,
   JalaliDatePicker,
   toGregorian,
   type JalaliDate,
@@ -20,14 +21,23 @@ function BirthDatePicker({
   required = false,
 }: BirthDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<JalaliDate | null>(null);
+
+  const selectedDate = useMemo<JalaliDate | null>(() => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return null;
+    }
+
+    try {
+      return fromGregorian(value);
+    } catch {
+      return null;
+    }
+  }, [value]);
 
   function handleDateChange(date: JalaliDate | null): void {
     if (!date) {
       return;
     }
-
-    setSelectedDate(date);
 
     const gregorianDate = toGregorian(date, "YYYY-MM-DD");
 
