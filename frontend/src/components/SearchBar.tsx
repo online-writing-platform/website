@@ -33,8 +33,10 @@ export default function SearchBox({
       <label className="sr-only" htmlFor="search-query">
         عبارت جست‌وجو
       </label>
+
       <Field orientation="horizontal">
         <Input
+          id="search-query"
           type="search"
           placeholder="داستان - نویسنده - ژانر"
           minLength={2}
@@ -42,6 +44,7 @@ export default function SearchBox({
           value={input}
           onChange={(event) => setInput(event.target.value)}
         />
+
         <Button>جستجو</Button>
       </Field>
     </form>
