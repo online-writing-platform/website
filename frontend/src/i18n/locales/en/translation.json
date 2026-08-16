@@ -1,16 +1,37 @@
 {
   "language": {
+    "names": {
+      "fa": "فارسی",
+      "en": "English"
+    },
     "switchTo": {
       "fa": "Switch language to Persian",
       "en": "Switch language to English"
     }
   },
   "PlatformHeader": {
+    "brand": "Story",
+    "home": "Home page",
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation",
     "discover": "Discover",
-    " browse": "Browse",
-    " write": "Write",
-    " profile": "Profile",
-    "search": "Search stories..."
+    "browse": "Browse",
+    "search": "Search",
+    "searchPlaceholder": "Search stories...",
+    "searchAriaLabel": "Search stories",
+    "library": "Library",
+    "write": "Write",
+    "notifications": "Notifications",
+    "analytics": "Analytics",
+    "moderation": "Moderation",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log out",
+    "login": "Log in",
+    "register": "Register",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "toggleTheme": "Change theme"
   },
   "hero": {
     "tagline": "Where Stories Come Alive",

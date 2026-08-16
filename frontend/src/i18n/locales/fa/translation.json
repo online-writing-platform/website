@@ -1,16 +1,37 @@
 {
   "language": {
+    "names": {
+      "fa": "فارسی",
+      "en": "English"
+    },
     "switchTo": {
       "fa": "تغییر زبان به فارسی",
       "en": "تغییر زبان به انگلیسی"
     }
   },
   "PlatformHeader": {
+    "brand": "داستان",
+    "home": "صفحه اصلی",
+    "mainNavigation": "ناوبری اصلی",
+    "mobileNavigation": "ناوبری موبایل",
     "discover": "کاوش",
     "browse": "مرور",
+    "search": "جستجو",
+    "searchPlaceholder": "جستجوی داستان...",
+    "searchAriaLabel": "جستجوی داستان",
+    "library": "کتابخانه",
     "write": "نوشتن",
+    "notifications": "اعلان‌ها",
+    "analytics": "آمار",
+    "moderation": "مدیریت",
     "profile": "پروفایل",
-    "search": "جستجوی داستان..."
+    "settings": "تنظیمات",
+    "logout": "خروج",
+    "login": "ورود",
+    "register": "ثبت‌نام",
+    "openMenu": "باز کردن منو",
+    "closeMenu": "بستن منو",
+    "toggleTheme": "تغییر پوسته"
   },
   "hero": {
     "tagline": "جایی که داستان‌ها دیده ‌می‌شوند",
