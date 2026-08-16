@@ -43,51 +43,54 @@ function PlatformHeader() {
         <Link
           to="/"
           className="platform-brand"
-          aria-label="صفحه اصلی"
+          aria-label={t("PlatformHeader.home")}
           onClick={closeMobileMenu}
         >
           <BookOpen className="platform-brand-icon" />
-          <span>داستان</span>
+          <span>{t("PlatformHeader.brand")}</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="platform-nav" aria-label="ناوبری اصلی">
+        <nav
+          className="platform-nav"
+          aria-label={t("PlatformHeader.mainNavigation")}
+        >
           <NavLink to="/discover" className="platform-nav-link">
             <Compass className="platform-nav-icon" />
-            <span>{t(`discover`)}</span>
+            <span>{t("PlatformHeader.discover")}</span>
           </NavLink>
 
           <NavLink to="/search" className="platform-nav-link">
             <Library className="platform-nav-icon" />
-            <span>جستجو</span>
+            <span>{t("PlatformHeader.search")}</span>
           </NavLink>
 
           {status === "authenticated" && (
             <>
               <NavLink to="/library" className="platform-nav-link">
                 <Library className="platform-nav-icon" />
-                <span>کتابخانه</span>
+                <span>{t("PlatformHeader.library")}</span>
               </NavLink>
 
               <NavLink to="/write" className="platform-nav-link">
                 <PenTool className="platform-nav-icon" />
-                <span>نوشتن</span>
+                <span>{t("PlatformHeader.write")}</span>
               </NavLink>
 
               <NavLink to="/notifications" className="platform-nav-link">
                 <Bell className="platform-nav-icon" />
-                <span>اعلان‌ها</span>
+                <span>{t("PlatformHeader.notifications")}</span>
               </NavLink>
 
               <NavLink to="/analytics" className="platform-nav-link">
                 <BarChart3 className="platform-nav-icon" />
-                <span>آمار</span>
+                <span>{t("PlatformHeader.analytics")}</span>
               </NavLink>
 
               {user && (user.role === "MODERATOR" || user.role === "ADMIN") && (
                 <NavLink to="/moderation" className="platform-nav-link">
                   <Settings className="platform-nav-icon" />
-                  <span>مدیریت</span>
+                  <span>{t("PlatformHeader.moderation")}</span>
                 </NavLink>
               )}
             </>
@@ -102,9 +105,8 @@ function PlatformHeader() {
             type="search"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder={t(`search`)}
-            aria-label="جستجوی داستان"
-            dir="rtl"
+            placeholder={t("PlatformHeader.searchPlaceholder")}
+            aria-label={t("PlatformHeader.searchAriaLabel")}
           />
         </div>
 
@@ -125,7 +127,7 @@ function PlatformHeader() {
               </Link>
 
               <Link to="/settings" className="platform-settings">
-                تنظیمات
+                {t("PlatformHeader.settings")}
               </Link>
 
               <button
@@ -134,17 +136,17 @@ function PlatformHeader() {
                 onClick={handleLogout}
               >
                 <LogOut className="platform-account-icon" />
-                <span>خروج</span>
+                <span>{t("PlatformHeader.logout")}</span>
               </button>
             </>
           ) : status === "anonymous" ? (
             <>
               <Link to="/login" className="platform-login">
-                ورود
+                {t("PlatformHeader.login")}
               </Link>
 
               <Link to="/register" className="platform-register">
-                ثبت‌نام
+                {t("PlatformHeader.register")}
               </Link>
             </>
           ) : (
@@ -156,7 +158,11 @@ function PlatformHeader() {
             type="button"
             className="platform-mobile-button"
             onClick={() => setMobileMenuOpen((current) => !current)}
-            aria-label={mobileMenuOpen ? "بستن منو" : "باز کردن منو"}
+            aria-label={
+              mobileMenuOpen
+                ? t("PlatformHeader.closeMenu")
+                : t("PlatformHeader.openMenu")
+            }
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X /> : <Menu />}
@@ -175,50 +181,52 @@ function PlatformHeader() {
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="جستجوی داستان..."
-              aria-label="جستجوی داستان"
-              dir="rtl"
+              placeholder={t("PlatformHeader.searchPlaceholder")}
+              aria-label={t("PlatformHeader.searchAriaLabel")}
             />
           </div>
 
-          <nav className="platform-mobile-nav" aria-label="ناوبری موبایل">
+          <nav
+            className="platform-mobile-nav"
+            aria-label={t("PlatformHeader.mobileNavigation")}
+          >
             <NavLink to="/discover" onClick={closeMobileMenu}>
               <Compass />
-              <span>{t(`discover`)}</span>
+              <span>{t("PlatformHeader.discover")}</span>
             </NavLink>
 
             <NavLink to="/search" onClick={closeMobileMenu}>
               <Search />
-              <span>جستجو</span>
+              <span>{t("PlatformHeader.search")}</span>
             </NavLink>
 
             {status === "authenticated" && (
               <>
                 <NavLink to="/library" onClick={closeMobileMenu}>
                   <Library />
-                  <span>کتابخانه</span>
+                  <span>{t("PlatformHeader.library")}</span>
                 </NavLink>
 
                 <NavLink to="/write" onClick={closeMobileMenu}>
                   <PenTool />
-                  <span>نوشتن</span>
+                  <span>{t("PlatformHeader.write")}</span>
                 </NavLink>
 
                 <NavLink to="/notifications" onClick={closeMobileMenu}>
                   <Bell />
-                  <span>اعلان‌ها</span>
+                  <span>{t("PlatformHeader.notifications")}</span>
                 </NavLink>
 
                 <NavLink to="/analytics" onClick={closeMobileMenu}>
                   <BarChart3 />
-                  <span>آمار</span>
+                  <span>{t("PlatformHeader.analytics")}</span>
                 </NavLink>
 
                 {user &&
                   (user.role === "MODERATOR" || user.role === "ADMIN") && (
                     <NavLink to="/moderation" onClick={closeMobileMenu}>
                       <Settings />
-                      <span>مدیریت</span>
+                      <span>{t("PlatformHeader.moderation")}</span>
                     </NavLink>
                   )}
               </>
@@ -233,23 +241,23 @@ function PlatformHeader() {
                   onClick={closeMobileMenu}
                 >
                   <User />
-                  <span>پروفایل</span>
+                  <span>{t("PlatformHeader.profile")}</span>
                 </Link>
 
                 <Link to="/settings" onClick={closeMobileMenu}>
                   <Settings />
-                  <span>تنظیمات</span>
+                  <span>{t("PlatformHeader.settings")}</span>
                 </Link>
 
                 <button type="button" onClick={handleLogout}>
                   <LogOut />
-                  <span>خروج</span>
+                  <span>{t("PlatformHeader.logout")}</span>
                 </button>
               </>
             ) : status === "anonymous" ? (
               <>
                 <Link to="/login" onClick={closeMobileMenu}>
-                  ورود
+                  {t("PlatformHeader.login")}
                 </Link>
 
                 <Link
@@ -257,7 +265,7 @@ function PlatformHeader() {
                   onClick={closeMobileMenu}
                   className="platform-register"
                 >
-                  ثبت‌نام
+                  {t("PlatformHeader.register")}
                 </Link>
               </>
             ) : null}
