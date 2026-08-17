@@ -41,6 +41,22 @@ export async function listLibrary(
     response.status(200).json({ data });
 }
 
+export async function getLibraryStatus(
+    request: Request<StoryIdParams>,
+    response: Response,
+): Promise<void> {
+    const inLibrary = await readingModule.service.contains(
+        requireUserId(request),
+        request.params.storyId,
+    );
+
+    response.status(200).json({
+        data: {
+            inLibrary,
+        },
+    });
+}
+
 export async function addLibrary(
     request: Request<StoryIdParams>,
     response: Response,

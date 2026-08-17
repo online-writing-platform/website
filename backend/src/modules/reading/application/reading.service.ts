@@ -36,6 +36,10 @@ export class ReadingService {
         return this.store.removeLibraryEntry(userId, storyId);
     }
 
+    public contains(userId: string, storyId: string): Promise<boolean> {
+        return this.store.hasLibraryEntry(userId, storyId);
+    }
+
     public list(userId: string, cursor: string | undefined, limit: number) {
         return this.store.listLibrary(userId, cursor, limit);
     }

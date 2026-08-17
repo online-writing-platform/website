@@ -151,6 +151,25 @@ export class PrismaReadingStore implements LibraryStore {
         });
     }
 
+    public async hasLibraryEntry(
+        userId: string,
+        storyId: string,
+    ): Promise<boolean> {
+        const entry = await prisma.libraryEntry.findUnique({
+            where: {
+                userId_storyId: {
+                    userId,
+                    storyId,
+                },
+            },
+            select: {
+                storyId: true,
+            },
+        });
+
+        return entry !== null;
+    }
+
     public async listLibrary(
         userId: string,
         cursor: string | undefined,
@@ -184,11 +203,7 @@ export class PrismaReadingStore implements LibraryStore {
             },
         });
 
-        const page = buildCursorPage(
-            rows,
-            limit,
-            (row) => row.storyId,
-        );
+        const page = buildCursorPage(rows, limit, (row) => row.storyId);
 
         return {
             entries: page.items.map((row) => ({
@@ -209,92 +224,95 @@ export class PrismaReadingStore implements LibraryStore {
         readAt: Date,
     ) {
         await prisma.$transaction(async (transaction) => {
-        const previous = await transaction.readingProgress.findUnique({
-            where: { userId_storyId: { userId, storyId } },
-            select: { chapterId: true, lastReadAt: true, progress: true },
-        });
-        await transaction.readingProgress.upsert({
-            where: {
-                userId_storyId: {
-                    userId,
-                    storyId,
-                },
-            },
-            create: {
-                userId,
-                storyId,
-                ...(chapterId
-                    ? {
-                          chapterId,
-                      }
-                    : {}),
-                progress,
-                anchor,
-                ...(progress >= 1 ? { completedAt: readAt } : {}),
-                lastReadAt: readAt,
-            },
-            update: {
-                chapterId: chapterId ?? null,
-                progress,
-                anchor: anchor ?? null,
-                completedAt: progress >= 1 ? readAt : null,
-                lastReadAt: readAt,
-            },
-        });
-
-        if (shouldRecordMeaningfulHistory({
-            previousChapterId: previous?.chapterId ?? null,
-            nextChapterId: chapterId ?? null,
-            previousReadAt: previous?.lastReadAt ?? null,
-            now: readAt,
-            completed: progress >= 1 && (previous?.progress ?? 0) < 1,
-        })) {
-            const type = progress >= 1
-                ? "COMPLETED"
-                : previous === null
-                  ? "STARTED"
-                  : previous.chapterId !== (chapterId ?? null)
-                    ? "CHAPTER_CHANGED"
-                    : "RESUMED";
-            await transaction.readingHistory.create({
-                data: { userId, storyId, chapterId, progress, type },
+            const previous = await transaction.readingProgress.findUnique({
+                where: { userId_storyId: { userId, storyId } },
+                select: { chapterId: true, lastReadAt: true, progress: true },
             });
-            const excess = await transaction.readingHistory.findMany({
-                where: { userId },
-                orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
-                skip: 200,
-                select: { id: true },
-            });
-            if (excess.length > 0) {
-                await transaction.readingHistory.deleteMany({
-                    where: { id: { in: excess.map(({ id }) => id) } },
-                });
-            }
-        }
-
-        if (qualified && chapterId) {
-            const visitorKey = createHash("sha256")
-                .update(`user:${userId}`)
-                .digest("hex");
-            await transaction.readSignal.upsert({
+            await transaction.readingProgress.upsert({
                 where: {
-                    visitorKey_chapterId_bucketStart: {
-                        visitorKey,
-                        chapterId,
-                        bucketStart: new Date(readSignalBucket(readAt, 60)),
+                    userId_storyId: {
+                        userId,
+                        storyId,
                     },
                 },
                 create: {
                     userId,
                     storyId,
-                    chapterId,
-                    actorType: "AUTHENTICATED",
-                    visitorKey,
-                    bucketStart: new Date(readSignalBucket(readAt, 60)),
+                    ...(chapterId
+                        ? {
+                              chapterId,
+                          }
+                        : {}),
+                    progress,
+                    anchor,
+                    ...(progress >= 1 ? { completedAt: readAt } : {}),
+                    lastReadAt: readAt,
                 },
-                update: {},
+                update: {
+                    chapterId: chapterId ?? null,
+                    progress,
+                    anchor: anchor ?? null,
+                    completedAt: progress >= 1 ? readAt : null,
+                    lastReadAt: readAt,
+                },
             });
-        }
+
+            if (
+                shouldRecordMeaningfulHistory({
+                    previousChapterId: previous?.chapterId ?? null,
+                    nextChapterId: chapterId ?? null,
+                    previousReadAt: previous?.lastReadAt ?? null,
+                    now: readAt,
+                    completed: progress >= 1 && (previous?.progress ?? 0) < 1,
+                })
+            ) {
+                const type =
+                    progress >= 1
+                        ? "COMPLETED"
+                        : previous === null
+                          ? "STARTED"
+                          : previous.chapterId !== (chapterId ?? null)
+                            ? "CHAPTER_CHANGED"
+                            : "RESUMED";
+                await transaction.readingHistory.create({
+                    data: { userId, storyId, chapterId, progress, type },
+                });
+                const excess = await transaction.readingHistory.findMany({
+                    where: { userId },
+                    orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+                    skip: 200,
+                    select: { id: true },
+                });
+                if (excess.length > 0) {
+                    await transaction.readingHistory.deleteMany({
+                        where: { id: { in: excess.map(({ id }) => id) } },
+                    });
+                }
+            }
+
+            if (qualified && chapterId) {
+                const visitorKey = createHash("sha256")
+                    .update(`user:${userId}`)
+                    .digest("hex");
+                await transaction.readSignal.upsert({
+                    where: {
+                        visitorKey_chapterId_bucketStart: {
+                            visitorKey,
+                            chapterId,
+                            bucketStart: new Date(readSignalBucket(readAt, 60)),
+                        },
+                    },
+                    create: {
+                        userId,
+                        storyId,
+                        chapterId,
+                        actorType: "AUTHENTICATED",
+                        visitorKey,
+                        bucketStart: new Date(readSignalBucket(readAt, 60)),
+                    },
+                    update: {},
+                });
+            }
         });
 
         return prisma.readingProgress.findUniqueOrThrow({
@@ -369,11 +387,7 @@ export class PrismaReadingStore implements LibraryStore {
             },
         });
 
-        const page = buildCursorPage(
-            rows,
-            limit,
-            (row) => row.storyId,
-        );
+        const page = buildCursorPage(rows, limit, (row) => row.storyId);
 
         return {
             items: page.items.map(({ storyId: _storyId, ...item }) => item),
@@ -496,10 +510,7 @@ export class PrismaReadingStore implements LibraryStore {
         return rows.map(mapList);
     }
 
-    public async listPublicReadingLists(
-        userId: string,
-        viewerId?: string,
-    ) {
+    public async listPublicReadingLists(userId: string, viewerId?: string) {
         const rows = await prisma.readingList.findMany({
             where: {
                 userId,
@@ -528,10 +539,7 @@ export class PrismaReadingStore implements LibraryStore {
         return rows.map(mapList);
     }
 
-    public async getReadingList(
-        listId: string,
-        viewerId: string | undefined,
-    ) {
+    public async getReadingList(listId: string, viewerId: string | undefined) {
         const list = await prisma.readingList.findFirst({
             where: {
                 id: listId,
@@ -622,7 +630,9 @@ export class PrismaReadingStore implements LibraryStore {
                 _max: { position: true },
             });
             await transaction.readingListItem.upsert({
-                where: { readingListId_storyId: { readingListId: listId, storyId } },
+                where: {
+                    readingListId_storyId: { readingListId: listId, storyId },
+                },
                 create: {
                     readingListId: listId,
                     storyId,
@@ -674,7 +684,11 @@ export class PrismaReadingStore implements LibraryStore {
                 SELECT pg_advisory_xact_lock(hashtextextended(${listId}, 2))
             `;
             const list = await transaction.readingList.findFirst({
-                where: { id: listId, userId, orderingVersion: expectedOrderingVersion },
+                where: {
+                    id: listId,
+                    userId,
+                    orderingVersion: expectedOrderingVersion,
+                },
                 select: { id: true },
             });
             if (!list) return null;
@@ -686,14 +700,16 @@ export class PrismaReadingStore implements LibraryStore {
             if (
                 existing.length !== storyIds.length ||
                 existing.some((item) => !expected.has(item.storyId))
-            ) return null;
+            )
+                return null;
 
             await transaction.$executeRaw`
                 SET CONSTRAINTS "reading_list_items_reading_list_id_position_key" DEFERRED
             `;
             if (storyIds.length > 0) {
-                const positions = storyIds.map((storyId, index) =>
-                    Prisma.sql`(${storyId}::uuid, ${index + 1}::integer)`,
+                const positions = storyIds.map(
+                    (storyId, index) =>
+                        Prisma.sql`(${storyId}::uuid, ${index + 1}::integer)`,
                 );
                 await transaction.$executeRaw(Prisma.sql`
                     UPDATE "reading_list_items" AS item

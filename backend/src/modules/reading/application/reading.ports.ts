@@ -6,8 +6,16 @@ import type {
 
 export interface LibraryStore {
     addLibraryEntry(userId: string, storyId: string): Promise<void>;
+
     removeLibraryEntry(userId: string, storyId: string): Promise<void>;
-    listLibrary(userId: string, cursor: string | undefined, limit: number): Promise<{
+
+    hasLibraryEntry(userId: string, storyId: string): Promise<boolean>;
+
+    listLibrary(
+        userId: string,
+        cursor: string | undefined,
+        limit: number,
+    ): Promise<{
         entries: LibraryEntryView[];
         pagination: { hasMore: boolean; nextCursor: string | null };
     }>;
@@ -21,10 +29,16 @@ export interface LibraryStore {
         qualified: boolean,
         readAt: Date,
     ): Promise<ReadingProgressView>;
-    listProgress(userId: string, cursor: string | undefined, limit: number): Promise<{
+
+    listProgress(
+        userId: string,
+        cursor: string | undefined,
+        limit: number,
+    ): Promise<{
         items: ReadingProgressView[];
         pagination: { hasMore: boolean; nextCursor: string | null };
     }>;
+
     deleteProgress(userId: string, storyId: string): Promise<void>;
 
     createReadingList(
@@ -33,26 +47,48 @@ export interface LibraryStore {
         description: string | undefined,
         isPublic: boolean,
     ): Promise<ReadingListView>;
+
     updateReadingList(
         userId: string,
         listId: string,
-        input: { name?: string; description?: string | null; isPublic?: boolean },
+        input: {
+            name?: string;
+            description?: string | null;
+            isPublic?: boolean;
+        },
     ): Promise<ReadingListView | null>;
+
     deleteReadingList(userId: string, listId: string): Promise<boolean>;
+
     listOwnReadingLists(userId: string): Promise<ReadingListView[]>;
+
     listPublicReadingLists(
         userId: string,
         viewerId?: string,
     ): Promise<ReadingListView[]>;
+
     getReadingList(
         listId: string,
         viewerId: string | undefined,
     ): Promise<{
-        list: ReadingListView & { owner: { username: string; displayName: string } };
+        list: ReadingListView & {
+            owner: { username: string; displayName: string };
+        };
         items: LibraryEntryView[];
     } | null>;
-    addReadingListItem(userId: string, listId: string, storyId: string): Promise<boolean>;
-    removeReadingListItem(userId: string, listId: string, storyId: string): Promise<boolean>;
+
+    addReadingListItem(
+        userId: string,
+        listId: string,
+        storyId: string,
+    ): Promise<boolean>;
+
+    removeReadingListItem(
+        userId: string,
+        listId: string,
+        storyId: string,
+    ): Promise<boolean>;
+
     reorderReadingListItems(
         userId: string,
         listId: string,
