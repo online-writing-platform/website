@@ -1,12 +1,17 @@
 import {
-    act,
-    fireEvent,
-    render,
-    screen,
-    waitFor,
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
 } from "@testing-library/react";
+
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApiError } from "../lib/api";
 
 import type { Chapter, ChapterResponse } from "../types/story";
 
@@ -22,41 +27,61 @@ vi.mock("../hooks/useAuth", () => ({
     }),
 }));
 
+afterEach(() => {
+    cleanup();
+});
+
 function deferred<T>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
 
-    const promise = new Promise<T>((resolvePromise) => {
+    let reject!: (reason?: unknown) => void;
+
+    const promise = new Promise<T>((resolvePromise, rejectPromise) => {
         resolve = resolvePromise;
+        reject = rejectPromise;
     });
 
     return {
         promise,
         resolve,
+        reject,
     };
 }
 
 const initialChapter: Chapter = {
     id: "chapter-1",
+
     title: "فصل تست",
+
     position: 1,
+
     content: "",
+
     version: 1,
+
     status: "DRAFT",
+
     moderationState: "VISIBLE",
+
     wordCount: 0,
+
     publishedAt: null,
+
     createdAt: "2026-08-17T00:00:00.000Z",
+
     updatedAt: "2026-08-17T00:00:00.000Z",
 };
 
-describe("ChapterEditorPage autosave", () => {
+describe("ChapterEditorPage autosave and publish concurrency", () => {
     beforeEach(() => {
         requestMock.mockReset();
+
         localStorage.clear();
     });
 
     it("does not lose edits made while an older save is in flight", async () => {
         const firstPatch = deferred<ChapterResponse>();
+
         const secondPatch = deferred<ChapterResponse>();
 
         const patchBodies: Array<{
@@ -150,9 +175,13 @@ describe("ChapterEditorPage autosave", () => {
                 data: {
                     chapter: {
                         ...initialChapter,
+
                         content: "AAAA",
+
                         version: 2,
+
                         wordCount: 1,
+
                         updatedAt: "2026-08-17T00:00:05.000Z",
                     },
                 },
@@ -172,6 +201,7 @@ describe("ChapterEditorPage autosave", () => {
 
         expect(patchBodies[1]).toMatchObject({
             content: "AAAABBBB",
+
             expectedVersion: 2,
         });
 
@@ -180,6 +210,7 @@ describe("ChapterEditorPage autosave", () => {
         );
 
         expect(recoveryBeforeSecondSave).not.toBeNull();
+
         expect(recoveryBeforeSecondSave).toContain("AAAABBBB");
 
         await act(async () => {
@@ -187,9 +218,13 @@ describe("ChapterEditorPage autosave", () => {
                 data: {
                     chapter: {
                         ...initialChapter,
+
                         content: "AAAABBBB",
+
                         version: 3,
+
                         wordCount: 1,
+
                         updatedAt: "2026-08-17T00:00:06.000Z",
                     },
                 },
@@ -205,5 +240,119 @@ describe("ChapterEditorPage autosave", () => {
         expect(
             localStorage.getItem("writing-platform:draft:story-1:chapter-1"),
         ).toBeNull();
+    }, 7000);
+
+    it("does not publish when saving the latest draft hits a version conflict", async () => {
+        let publishWasCalled = false;
+
+        requestMock.mockImplementation(
+            (path: string, options: RequestInit = {}) => {
+                if (
+                    path === "/api/v1/stories/mine/story-1/chapters/chapter-1"
+                ) {
+                    return Promise.resolve({
+                        data: {
+                            chapter: initialChapter,
+                        },
+                    });
+                }
+
+                if (
+                    path === "/api/v1/stories/story-1/chapters/chapter-1" &&
+                    options.method === "PATCH"
+                ) {
+                    return Promise.reject(
+                        new ApiError(
+                            409,
+
+                            "CHAPTER_EDIT_CONFLICT",
+
+                            "The chapter has been modified by another request.",
+
+                            {
+                                currentVersion: 2,
+
+                                updatedAt: "2026-08-17T08:00:00.000Z",
+                            },
+                        ),
+                    );
+                }
+
+                if (
+                    path ===
+                        "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
+                    options.method === "POST"
+                ) {
+                    publishWasCalled = true;
+
+                    return Promise.resolve({
+                        data: {
+                            chapter: {
+                                ...initialChapter,
+
+                                status: "PUBLISHED",
+
+                                version: 2,
+
+                                publishedAt: "2026-08-17T08:01:00.000Z",
+                            },
+                        },
+                    });
+                }
+
+                throw new Error(
+                    `Unexpected request: ${options.method ?? "GET"} ${path}`,
+                );
+            },
+        );
+
+        render(
+            <MemoryRouter
+                initialEntries={["/write/story-1/chapters/chapter-1"]}
+            >
+                <Routes>
+                    <Route
+                        path="/write/:storyId/chapters/:chapterId"
+                        element={<ChapterEditorPage />}
+                    />
+                </Routes>
+            </MemoryRouter>,
+        );
+
+        const editor = await screen.findByLabelText("متن فصل");
+
+        fireEvent.change(editor, {
+            target: {
+                value: "متن جدیدی که فقط در Tab B نوشته شده",
+            },
+        });
+
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "انتشار فصل",
+            }),
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText("تعارض ویرایش")).toBeTruthy();
+        });
+
+        expect(publishWasCalled).toBe(false);
+
+        const publishCalls = requestMock.mock.calls.filter(
+            ([path, options]) =>
+                path === "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
+                options?.method === "POST",
+        );
+
+        expect(publishCalls).toHaveLength(0);
+
+        const recovery = localStorage.getItem(
+            "writing-platform:draft:story-1:chapter-1",
+        );
+
+        expect(recovery).not.toBeNull();
+
+        expect(recovery).toContain("متن جدیدی که فقط در Tab B نوشته شده");
     }, 7000);
 });
