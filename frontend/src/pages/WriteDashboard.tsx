@@ -54,74 +54,96 @@ export default function WriteDashboard() {
   }
 
   return (
-    <main className="page-shell">
-      <header className="page-heading">
-        <div>
-          <p className="eyebrow">فضای نویسنده</p>
-          <h1>داستان‌های من</h1>
-          <p>پیش‌نویس، فصل‌ها و وضعیت انتشار را از اینجا مدیریت کنید.</p>
-        </div>
-      </header>
-
-      {!user?.emailVerified && (
-        <p className="status-message status-message--warning">
-          برای ساخت یا انتشار محتوا ابتدا ایمیل حساب را تأیید کنید.{" "}
-          <Link to="/settings">تنظیمات حساب</Link>
-        </p>
-      )}
-
-      {error && <p className="status-message status-message--error" role="alert">{error}</p>}
-
-      <section className="surface">
-        <h2>داستان جدید</h2>
-        <form className="stack-form" onSubmit={(event) => void createStory(event)}>
-          <label>
-            عنوان
-            <input
-              value={title}
-              minLength={1}
-              maxLength={200}
-              required
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </label>
-          <label>
-            معرفی کوتاه
-            <textarea
-              value={description}
-              minLength={1}
-              maxLength={5000}
-              required
-              rows={4}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
-          <button className="button" disabled={busy || !user?.emailVerified} type="submit">
-            {busy ? "در حال ساخت…" : "ساخت پیش‌نویس"}
-          </button>
-        </form>
-      </section>
-
-      <section className="section-block">
-        <div className="section-heading">
-          <h2>همه داستان‌ها</h2>
-          <span>{stories.length.toLocaleString("fa-IR")}</span>
-        </div>
-        {stories.length === 0 ? (
-          <p className="empty-state">هنوز داستانی نساخته‌اید.</p>
-        ) : (
-          <div className="story-grid">
-            {stories.map((story) => (
-              <div key={story.id}>
-                <StoryCard story={story} />
-                <Link className="text-link" to={`/write/${story.id}`}>
-                  مدیریت داستان
-                </Link>
+      <main className="page-shell">
+          <header className="page-heading">
+              <div>
+                  <p className="eyebrow">فضای نویسنده</p>
+                  <h1>داستان‌های من</h1>
+                  <p>
+                      پیش‌نویس، فصل‌ها و وضعیت انتشار را از اینجا مدیریت کنید.
+                  </p>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+          </header>
+
+          {!user?.emailVerified && (
+              <p className="status-message status-message--warning">
+                  برای ساخت یا انتشار محتوا ابتدا ایمیل حساب را تأیید کنید.{" "}
+                  <Link to="/settings">تنظیمات حساب</Link>
+              </p>
+          )}
+
+          {error && (
+              <p className="status-message status-message--error" role="alert">
+                  {error}
+              </p>
+          )}
+
+          <section className="surface">
+              <h2>داستان جدید</h2>
+              <form
+                  className="stack-form"
+                  onSubmit={(event) => void createStory(event)}
+              >
+                  <label>
+                      عنوان
+                      <input
+                          value={title}
+                          minLength={1}
+                          maxLength={200}
+                          required
+                          onChange={(event) => setTitle(event.target.value)}
+                      />
+                  </label>
+                  <label>
+                      معرفی کوتاه
+                      <textarea
+                          value={description}
+                          minLength={1}
+                          maxLength={5000}
+                          required
+                          rows={4}
+                          onChange={(event) =>
+                              setDescription(event.target.value)
+                          }
+                      />
+                  </label>
+                  <button
+                      className="button"
+                      disabled={busy || !user?.emailVerified}
+                      type="submit"
+                  >
+                      {busy ? "در حال ساخت…" : "ساخت پیش‌نویس"}
+                  </button>
+              </form>
+          </section>
+
+          <section className="section-block">
+              <div className="section-heading">
+                  <h2>همه داستان‌ها</h2>
+                  <span>{stories.length.toLocaleString("fa-IR")}</span>
+              </div>
+              {stories.length === 0 ? (
+                  <p className="empty-state">هنوز داستانی نساخته‌اید.</p>
+              ) : (
+                  <div className="story-grid">
+                      {stories.map((story) => (
+                          <div key={story.id}>
+                              <StoryCard
+                                  story={story}
+                                  to={`/write/${story.id}`}
+                              />
+
+                              <Link
+                                  className="text-link"
+                                  to={`/write/${story.id}`}
+                              >
+                                  مدیریت داستان
+                              </Link>
+                          </div>
+                      ))}
+                  </div>
+              )}
+          </section>
+      </main>
   );
 }
