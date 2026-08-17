@@ -65,15 +65,19 @@ export default function ReaderPage() {
 
     async function load(): Promise<void> {
       setError(null);
-      const storyResult = await apiRequest<StoryResponse>(
-        `/api/v1/stories/${encodeURIComponent(slug)}`,
-      );
+      const storyPath = `/api/v1/stories/${encodeURIComponent(slug)}`;
 
       const chapterPath = `/api/v1/stories/${encodeURIComponent(slug)}/chapters/${encodeURIComponent(chapterId)}`;
+
+      const storyResult =
+          status === "authenticated"
+              ? await request<StoryResponse>(storyPath)
+              : await apiRequest<StoryResponse>(storyPath);
+
       const chapterResult =
-        status === "authenticated"
-          ? await request<ChapterResponse>(chapterPath)
-          : await apiRequest<ChapterResponse>(chapterPath);
+          status === "authenticated"
+              ? await request<ChapterResponse>(chapterPath)
+              : await apiRequest<ChapterResponse>(chapterPath);
 
       if (!active) return;
       setStoryResponse(storyResult);
