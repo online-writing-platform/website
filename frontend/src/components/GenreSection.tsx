@@ -46,92 +46,92 @@ interface GenrePresentation {
 const defaultPresentation: GenrePresentation = {
   icon: BookOpen,
   className:
-    "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300",
+    "bg-slate-100 text-slate-800! dark:bg-slate-900/30 dark:text-slate-100!",
 };
 
 const genrePresentations: Record<string, GenrePresentation> = {
   romance: {
     icon: Heart,
     className:
-      "bg-rose-kiss-100 text-rose-700 dark:bg-rose-kiss-700 dark:text-rose-300",
+      "bg-rose-kiss-100 text-rose-800! dark:bg-rose-kiss-700 dark:text-rose-kiss-100!",
   },
 
   fantasy: {
     icon: Wand2,
     className:
-      "bg-electric-aqua-100 text-electric-aqua-300 dark:bg-electric-aqua-800 dark:text-violet-300",
+      "bg-electric-aqua-100 text-electric-aqua-700! dark:bg-electric-aqua-800 dark:text-electric-aqua-200!",
   },
 
   "science-fiction": {
     icon: Rocket,
     className:
-      "bg-tea-green-100 text-cyan-700 dark:bg-tea-green-800 dark:text-cyan-300",
+      "bg-tea-green-100 text-emerald-700! dark:bg-tea-green-800 dark:text-tea-green-200!",
   },
 
   mystery: {
     icon: Search,
     className:
-      "bg-baby-blue-ice-100 text-amber-700 dark:bg-baby-blue-ice-800 dark:text-amber-300",
+      "bg-baby-blue-ice-100 text-blue-700! dark:bg-baby-blue-ice-800 dark:text-baby-blue-ice-200!",
   },
 
   thriller: {
     icon: Zap,
     className:
-      "bg-vibrant-coral-100 text-red-700 dark:bg-vibrant-coral-800 dark:text-red-300",
+      "bg-vibrant-coral-100 text-red-700! dark:bg-vibrant-coral-800 dark:text-vibrant-coral-200!",
   },
 
   horror: {
     icon: Skull,
     className:
-      "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
+      "bg-gray-100 text-gray-700! dark:bg-gray-900/30 dark:text-gray-200!",
   },
 
   adventure: {
     icon: Compass,
     className:
-      "bg-beige-100 text-emerald-700 dark:bg-beige-800 dark:text-emerald-300",
+      "bg-beige-100 text-beige-700! dark:bg-beige-800 dark:text-beige-200!",
   },
 
   "fan-fiction": {
     icon: GiStarSwirl,
     className:
-      "bg-[linear-gradient(135deg,#fecdd3_0%,#fed7aa_16%,#fef08a_32%,#bbf7d0_48%,#bae6fd_64%,#ddd6fe_80%,#fbcfe8_100%)] text-slate-900 dark:bg-[linear-gradient(135deg,#9f1239_0%,#9a3412_16%,#854d0e_32%,#166534_48%,#075985_64%,#5b21b6_80%,#9d174d_100%)] dark:text-white",
+      "bg-[linear-gradient(135deg,#fecdd3_0%,#fed7aa_16%,#fef08a_32%,#bbf7d0_48%,#bae6fd_64%,#ddd6fe_80%,#fbcfe8_100%)] text-violet-900! dark:bg-[linear-gradient(135deg,#9f1239_0%,#9a3412_16%,#854d0e_32%,#166534_48%,#075985_64%,#5b21b6_80%,#9d174d_100%)] dark:text-fuchsia-100!",
   },
 
   "historical-fiction": {
     icon: Landmark,
     className:
-      "bg-powder-petal-100 text-orange-700 dark:bg-powder-petal-800 dark:text-orange-300",
+      "bg-powder-petal-100 text-powder-petal-700! dark:bg-powder-petal-800 dark:text-powder-petal-200!",
   },
 
   "young-adult": {
     icon: GraduationCap,
     className:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+      "bg-purple-100 text-purple-700! dark:bg-purple-900/30 dark:text-purple-200!",
   },
 
   humor: {
     icon: Smile,
     className:
-      "bg-porcelain-100 text-yellow-700 dark:bg-porcelain-800 dark:text-yellow-300",
+      "bg-porcelain-100 text-porcelain-700! dark:bg-porcelain-800 dark:text-porcelain-200!",
   },
 
   poetry: {
     icon: Feather,
     className:
-      "bg-apricot-cream-50 text-pink-700 dark:bg-apricot-cream-700 dark:text-pink-300",
+      "bg-apricot-cream-50 text-pink-700! dark:bg-apricot-cream-700 dark:text-pink-200!",
   },
 
   "non-fiction": {
     icon: FileText,
     className:
-      "bg-dusty-olive-100 text-blue-700 dark:bg-dusty-olive-800 dark:text-blue-300",
+      "bg-dusty-olive-100 text-dusty-olive-700! dark:bg-dusty-olive-800 dark:text-dusty-olive-200!",
   },
 
   "short-story": {
     icon: Drama,
     className:
-      "bg-cream-100 text-teal-700 dark:bg-cream-800 dark:text-teal-300",
+      "bg-cream-100 text-cream-800! dark:bg-cream-800 dark:text-cream-200!",
   },
 };
 
@@ -195,7 +195,7 @@ export function GenreSection() {
         ) : genres.length === 0 ? (
           <p className="empty-state surface">{t("genres.empty")}</p>
         ) : (
-          <ul className="grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+          <ul className="mx-auto grid max-w-6xl list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
             {genres.map((genre, index) => {
               const presentation =
                 genrePresentations[genre.slug] ?? defaultPresentation;
@@ -229,9 +229,9 @@ export function GenreSection() {
                       genre: label,
                     })}
                   >
-                    <Icon className="h-6 w-6" aria-hidden={true} />
+                    <Icon className="h-[22px] w-[22px]" aria-hidden={true} />
 
-                    <span className="text-sm font-medium">{label}</span>
+                    <span className="text-xs font-medium">{label}</span>
                   </Link>
                 </motion.li>
               );
