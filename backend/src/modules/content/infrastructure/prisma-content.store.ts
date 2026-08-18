@@ -405,7 +405,12 @@ export class PrismaContentStore implements StoryStore {
                 where: { id: storyId },
                 data: {
                     visibility: "PUBLIC",
-                    status: story.status === "DRAFT" ? "ONGOING" : story.status,
+
+                    status:
+                        story.status === "DRAFT" || story.status === "SCHEDULED"
+                            ? "ONGOING"
+                            : story.status,
+
                     ...(story.publishedAt === null ? { publishedAt } : {}),
                 },
             });
