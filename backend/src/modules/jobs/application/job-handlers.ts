@@ -160,7 +160,6 @@ export async function handleJob(
                     where: {
                         chapter: {
                             storyId,
-
                             deletedAt: null,
                         },
                     },
@@ -303,7 +302,13 @@ export async function handleOutbox(message: ClaimedOutbox): Promise<void> {
 
                         dedupeKey: `story-published:${message.id}:${followerId}`,
 
-                        type: "CHAPTER_PUBLISHED",
+                        /*
+                         * BUG-008:
+                         *
+                         * قبلاً اشتباهاً
+                         * CHAPTER_PUBLISHED بود.
+                         */
+                        type: "STORY_PUBLISHED",
 
                         data: {
                             storyId: story.id,
