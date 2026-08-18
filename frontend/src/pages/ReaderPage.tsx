@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Link, useParams } from "react-router-dom";
 
 import ReaderInteractions from "../components/ReaderInteractions";
@@ -45,8 +51,11 @@ function contentDirection(language: string): "rtl" | "ltr" {
 export default function ReaderPage() {
   const { slug = "", chapterId = "" } = useParams();
   const { status, request } = useAuth();
-  const [storyResponse, setStoryResponse] = useState<StoryResponse | null>(null);
-  const [chapterResponse, setChapterResponse] = useState<ChapterResponse | null>(null);
+  const [storyResponse, setStoryResponse] = useState<StoryResponse | null>(
+    null,
+  );
+  const [chapterResponse, setChapterResponse] =
+    useState<ChapterResponse | null>(null);
   const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
   const lastProgressRef = useRef(-1);
@@ -57,7 +66,10 @@ export default function ReaderPage() {
   useDocumentMeta({
     title: chapter && story ? `${chapter.title} — ${story.title}` : "مطالعه",
     description: story?.description,
-    canonicalPath: story && chapter ? `/stories/${story.slug}/chapters/${chapter.id}` : undefined,
+    canonicalPath:
+      story && chapter
+        ? `/stories/${story.slug}/chapters/${chapter.id}`
+        : undefined,
   });
 
   useEffect(() => {
@@ -81,7 +93,9 @@ export default function ReaderPage() {
 
       if (status === "authenticated") {
         try {
-          const preferenceResult = await request<PreferenceResponse>("/api/v1/preferences");
+          const preferenceResult = await request<PreferenceResponse>(
+            "/api/v1/preferences",
+          );
           if (active) {
             setSettings({
               theme: preferenceResult.data.preferences.readerTheme,
@@ -124,7 +138,10 @@ export default function ReaderPage() {
       const scrollable = Math.max(1, root.scrollHeight - window.innerHeight);
       const progress = Math.min(1, Math.max(0, window.scrollY / scrollable));
 
-      if (Math.abs(progress - lastProgressRef.current) < 0.03 && progress < 0.99) {
+      if (
+        Math.abs(progress - lastProgressRef.current) < 0.03 &&
+        progress < 0.99
+      ) {
         return;
       }
       lastProgressRef.current = progress;
@@ -152,7 +169,8 @@ export default function ReaderPage() {
   }, [chapter, request, status, story]);
 
   const navigation = useMemo(() => {
-    if (!story?.chapters || !chapter) return { previous: undefined, next: undefined };
+    if (!story?.chapters || !chapter)
+      return { previous: undefined, next: undefined };
     const index = story.chapters.findIndex((item) => item.id === chapter.id);
     return {
       previous: index > 0 ? story.chapters[index - 1] : undefined,
@@ -177,11 +195,19 @@ export default function ReaderPage() {
   }
 
   if (error) {
-    return <main className="page-shell"><p className="status-message status-message--error">{error}</p></main>;
+    return (
+      <main className="page-shell">
+        <p className="status-message status-message--error">{error}</p>
+      </main>
+    );
   }
 
   if (!story || !chapter) {
-    return <main className="page-shell"><p className="status-message">در حال بارگذاری فصل…</p></main>;
+    return (
+      <main className="page-shell">
+        <p className="status-message">در حال بارگذاری فصل…</p>
+      </main>
+    );
   }
 
   const direction = contentDirection(story.language);
@@ -189,10 +215,12 @@ export default function ReaderPage() {
   return (
     <main
       className={`reader reader--${settings.theme.toLowerCase()}`}
-      style={{
-        "--reader-font-scale": String(settings.fontScale),
-        "--reader-line-height": String(settings.lineHeight),
-      } as CSSProperties}
+      style={
+        {
+          "--reader-font-scale": String(settings.fontScale),
+          "--reader-line-height": String(settings.lineHeight),
+        } as CSSProperties
+      }
     >
       <div className="reader__toolbar" aria-label="تنظیمات مطالعه">
         <Link to={`/stories/${story.slug}`}>← {story.title}</Link>
@@ -200,7 +228,9 @@ export default function ReaderPage() {
           پوسته
           <select
             value={settings.theme}
-            onChange={(event) => void updateSettings({ theme: event.target.value as ReaderTheme })}
+            onChange={(event) =>
+              void updateSettings({ theme: event.target.value as ReaderTheme })
+            }
           >
             <option value="SYSTEM">سیستم</option>
             <option value="LIGHT">روشن</option>
@@ -216,7 +246,9 @@ export default function ReaderPage() {
             max="1.5"
             step="0.05"
             value={settings.fontScale}
-            onChange={(event) => void updateSettings({ fontScale: Number(event.target.value) })}
+            onChange={(event) =>
+              void updateSettings({ fontScale: Number(event.target.value) })
+            }
           />
         </label>
         <label>
@@ -227,7 +259,9 @@ export default function ReaderPage() {
             max="2.2"
             step="0.05"
             value={settings.lineHeight}
-            onChange={(event) => void updateSettings({ lineHeight: Number(event.target.value) })}
+            onChange={(event) =>
+              void updateSettings({ lineHeight: Number(event.target.value) })
+            }
           />
         </label>
       </div>
@@ -253,7 +287,9 @@ export default function ReaderPage() {
           >
             فصل قبل
           </Link>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
         {navigation.next ? (
           <Link
             className="button"
@@ -261,7 +297,9 @@ export default function ReaderPage() {
           >
             فصل بعد
           </Link>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
       </nav>
 
       <div className="reader__discussion">
