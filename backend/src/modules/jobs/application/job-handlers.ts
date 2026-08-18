@@ -22,8 +22,30 @@ export async function handleJob(job: ClaimedJob, now = new Date()): Promise<void
         const storyId = stringField(payload, "storyId");
         await prisma.$transaction(async (transaction) => {
             const result = await transaction.story.updateMany({
-                where: { id: storyId, status: "SCHEDULED", scheduledAt: { lte: now }, deletedAt: null },
-                data: { status: "ONGOING", scheduledAt: null, publishedAt: now, visibility: "PUBLIC" },
+                where: {
+                    id: storyId,
+
+                    status: "SCHEDULED",
+
+                    scheduledAt: {
+                        lte: now,
+                    },
+
+                    deletedAt: null,
+
+                    chapters: {
+                        some: {
+                            status: "PUBLISHED",
+                            deletedAt: null,
+                        },
+                    },
+                },
+                data: {
+                    status: "ONGOING",
+                    scheduledAt: null,
+                    publishedAt: now,
+                    visibility: "PUBLIC",
+                },
             });
             if (result.count === 1) {
                 await transaction.outboxMessage.create({
@@ -42,8 +64,27 @@ export async function handleJob(job: ClaimedJob, now = new Date()): Promise<void
         const chapterId = stringField(payload, "chapterId");
         await prisma.$transaction(async (transaction) => {
             const result = await transaction.chapter.updateMany({
-                where: { id: chapterId, status: "SCHEDULED", scheduledAt: { lte: now }, deletedAt: null },
-                data: { status: "PUBLISHED", scheduledAt: null, publishedAt: now, version: { increment: 1 } },
+                where: {
+                    id: chapterId,
+
+                    status: "SCHEDULED",
+
+                    scheduledAt: {
+                        lte: now,
+                    },
+
+                    deletedAt: null,
+
+                    wordCount: {
+                        gt: 0,
+                    },
+                },
+                data: {
+                    status: "PUBLISHED",
+                    scheduledAt: null,
+                    publishedAt: now,
+                    version: { increment: 1 },
+                },
             });
             if (result.count === 1) {
                 await transaction.outboxMessage.create({
