@@ -20,9 +20,15 @@ import type {
 interface GenresResponse {
     data: { genres: Array<{ slug: string; name: string }> };
 }
+
 interface MediaResponse {
     data: {
-        media: { assetId: string; url: string; width: number; height: number };
+        media: {
+            assetId: string;
+            url: string;
+            width: number;
+            height: number;
+        };
     };
 }
 
@@ -30,40 +36,68 @@ export default function WriterStoryPage() {
     const { storyId = "" } = useParams();
     const { request } = useAuth();
     const navigate = useNavigate();
+
     const [story, setStory] = useState<Story | null>(null);
-    const [genres, setGenres] = useState<Array<{ slug: string; name: string }>>(
-        [],
-    );
+
+    const [genres, setGenres] = useState<
+        Array<{
+            slug: string;
+            name: string;
+        }>
+    >([]);
+
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [language, setLanguage] = useState("fa");
+
     const [storyStatus, setStoryStatus] = useState<Story["status"]>("DRAFT");
+
     const [genreSlug, setGenreSlug] = useState("");
     const [tags, setTags] = useState("");
+
     const [rights, setRights] = useState<StoryRights>("ALL_RIGHTS_RESERVED");
+
     const [isMature, setIsMature] = useState(false);
+
     const [chapterTitle, setChapterTitle] = useState("");
+
     const [cover, setCover] = useState<File | null>(null);
+
     const coverInputRef = useRef<HTMLInputElement | null>(null);
+
     const [error, setError] = useState<string | null>(null);
+
     const [message, setMessage] = useState<string | null>(null);
+
     const [busy, setBusy] = useState(false);
 
     const load = useCallback(async (): Promise<void> => {
         const [storyResponse, genreResponse] = await Promise.all([
             request<StoryResponse>(`/api/v1/stories/mine/${storyId}`),
+
             request<GenresResponse>("/api/v1/stories/genres"),
         ]);
+
         const value = storyResponse.data.story;
+
         setStory(value);
+
         setGenres(genreResponse.data.genres);
+
         setTitle(value.title);
+
         setDescription(value.description);
+
         setLanguage(value.language);
+
         setStoryStatus(value.status);
+
         setGenreSlug(value.genre?.slug ?? "");
+
         setTags(value.tags.map((tag) => tag.name).join(", "));
+
         setRights(value.rights);
+
         setIsMature(value.isMature);
     }, [request, storyId]);
 
@@ -89,34 +123,59 @@ export default function WriterStoryPage() {
         event: FormEvent<HTMLFormElement>,
     ): Promise<void> {
         event.preventDefault();
-        if (busy) return;
+
+        if (busy) {
+            return;
+        }
+
         setBusy(true);
+
         setError(null);
+
         setMessage(null);
 
         try {
+            const editableStatus =
+                storyStatus === "ONGOING" ||
+                storyStatus === "COMPLETED" ||
+                storyStatus === "HIATUS"
+                    ? storyStatus
+                    : undefined;
+
             const response = await request<StoryResponse>(
                 `/api/v1/stories/${storyId}`,
                 {
                     method: "PATCH",
+
                     body: JSON.stringify({
                         title: title.trim(),
+
                         description: description.trim(),
+
                         language: language.trim(),
-                        ...(storyStatus !== "DRAFT"
-                            ? { status: storyStatus }
+
+                        ...(editableStatus !== undefined
+                            ? {
+                                  status: editableStatus,
+                              }
                             : {}),
+
                         genreSlug: genreSlug || null,
+
                         tags: tags
                             .split(",")
                             .map((tag) => tag.trim())
                             .filter(Boolean),
+
                         rights,
+
                         isMature,
                     }),
                 },
             );
+
             setStory(response.data.story);
+
             setMessage("مشخصات داستان ذخیره شد.");
         } catch (cause) {
             setError(getErrorMessage(cause));
@@ -126,23 +185,42 @@ export default function WriterStoryPage() {
     }
 
     async function uploadCover(): Promise<void> {
-        if (!cover || busy) return;
+        if (!cover || busy) {
+            return;
+        }
+
         setBusy(true);
+
         setError(null);
+
         setMessage(null);
+
         try {
             const form = new FormData();
+
             form.append("file", cover);
+
             const response = await request<MediaResponse>(
                 `/api/v1/media/story-covers/${storyId}`,
-                { method: "POST", body: form },
+                {
+                    method: "POST",
+
+                    body: form,
+                },
             );
+
             setStory((current) =>
                 current
-                    ? { ...current, coverUrl: response.data.media.url }
+                    ? {
+                          ...current,
+
+                          coverUrl: response.data.media.url,
+                      }
                     : current,
             );
+
             setCover(null);
+
             setMessage("تصویر جلد ذخیره شد.");
         } catch (cause) {
             setError(getErrorMessage(cause));
@@ -155,20 +233,29 @@ export default function WriterStoryPage() {
         event: FormEvent<HTMLFormElement>,
     ): Promise<void> {
         event.preventDefault();
-        if (!chapterTitle.trim() || busy) return;
+
+        if (!chapterTitle.trim() || busy) {
+            return;
+        }
+
         setBusy(true);
+
         setError(null);
+
         try {
             const response = await request<ChapterResponse>(
                 `/api/v1/stories/${storyId}/chapters`,
                 {
                     method: "POST",
+
                     body: JSON.stringify({
                         title: chapterTitle.trim(),
+
                         content: "",
                     }),
                 },
             );
+
             navigate(`/write/${storyId}/chapters/${response.data.chapter.id}`);
         } catch (cause) {
             setError(getErrorMessage(cause));
@@ -178,19 +265,30 @@ export default function WriterStoryPage() {
     }
 
     async function togglePublish(): Promise<void> {
-        if (!story || busy) return;
+        if (!story || busy) {
+            return;
+        }
+
         setBusy(true);
+
         setError(null);
+
         setMessage(null);
+
         const isPublic = story.visibility === "PUBLIC";
+
         try {
             await request(
-                `/api/v1/stories/${storyId}/${isPublic ? "unpublish" : "publish"}`,
+                `/api/v1/stories/${storyId}/${
+                    isPublic ? "unpublish" : "publish"
+                }`,
                 {
                     method: "POST",
                 },
             );
+
             await load();
+
             setMessage(
                 isPublic ? "داستان از انتشار خارج شد." : "داستان منتشر شد.",
             );
@@ -220,12 +318,15 @@ export default function WriterStoryPage() {
             <header className="page-heading">
                 <div>
                     <p className="eyebrow">مدیریت داستان</p>
+
                     <h1>{story.title}</h1>
+
                     <p>
                         {story.visibility === "PUBLIC" ? "منتشرشده" : "خصوصی"} ·{" "}
                         {story.status}
                     </p>
                 </div>
+
                 <div className="button-row">
                     {story.visibility !== "PRIVATE" && (
                         <Link
@@ -235,6 +336,7 @@ export default function WriterStoryPage() {
                             پیش‌نمایش عمومی
                         </Link>
                     )}
+
                     <button
                         className="button"
                         type="button"
@@ -256,6 +358,7 @@ export default function WriterStoryPage() {
                     {error}
                 </p>
             )}
+
             {message && (
                 <p className="status-message status-message--success">
                     {message}
@@ -265,6 +368,7 @@ export default function WriterStoryPage() {
             <div className="two-column">
                 <section className="surface">
                     <h2>مشخصات</h2>
+
                     <form
                         className="stack-form"
                         onSubmit={(event) => void saveMetadata(event)}
@@ -279,6 +383,7 @@ export default function WriterStoryPage() {
                                 }
                             />
                         </label>
+
                         <label>
                             توضیحات
                             <textarea
@@ -290,6 +395,7 @@ export default function WriterStoryPage() {
                                 }
                             />
                         </label>
+
                         <label>
                             زبان
                             <input
@@ -300,6 +406,7 @@ export default function WriterStoryPage() {
                                 }
                             />
                         </label>
+
                         <label>
                             وضعیت داستان
                             <select
@@ -313,11 +420,22 @@ export default function WriterStoryPage() {
                                 <option value="DRAFT" disabled>
                                     پیش‌نویس
                                 </option>
+
+                                {}
+                                {String(storyStatus) === "SCHEDULED" && (
+                                    <option value="SCHEDULED" disabled>
+                                        زمان‌بندی‌شده
+                                    </option>
+                                )}
+
                                 <option value="ONGOING">در حال انتشار</option>
+
                                 <option value="COMPLETED">کامل‌شده</option>
+
                                 <option value="HIATUS">وقفه</option>
                             </select>
                         </label>
+
                         <label>
                             ژانر
                             <select
@@ -327,6 +445,7 @@ export default function WriterStoryPage() {
                                 }
                             >
                                 <option value="">بدون ژانر</option>
+
                                 {genres.map((genre) => (
                                     <option key={genre.slug} value={genre.slug}>
                                         {genre.name}
@@ -334,6 +453,7 @@ export default function WriterStoryPage() {
                                 ))}
                             </select>
                         </label>
+
                         <label>
                             برچسب‌ها
                             <input
@@ -344,6 +464,7 @@ export default function WriterStoryPage() {
                                 placeholder="فانتزی، ماجراجویی"
                             />
                         </label>
+
                         <label>
                             حقوق اثر
                             <select
@@ -355,14 +476,17 @@ export default function WriterStoryPage() {
                                 <option value="ALL_RIGHTS_RESERVED">
                                     تمام حقوق محفوظ است
                                 </option>
+
                                 <option value="CREATIVE_COMMONS">
                                     Creative Commons
                                 </option>
+
                                 <option value="PUBLIC_DOMAIN">
                                     مالکیت عمومی
                                 </option>
                             </select>
                         </label>
+
                         <label className="inline-check">
                             <input
                                 type="checkbox"
@@ -373,6 +497,7 @@ export default function WriterStoryPage() {
                             />
                             محتوای بزرگسال
                         </label>
+
                         <button
                             className="button"
                             disabled={busy}
@@ -401,12 +526,16 @@ export default function WriterStoryPage() {
                         ref={coverInputRef}
                         type="file"
                         accept="image/jpeg,image/png"
-                        style={{ display: "none" }}
+                        style={{
+                            display: "none",
+                        }}
                         onChange={(event) => {
                             const file = event.target.files?.[0] ?? null;
 
                             setCover(file);
+
                             setError(null);
+
                             setMessage(null);
                         }}
                     />
@@ -452,8 +581,10 @@ export default function WriterStoryPage() {
             <section className="surface">
                 <div className="section-heading">
                     <h2>فصل‌ها</h2>
+
                     <span>{chapters.length.toLocaleString("fa-IR")}</span>
                 </div>
+
                 <form
                     className="inline-form"
                     onSubmit={(event) => void createChapter(event)}
@@ -461,6 +592,7 @@ export default function WriterStoryPage() {
                     <label className="sr-only" htmlFor="new-chapter-title">
                         عنوان فصل جدید
                     </label>
+
                     <input
                         id="new-chapter-title"
                         value={chapterTitle}
@@ -470,6 +602,7 @@ export default function WriterStoryPage() {
                             setChapterTitle(event.target.value)
                         }
                     />
+
                     <button
                         className="button"
                         disabled={busy || !chapterTitle.trim()}
@@ -478,6 +611,7 @@ export default function WriterStoryPage() {
                         ساخت فصل
                     </button>
                 </form>
+
                 <ol className="chapter-list">
                     {chapters.map((chapter) => (
                         <li key={chapter.id}>
@@ -485,6 +619,7 @@ export default function WriterStoryPage() {
                                 <strong>
                                     {chapter.position}. {chapter.title}
                                 </strong>
+
                                 <span>
                                     {chapter.status === "PUBLISHED"
                                         ? "منتشرشده"
@@ -492,6 +627,7 @@ export default function WriterStoryPage() {
                                     · نسخه {chapter.version}
                                 </span>
                             </div>
+
                             <Link
                                 className="text-link"
                                 to={`/write/${storyId}/chapters/${chapter.id}`}
