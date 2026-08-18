@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   fromGregorian,
   JalaliDatePicker,
@@ -20,6 +21,7 @@ function BirthDatePicker({
   onChange,
   required = false,
 }: BirthDatePickerProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedDate = useMemo<JalaliDate | null>(() => {
@@ -64,7 +66,7 @@ function BirthDatePicker({
           name="birthDate"
           type="text"
           value={displayValue()}
-          placeholder="تاریخ تولد"
+          placeholder={t("auth.register.birthDatePlaceholder")}
           readOnly
           required={required}
           autoComplete="bday"
@@ -77,7 +79,7 @@ function BirthDatePicker({
             event.stopPropagation();
             setIsOpen((current) => !current);
           }}
-          aria-label="انتخاب تاریخ تولد"
+          aria-label={t("auth.register.chooseBirthDate")}
           aria-expanded={isOpen}
         >
           <HiOutlineCalendarDays />
