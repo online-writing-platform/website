@@ -231,10 +231,18 @@ export class PrismaContentStore implements StoryStore {
                     slug,
                     title: input.title,
                     description: input.description,
-                    ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}),
-                    ...(input.language !== undefined ? { language: input.language } : {}),
-                    ...(input.rights !== undefined ? { rights: input.rights } : {}),
-                    ...(input.isMature !== undefined ? { isMature: input.isMature } : {}),
+                    ...(input.coverUrl !== undefined
+                        ? { coverUrl: input.coverUrl }
+                        : {}),
+                    ...(input.language !== undefined
+                        ? { language: input.language }
+                        : {}),
+                    ...(input.rights !== undefined
+                        ? { rights: input.rights }
+                        : {}),
+                    ...(input.isMature !== undefined
+                        ? { isMature: input.isMature }
+                        : {}),
                     ...(genre ? { genreId: genre.id } : {}),
                 },
                 select: { id: true },
@@ -307,15 +315,27 @@ export class PrismaContentStore implements StoryStore {
                     deletedAt: null,
                 },
                 data: {
-                    ...(input.title !== undefined ? { title: input.title } : {}),
+                    ...(input.title !== undefined
+                        ? { title: input.title }
+                        : {}),
                     ...(input.description !== undefined
                         ? { description: input.description }
                         : {}),
-                    ...(input.coverUrl !== undefined ? { coverUrl: input.coverUrl } : {}),
-                    ...(input.language !== undefined ? { language: input.language } : {}),
-                    ...(input.rights !== undefined ? { rights: input.rights } : {}),
-                    ...(input.isMature !== undefined ? { isMature: input.isMature } : {}),
-                    ...(input.status !== undefined ? { status: input.status } : {}),
+                    ...(input.coverUrl !== undefined
+                        ? { coverUrl: input.coverUrl }
+                        : {}),
+                    ...(input.language !== undefined
+                        ? { language: input.language }
+                        : {}),
+                    ...(input.rights !== undefined
+                        ? { rights: input.rights }
+                        : {}),
+                    ...(input.isMature !== undefined
+                        ? { isMature: input.isMature }
+                        : {}),
+                    ...(input.status !== undefined
+                        ? { status: input.status }
+                        : {}),
                     ...(input.visibility !== undefined
                         ? { visibility: input.visibility }
                         : {}),
@@ -405,7 +425,12 @@ export class PrismaContentStore implements StoryStore {
                 where: { id: storyId },
                 data: {
                     visibility: "PUBLIC",
-                    status: story.status === "DRAFT" ? "ONGOING" : story.status,
+
+                    status:
+                        story.status === "DRAFT" || story.status === "SCHEDULED"
+                            ? "ONGOING"
+                            : story.status,
+
                     ...(story.publishedAt === null ? { publishedAt } : {}),
                 },
             });
@@ -414,7 +439,10 @@ export class PrismaContentStore implements StoryStore {
         });
     }
 
-    public async unpublishStory(authorId: string, storyId: string): Promise<boolean> {
+    public async unpublishStory(
+        authorId: string,
+        storyId: string,
+    ): Promise<boolean> {
         const result = await prisma.story.updateMany({
             where: { id: storyId, authorId, deletedAt: null },
             data: { visibility: "PRIVATE" },
@@ -423,10 +451,7 @@ export class PrismaContentStore implements StoryStore {
         return result.count === 1;
     }
 
-    public async findReadableStoryById(
-        storyId: string,
-        viewerId?: string,
-    ) {
+    public async findReadableStoryById(storyId: string, viewerId?: string) {
         const canReadMature = await viewerCanReadMatureContent(viewerId);
 
         return prisma.story.findFirst({
@@ -457,10 +482,7 @@ export class PrismaContentStore implements StoryStore {
         });
     }
 
-    public async findReadableChapterById(
-        chapterId: string,
-        viewerId?: string,
-    ) {
+    public async findReadableChapterById(chapterId: string, viewerId?: string) {
         const canReadMature = await viewerCanReadMatureContent(viewerId);
 
         const row = await prisma.chapter.findFirst({
@@ -480,8 +502,12 @@ export class PrismaContentStore implements StoryStore {
                         status: "ACTIVE",
                         ...(viewerId
                             ? {
-                                  blocksCreated: { none: { blockedId: viewerId } },
-                                  blocksReceived: { none: { blockerId: viewerId } },
+                                  blocksCreated: {
+                                      none: { blockedId: viewerId },
+                                  },
+                                  blocksReceived: {
+                                      none: { blockerId: viewerId },
+                                  },
                               }
                             : {}),
                     },
@@ -581,11 +607,18 @@ export class PrismaContentStore implements StoryStore {
     public async listPublicStories(
         cursor: string | undefined,
         limit: number,
-        filters: { genre?: string; tag?: string; language?: string; author?: string },
+        filters: {
+            genre?: string;
+            tag?: string;
+            language?: string;
+            author?: string;
+        },
         viewerId?: string,
     ): Promise<StoryPage> {
         const canReadMature = await viewerCanReadMatureContent(viewerId);
-        const decodedCursor = cursor ? cursorCodec.decode(cursor, dateIdCursorSchema) : null;
+        const decodedCursor = cursor
+            ? cursorCodec.decode(cursor, dateIdCursorSchema)
+            : null;
         const rows: StoryRow[] = await prisma.story.findMany({
             where: {
                 deletedAt: null,
@@ -596,7 +629,9 @@ export class PrismaContentStore implements StoryStore {
                 ...(canReadMature ? {} : { isMature: false }),
                 author: {
                     status: "ACTIVE",
-                    ...(filters.author ? { usernameNormalized: filters.author } : {}),
+                    ...(filters.author
+                        ? { usernameNormalized: filters.author }
+                        : {}),
                     ...(viewerId
                         ? {
                               blocksCreated: { none: { blockedId: viewerId } },
@@ -604,13 +639,21 @@ export class PrismaContentStore implements StoryStore {
                           }
                         : {}),
                 },
-                ...(filters.genre ? { genre: { slug: filters.genre, isActive: true } } : {}),
-                ...(filters.tag ? { tags: { some: { tag: { slug: filters.tag } } } } : {}),
+                ...(filters.genre
+                    ? { genre: { slug: filters.genre, isActive: true } }
+                    : {}),
+                ...(filters.tag
+                    ? { tags: { some: { tag: { slug: filters.tag } } } }
+                    : {}),
                 ...(filters.language ? { language: filters.language } : {}),
                 ...(decodedCursor
                     ? {
                           OR: [
-                              { publishedAt: { lt: new Date(decodedCursor.at) } },
+                              {
+                                  publishedAt: {
+                                      lt: new Date(decodedCursor.at),
+                                  },
+                              },
                               {
                                   publishedAt: new Date(decodedCursor.at),
                                   id: { lt: decodedCursor.id },
@@ -632,7 +675,10 @@ export class PrismaContentStore implements StoryStore {
                 hasMore,
                 nextCursor:
                     hasMore && last?.publishedAt
-                        ? cursorCodec.encode({ at: last.publishedAt.toISOString(), id: last.id })
+                        ? cursorCodec.encode({
+                              at: last.publishedAt.toISOString(),
+                              id: last.id,
+                          })
                         : null,
             },
         };
@@ -643,7 +689,9 @@ export class PrismaContentStore implements StoryStore {
         cursor: string | undefined,
         limit: number,
     ): Promise<StoryPage> {
-        const decodedCursor = cursor ? cursorCodec.decode(cursor, dateIdCursorSchema) : null;
+        const decodedCursor = cursor
+            ? cursorCodec.decode(cursor, dateIdCursorSchema)
+            : null;
         const rows: StoryRow[] = await prisma.story.findMany({
             where: {
                 authorId,
@@ -652,7 +700,10 @@ export class PrismaContentStore implements StoryStore {
                     ? {
                           OR: [
                               { updatedAt: { lt: new Date(decodedCursor.at) } },
-                              { updatedAt: new Date(decodedCursor.at), id: { lt: decodedCursor.id } },
+                              {
+                                  updatedAt: new Date(decodedCursor.at),
+                                  id: { lt: decodedCursor.id },
+                              },
                           ],
                       }
                     : {}),
@@ -668,9 +719,13 @@ export class PrismaContentStore implements StoryStore {
             stories: pageRows.map(mapSummary),
             pagination: {
                 hasMore,
-                nextCursor: hasMore && last
-                    ? cursorCodec.encode({ at: last.updatedAt.toISOString(), id: last.id })
-                    : null,
+                nextCursor:
+                    hasMore && last
+                        ? cursorCodec.encode({
+                              at: last.updatedAt.toISOString(),
+                              id: last.id,
+                          })
+                        : null,
             },
         };
     }
@@ -721,7 +776,10 @@ export class PrismaContentStore implements StoryStore {
                                 storyId,
                                 title: input.title,
                                 content: input.content,
-                                contentHash: chapterContentHash(input.title, input.content),
+                                contentHash: chapterContentHash(
+                                    input.title,
+                                    input.content,
+                                ),
                                 wordCount,
                                 position: (aggregate._max.position ?? 0) + 1,
                             },
@@ -773,21 +831,28 @@ export class PrismaContentStore implements StoryStore {
             });
             if (!current) return null;
             if (current.version !== input.expectedVersion) {
-                return { kind: "CONFLICT" as const, current: mapChapter(current) };
+                return {
+                    kind: "CONFLICT" as const,
+                    current: mapChapter(current),
+                };
             }
 
             const nextTitle = input.title ?? current.title;
             const nextContent = input.content ?? current.content;
-            const currentHash = current.contentHash || chapterContentHash(current.title, current.content);
+            const currentHash =
+                current.contentHash ||
+                chapterContentHash(current.title, current.content);
             const incomingHash = chapterContentHash(nextTitle, nextContent);
             const lastRevision = current.revisions.at(0);
-            if (shouldCreateDraftRevision({
-                currentHash,
-                incomingHash,
-                lastRevisionAt: lastRevision?.createdAt ?? null,
-                now: new Date(),
-                minimumIntervalMs: 5 * 60_000,
-            })) {
+            if (
+                shouldCreateDraftRevision({
+                    currentHash,
+                    incomingHash,
+                    lastRevisionAt: lastRevision?.createdAt ?? null,
+                    now: new Date(),
+                    minimumIntervalMs: 5 * 60_000,
+                })
+            ) {
                 await transaction.chapterRevision.create({
                     data: {
                         chapterId,
@@ -806,8 +871,12 @@ export class PrismaContentStore implements StoryStore {
             const row = await transaction.chapter.update({
                 where: { id: chapterId },
                 data: {
-                    ...(input.title !== undefined ? { title: input.title } : {}),
-                    ...(input.content !== undefined ? { content: input.content } : {}),
+                    ...(input.title !== undefined
+                        ? { title: input.title }
+                        : {}),
+                    ...(input.content !== undefined
+                        ? { content: input.content }
+                        : {}),
                     ...(wordCount !== undefined ? { wordCount } : {}),
                     contentHash: incomingHash,
                     version: { increment: 1 },
@@ -847,34 +916,59 @@ export class PrismaContentStore implements StoryStore {
         chapterId: string,
         publishedAt: Date,
     ): Promise<ChapterView | "EMPTY" | null> {
-        const current = await prisma.chapter.findFirst({
-            where: {
-                id: chapterId,
-                storyId,
-                deletedAt: null,
-                story: { authorId, deletedAt: null },
-            },
-            select: { wordCount: true },
+        return prisma.$transaction(async (transaction) => {
+            const current = await transaction.chapter.findFirst({
+                where: {
+                    id: chapterId,
+                    storyId,
+                    deletedAt: null,
+                    story: {
+                        authorId,
+                        deletedAt: null,
+                    },
+                },
+                select: {
+                    wordCount: true,
+                },
+            });
+
+            if (!current) {
+                return null;
+            }
+
+            if (current.wordCount === 0) {
+                return "EMPTY";
+            }
+
+            const row: ChapterRow = await transaction.chapter.update({
+                where: {
+                    id: chapterId,
+                },
+                data: {
+                    status: "PUBLISHED",
+                    publishedAt,
+                },
+                select: chapterContentSelect,
+            });
+
+            await transaction.outboxMessage.create({
+                data: {
+                    eventType: "CHAPTER_PUBLISHED",
+
+                    aggregateType: "CHAPTER",
+
+                    aggregateId: chapterId,
+
+                    payload: {
+                        chapterId,
+
+                        publishedAt: publishedAt.toISOString(),
+                    },
+                },
+            });
+
+            return mapChapter(row);
         });
-
-        if (!current) {
-            return null;
-        }
-
-        if (current.wordCount === 0) {
-            return "EMPTY";
-        }
-
-        const row: ChapterRow = await prisma.chapter.update({
-            where: { id: chapterId },
-            data: {
-                status: "PUBLISHED",
-                publishedAt,
-            },
-            select: chapterContentSelect,
-        });
-
-        return mapChapter(row);
     }
 
     public async unpublishChapter(
@@ -946,8 +1040,9 @@ export class PrismaContentStore implements StoryStore {
                 SET CONSTRAINTS "chapters_story_id_position_key" DEFERRED
             `;
             if (chapterIds.length > 0) {
-                const positions = chapterIds.map((chapterId, index) =>
-                    Prisma.sql`(${chapterId}::uuid, ${index + 1}::integer)`,
+                const positions = chapterIds.map(
+                    (chapterId, index) =>
+                        Prisma.sql`(${chapterId}::uuid, ${index + 1}::integer)`,
                 );
                 await transaction.$executeRaw(Prisma.sql`
                     UPDATE "chapters" AS chapter
@@ -1000,8 +1095,12 @@ export class PrismaContentStore implements StoryStore {
                         status: "ACTIVE",
                         ...(viewerId
                             ? {
-                                  blocksCreated: { none: { blockedId: viewerId } },
-                                  blocksReceived: { none: { blockerId: viewerId } },
+                                  blocksCreated: {
+                                      none: { blockedId: viewerId },
+                                  },
+                                  blocksReceived: {
+                                      none: { blockerId: viewerId },
+                                  },
                               }
                             : {}),
                     },

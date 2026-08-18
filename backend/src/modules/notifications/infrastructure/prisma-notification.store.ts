@@ -19,35 +19,57 @@ const preferenceField: Record<
     | "notifySecurity"
 > = {
     FOLLOW: "notifyFollow",
+
     COMMENT: "notifyComment",
+
     COMMENT_REPLY: "notifyReply",
+
     CHAPTER_VOTE: "notifyVote",
+
+    STORY_PUBLISHED: "notifyChapterPublished",
+
     CHAPTER_PUBLISHED: "notifyChapterPublished",
+
     MODERATION: "notifyModeration",
+
     SECURITY: "notifySecurity",
 };
 
 export class PrismaNotificationStore implements NotificationStore {
-    public async shouldDeliver(input: CreateNotificationInput): Promise<boolean> {
+    public async shouldDeliver(
+        input: CreateNotificationInput,
+    ): Promise<boolean> {
         const user = await prisma.user.findUnique({
-            where: { id: input.recipientId },
+            where: {
+                id: input.recipientId,
+            },
+
             select: {
                 status: true,
+
                 preferences: {
                     select: {
                         notifyFollow: true,
+
                         notifyComment: true,
+
                         notifyReply: true,
+
                         notifyVote: true,
+
                         notifyChapterPublished: true,
+
                         notifyModeration: true,
+
                         notifySecurity: true,
                     },
                 },
             },
         });
 
-        if (!user || user.status !== "ACTIVE") return false;
+        if (!user || user.status !== "ACTIVE") {
+            return false;
+        }
 
         if (
             user.preferences &&
@@ -62,18 +84,26 @@ export class PrismaNotificationStore implements NotificationStore {
                     OR: [
                         {
                             blockerId: input.recipientId,
+
                             blockedId: input.actorId,
                         },
+
                         {
                             blockerId: input.actorId,
+
                             blockedId: input.recipientId,
                         },
                     ],
                 },
-                select: { blockerId: true },
+
+                select: {
+                    blockerId: true,
+                },
             });
 
-            if (block) return false;
+            if (block) {
+                return false;
+            }
         }
 
         return true;
@@ -82,25 +112,48 @@ export class PrismaNotificationStore implements NotificationStore {
     public async create(input: CreateNotificationInput): Promise<void> {
         const data = {
             recipientId: input.recipientId,
-            ...(input.actorId ? { actorId: input.actorId } : {}),
+
+            ...(input.actorId
+                ? {
+                      actorId: input.actorId,
+                  }
+                : {}),
+
             type: input.type,
+
             data: input.data,
-            ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
+
+            ...(input.dedupeKey
+                ? {
+                      dedupeKey: input.dedupeKey,
+                  }
+                : {}),
         };
 
         if (input.dedupeKey) {
             await prisma.notification.upsert({
-                where: { dedupeKey: input.dedupeKey },
+                where: {
+                    dedupeKey: input.dedupeKey,
+                },
+
                 update: {},
+
                 create: data,
-                select: { id: true },
+
+                select: {
+                    id: true,
+                },
             });
+
             return;
         }
 
         await prisma.notification.create({
             data,
-            select: { id: true },
+
+            select: {
+                id: true,
+            },
         });
     }
 
@@ -110,24 +163,55 @@ export class PrismaNotificationStore implements NotificationStore {
         limit: number,
     ): Promise<{
         items: NotificationRecord[];
+
         hasMore: boolean;
+
         nextCursor: string | null;
     }> {
         const rows: NotificationRecord[] = await prisma.notification.findMany({
-            where: { recipientId },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            where: {
+                recipientId,
+            },
+
+            orderBy: [
+                {
+                    createdAt: "desc",
+                },
+
+                {
+                    id: "desc",
+                },
+            ],
+
             take: limit + 1,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+
+            ...(cursor
+                ? {
+                      cursor: {
+                          id: cursor,
+                      },
+
+                      skip: 1,
+                  }
+                : {}),
+
             select: {
                 id: true,
+
                 type: true,
+
                 data: true,
+
                 readAt: true,
+
                 createdAt: true,
+
                 actor: {
                     select: {
                         username: true,
+
                         displayName: true,
+
                         avatarUrl: true,
                     },
                 },
@@ -138,7 +222,9 @@ export class PrismaNotificationStore implements NotificationStore {
 
         return {
             items: page.items,
+
             hasMore: page.pagination.hasMore,
+
             nextCursor: page.pagination.nextCursor,
         };
     }
@@ -149,8 +235,15 @@ export class PrismaNotificationStore implements NotificationStore {
         readAt: Date,
     ): Promise<boolean> {
         const result = await prisma.notification.updateMany({
-            where: { id: notificationId, recipientId },
-            data: { readAt },
+            where: {
+                id: notificationId,
+
+                recipientId,
+            },
+
+            data: {
+                readAt,
+            },
         });
 
         return result.count === 1;
@@ -161,8 +254,15 @@ export class PrismaNotificationStore implements NotificationStore {
         readAt: Date,
     ): Promise<number> {
         const result = await prisma.notification.updateMany({
-            where: { recipientId, readAt: null },
-            data: { readAt },
+            where: {
+                recipientId,
+
+                readAt: null,
+            },
+
+            data: {
+                readAt,
+            },
         });
 
         return result.count;
