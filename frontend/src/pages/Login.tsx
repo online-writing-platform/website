@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LuEyeClosed, LuEye } from "react-icons/lu";
+
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
 
@@ -12,6 +14,7 @@ interface LoginLocationState {
 }
 
 function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { login, status } = useAuth();
@@ -51,8 +54,9 @@ function Login() {
   return (
     <main className="login-page">
       <section className="form-card">
-        <h1 className="form-title">ورود</h1>
-        <p className="form-subtitle">برای ادامه وارد حساب خود شوید.</p>
+        <h1 className="form-title">{t("auth.login.title")}</h1>
+
+        <p className="form-subtitle">{t("auth.login.subtitle")}</p>
 
         <form className="form" onSubmit={(event) => void handleSubmit(event)}>
           {errorMessage && (
@@ -62,7 +66,8 @@ function Login() {
           )}
 
           <div className="form-group">
-            <label htmlFor="identifier">ایمیل یا نام کاربری</label>
+            <label htmlFor="identifier">{t("auth.login.identifier")}</label>
+
             <input
               id="identifier"
               name="identifier"
@@ -75,7 +80,8 @@ function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">رمز عبور</label>
+            <label htmlFor="password">{t("auth.login.password")}</label>
+
             <div className="password-input-wrapper">
               <input
                 id="password"
@@ -87,12 +93,15 @@ function Login() {
                 required
                 onChange={(event) => setPassword(event.target.value)}
               />
+
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={
-                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+                  showPassword
+                    ? t("auth.common.hidePassword")
+                    : t("auth.common.showPassword")
                 }
               >
                 {showPassword ? <LuEye /> : <LuEyeClosed />}
@@ -101,15 +110,17 @@ function Login() {
           </div>
 
           <button className="button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "در حال ورود…" : "ورود"}
+            {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
           </button>
         </form>
 
         <p className="form-footer">
-          <Link to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>
+          <Link to="/forgot-password">{t("auth.login.forgotPassword")}</Link>
         </p>
+
         <p className="form-footer">
-          حساب ندارید؟ <Link to="/register">ثبت‌نام</Link>
+          {t("auth.login.noAccount")}{" "}
+          <Link to="/register">{t("auth.login.register")}</Link>
         </p>
       </section>
     </main>
