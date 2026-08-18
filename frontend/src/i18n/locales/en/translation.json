@@ -9,6 +9,61 @@
       "en": "Switch language to English"
     }
   },
+  "auth": {
+    "common": {
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "login": {
+      "title": "Log in",
+      "subtitle": "Log in to your account to continue.",
+      "identifier": "Email or username",
+      "password": "Password",
+      "submitting": "Logging in…",
+      "submit": "Log in",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "register": "Register"
+    },
+    "register": {
+      "title": "Register",
+      "subtitle": "Create your reading and writing account.",
+      "username": "Username",
+      "usernameHelp": "3–20 characters; English letters, numbers, underscores, and hyphens.",
+      "email": "Email",
+      "birthDate": "Date of birth",
+      "birthDatePlaceholder": "Date of birth",
+      "chooseBirthDate": "Choose date of birth",
+      "birthDateHelp": "Used by the server to apply the mature-content policy.",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "acceptTerms": "I have read and accept the <termsLink>Terms of Service</termsLink>.",
+      "submitting": "Creating account…",
+      "submit": "Register",
+      "hasAccount": "Already have an account?",
+      "login": "Log in",
+      "validation": {
+        "birthDateRequired": "Please choose your date of birth.",
+        "passwordsMismatch": "The passwords do not match.",
+        "termsRequired": "You must accept the Terms of Service to register."
+      }
+    }
+  },
+  "errors": {
+    "NETWORK_ERROR": "Could not connect to the server. Make sure the backend is running.",
+    "VALIDATION_ERROR": "The submitted information is invalid. Check the form fields.",
+    "EMAIL_ALREADY_EXISTS": "An account already exists with this email address.",
+    "USERNAME_ALREADY_EXISTS": "This username is already taken.",
+    "IDENTITY_ALREADY_EXISTS": "This email address or username is already in use.",
+    "INVALID_CREDENTIALS": "The email, username, or password is incorrect.",
+    "LOGIN_RATE_LIMIT_EXCEEDED": "Too many login attempts. Please try again later.",
+    "REGISTRATION_RATE_LIMIT_EXCEEDED": "Too many registration attempts. Please try again later.",
+    "UNAUTHORIZED": "You must log in to perform this action.",
+    "INVALID_ACCESS_TOKEN": "Your session has expired. Please log in again.",
+    "INACTIVE_SESSION": "Your session is no longer active. Please log in again.",
+    "USER_NOT_FOUND": "The requested user was not found.",
+    "UNEXPECTED_ERROR": "An unexpected error occurred."
+  },
   "genres": {
     "title": "Browse by Genre",
     "loading": "Loading genres...",
