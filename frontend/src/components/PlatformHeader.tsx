@@ -111,7 +111,6 @@ function PlatformHeader() {
               <NavigationMenuList>
                 <NavigationMenuItem value="account">
                   <NavigationMenuTrigger className="platform-profile-trigger">
-                    <User className="platform-account-icon" />
                     <span>{user.displayName}</span>
                   </NavigationMenuTrigger>
 
