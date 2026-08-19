@@ -60,11 +60,6 @@ function PlatformHeader() {
             <span>{t("PlatformHeader.discover")}</span>
           </NavLink>
 
-          <NavLink to="/search" className="platform-nav-link">
-            <Library className="platform-nav-icon" />
-            <span>{t("PlatformHeader.search")}</span>
-          </NavLink>
-
           {status === "authenticated" && (
             <>
               <NavLink to="/library" className="platform-nav-link">
@@ -193,11 +188,6 @@ function PlatformHeader() {
             <NavLink to="/discover" onClick={closeMobileMenu}>
               <Compass />
               <span>{t("PlatformHeader.discover")}</span>
-            </NavLink>
-
-            <NavLink to="/search" onClick={closeMobileMenu}>
-              <Search />
-              <span>{t("PlatformHeader.search")}</span>
             </NavLink>
 
             {status === "authenticated" && (
