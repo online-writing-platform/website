@@ -19,6 +19,14 @@ import {
 import useAuth from "../hooks/useAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
 import ThemeButton from "./ThemeButton";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "./ui/navigation-menu";
 import "./PlatformHeader.css";
 
 function PlatformHeader() {
@@ -65,36 +73,14 @@ function PlatformHeader() {
             <span>{t("PlatformHeader.search")}</span>
           </NavLink>
 
-          {status === "authenticated" && (
-            <>
-              <NavLink to="/library" className="platform-nav-link">
-                <Library className="platform-nav-icon" />
-                <span>{t("PlatformHeader.library")}</span>
+          {status === "authenticated" &&
+            user &&
+            (user.role === "MODERATOR" || user.role === "ADMIN") && (
+              <NavLink to="/moderation" className="platform-nav-link">
+                <Settings className="platform-nav-icon" />
+                <span>{t("PlatformHeader.moderation")}</span>
               </NavLink>
-
-              <NavLink to="/write" className="platform-nav-link">
-                <PenTool className="platform-nav-icon" />
-                <span>{t("PlatformHeader.write")}</span>
-              </NavLink>
-
-              <NavLink to="/notifications" className="platform-nav-link">
-                <Bell className="platform-nav-icon" />
-                <span>{t("PlatformHeader.notifications")}</span>
-              </NavLink>
-
-              <NavLink to="/analytics" className="platform-nav-link">
-                <BarChart3 className="platform-nav-icon" />
-                <span>{t("PlatformHeader.analytics")}</span>
-              </NavLink>
-
-              {user && (user.role === "MODERATOR" || user.role === "ADMIN") && (
-                <NavLink to="/moderation" className="platform-nav-link">
-                  <Settings className="platform-nav-icon" />
-                  <span>{t("PlatformHeader.moderation")}</span>
-                </NavLink>
-              )}
-            </>
-          )}
+            )}
         </nav>
 
         {/* Search */}
@@ -117,28 +103,92 @@ function PlatformHeader() {
           <LanguageSwitcher />
 
           {status === "authenticated" && user ? (
-            <>
-              <Link
-                to={`/users/${encodeURIComponent(user.username)}`}
-                className="platform-user"
-              >
-                <User className="platform-account-icon" />
-                <span>{user.displayName}</span>
-              </Link>
+            <NavigationMenu
+              className="platform-profile"
+              align="end"
+              aria-label={t("PlatformHeader.accountMenu")}
+            >
+              <NavigationMenuList>
+                <NavigationMenuItem value="account">
+                  <NavigationMenuTrigger className="platform-profile-trigger">
+                    <User className="platform-account-icon" />
+                    <span>{user.displayName}</span>
+                  </NavigationMenuTrigger>
 
-              <Link to="/settings" className="platform-settings">
-                {t("PlatformHeader.settings")}
-              </Link>
+                  <NavigationMenuContent className="platform-profile-menu">
+                    <ul className="platform-profile-menu-list">
+                      <li>
+                        <NavigationMenuLink
+                          render={<NavLink to="/library" />}
+                          closeOnClick
+                        >
+                          <Library />
+                          <span>{t("PlatformHeader.library")}</span>
+                        </NavigationMenuLink>
+                      </li>
 
-              <button
-                type="button"
-                className="platform-logout"
-                onClick={handleLogout}
-              >
-                <LogOut className="platform-account-icon" />
-                <span>{t("PlatformHeader.logout")}</span>
-              </button>
-            </>
+                      <li>
+                        <NavigationMenuLink
+                          render={<NavLink to="/write" />}
+                          closeOnClick
+                        >
+                          <PenTool />
+                          <span>{t("PlatformHeader.write")}</span>
+                        </NavigationMenuLink>
+                      </li>
+
+                      <li>
+                        <NavigationMenuLink
+                          render={<NavLink to="/notifications" />}
+                          closeOnClick
+                        >
+                          <Bell />
+                          <span>{t("PlatformHeader.notifications")}</span>
+                        </NavigationMenuLink>
+                      </li>
+
+                      <li>
+                        <NavigationMenuLink
+                          render={<NavLink to="/analytics" />}
+                          closeOnClick
+                        >
+                          <BarChart3 />
+                          <span>{t("PlatformHeader.analytics")}</span>
+                        </NavigationMenuLink>
+                      </li>
+
+                      <li
+                        className="platform-profile-menu-divider"
+                        role="separator"
+                      />
+
+                      <li>
+                        <NavigationMenuLink
+                          render={<NavLink to="/settings" />}
+                          closeOnClick
+                        >
+                          <Settings />
+                          <span>{t("PlatformHeader.settings")}</span>
+                        </NavigationMenuLink>
+                      </li>
+
+                      <li>
+                        <NavigationMenuLink
+                          render={
+                            <button type="button" onClick={handleLogout} />
+                          }
+                          className="platform-profile-logout"
+                          closeOnClick
+                        >
+                          <LogOut />
+                          <span>{t("PlatformHeader.logout")}</span>
+                        </NavigationMenuLink>
+                      </li>
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           ) : status === "anonymous" ? (
             <>
               <Link to="/login" className="platform-login">

@@ -211,10 +211,7 @@
   height: 17px;
 }
 
-.platform-user,
-.platform-settings,
-.platform-login,
-.platform-logout {
+.platform-login {
   display: flex;
   align-items: center;
 
@@ -229,25 +226,212 @@
     background-color 0.2s ease;
 }
 
-.platform-user:hover,
-.platform-settings:hover,
 .platform-login:hover {
   color: var(--primary);
 }
 
-.platform-logout {
-  border: 0;
+.platform-profile {
+  flex: 0 0 auto;
+}
 
+.platform-profile [data-slot="navigation-menu-list"] {
+  margin: 0;
   padding: 0;
+}
+
+.platform-profile-trigger {
+  display: flex;
+  align-items: center;
+
+  gap: 0.4rem;
+
+  min-height: 38px;
+
+  padding: 0.45rem 0.65rem;
+
+  border: 0;
+  border-radius: var(--radius);
 
   background: transparent;
 
-  font-family: inherit;
+  color: var(--text-secondary);
 
   cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
-.platform-logout:hover {
+.platform-profile-trigger:hover,
+.platform-profile-trigger:focus-visible,
+.platform-profile-trigger[data-popup-open] {
+  background: var(--primary-soft);
+
+  color: var(--primary);
+}
+
+.platform-profile-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cn-navigation-menu-trigger-icon {
+  display: flex;
+
+  width: 15px;
+  height: 15px;
+
+  transition: transform 0.2s ease;
+}
+
+.cn-navigation-menu-trigger-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.platform-profile-trigger[data-popup-open] .cn-navigation-menu-trigger-icon {
+  transform: rotate(180deg);
+}
+
+.cn-navigation-menu-positioner {
+  z-index: 60;
+}
+
+.cn-navigation-menu-popup {
+  position: relative;
+
+  width: var(--popup-width);
+  height: var(--popup-height);
+
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+
+  background: var(--surface);
+
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--text) 16%, transparent);
+
+  transform-origin: var(--transform-origin);
+
+  transition:
+    width 0.25s ease,
+    height 0.25s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cn-navigation-menu-popup[data-starting-style],
+.cn-navigation-menu-popup[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+
+.cn-navigation-menu-viewport {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+}
+
+.platform-profile-menu {
+  width: max-content;
+  min-width: 220px;
+
+  padding: 0.4rem;
+
+  background: var(--surface);
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.platform-profile-menu[data-starting-style],
+.platform-profile-menu[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.platform-profile-menu-list {
+  display: flex;
+  flex-direction: column;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.platform-profile-menu-list > li {
+  width: 100%;
+}
+
+.platform-profile-menu a,
+.platform-profile-menu button {
+  display: flex;
+  align-items: center;
+
+  gap: 0.7rem;
+
+  width: 100%;
+
+  padding: 0.65rem 0.75rem;
+
+  border: 0;
+  border-radius: var(--radius);
+
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  font-family: inherit;
+  font-size: 0.9rem;
+
+  text-align: start;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.platform-profile-menu a:hover,
+.platform-profile-menu a:focus-visible,
+.platform-profile-menu a.active,
+.platform-profile-menu button:hover,
+.platform-profile-menu button:focus-visible {
+  outline: none;
+
+  background: var(--primary-soft);
+
+  color: var(--primary);
+}
+
+.platform-profile-menu svg {
+  width: 18px;
+  height: 18px;
+
+  flex: 0 0 auto;
+}
+
+.platform-profile-menu-divider {
+  height: 1px;
+
+  margin: 0.35rem 0.45rem;
+
+  background: var(--border);
+}
+
+.platform-profile-menu .platform-profile-logout:hover,
+.platform-profile-menu .platform-profile-logout:focus-visible {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+
   color: var(--danger);
 }
 
@@ -395,11 +579,12 @@
     gap: 0.4rem;
   }
 
-  .platform-user span,
-  .platform-settings,
   .platform-login,
-  .platform-logout span,
   .platform-language-button span {
+    display: none;
+  }
+
+  .platform-profile {
     display: none;
   }
 
