@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-
 import { LuEyeClosed, LuEye } from "react-icons/lu";
+
 import Button from "../components/Button";
+import BirthDatePicker from "../components/BirthDatePicker";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
-import BirthDatePicker from "../components/BirthDatePicker";
-import "@aliasadollahi/jalali-datepicker/styles.css";
 
+import "@aliasadollahi/jalali-datepicker/styles.css";
 import "./Register.css";
 import "../styles/Form.css";
 
@@ -30,8 +31,10 @@ const initialForm: RegisterForm = {
 };
 
 function Register() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register, status } = useAuth();
+
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,18 +49,19 @@ function Register() {
   ): Promise<void> {
     event.preventDefault();
     setErrorMessage(null);
+
     if (!form.birthDate) {
-      setErrorMessage("لطفاً تاریخ تولد خود را انتخاب کنید.");
+      setErrorMessage(t("auth.register.validation.birthDateRequired"));
       return;
     }
 
     if (form.password !== form.confirmPassword) {
-      setErrorMessage("رمز عبور و تکرار آن یکسان نیستند.");
+      setErrorMessage(t("auth.register.validation.passwordsMismatch"));
       return;
     }
 
     if (!form.acceptTerms) {
-      setErrorMessage("برای ثبت‌نام باید قوانین سایت را بپذیرید.");
+      setErrorMessage(t("auth.register.validation.termsRequired"));
       return;
     }
 
@@ -84,10 +88,10 @@ function Register() {
     <main className="register-page">
       <section className="form-card" aria-labelledby="register-title">
         <h1 id="register-title" className="form-title">
-          ثبت‌نام
+          {t("auth.register.title")}
         </h1>
 
-        <p className="form-subtitle">حساب نویسندگی و مطالعه خود را بسازید.</p>
+        <p className="form-subtitle">{t("auth.register.subtitle")}</p>
 
         <form
           className="form"
@@ -102,7 +106,8 @@ function Register() {
           )}
 
           <div className="form-group">
-            <label htmlFor="username">نام کاربری</label>
+            <label htmlFor="username">{t("auth.register.username")}</label>
+
             <input
               id="username"
               name="username"
@@ -121,13 +126,15 @@ function Register() {
               dir="ltr"
               required
             />
+
             <small className="form-help">
-              ۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد و underscore.
+              {t("auth.register.usernameHelp")}
             </small>
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">ایمیل</label>
+            <label htmlFor="email">{t("auth.register.email")}</label>
+
             <input
               id="email"
               name="email"
@@ -146,7 +153,7 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="birthDate">تاریخ تولد</label>
+            <label htmlFor="birthDate">{t("auth.register.birthDate")}</label>
 
             <BirthDatePicker
               value={form.birthDate}
@@ -160,12 +167,12 @@ function Register() {
             />
 
             <small className="form-help">
-              برای اعمال سیاست محتوای بزرگسال در سمت سرور استفاده می‌شود.
+              {t("auth.register.birthDateHelp")}
             </small>
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">رمز عبور</label>
+            <label htmlFor="password">{t("auth.register.password")}</label>
 
             <div className="password-input-wrapper">
               <input
@@ -190,16 +197,21 @@ function Register() {
                 className="password-toggle"
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={
-                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+                  showPassword
+                    ? t("auth.common.hidePassword")
+                    : t("auth.common.showPassword")
                 }
               >
-                {showPassword ? <LuEye /> : <LuEyeClosed />}{" "}
+                {showPassword ? <LuEye /> : <LuEyeClosed />}
               </button>
             </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">تکرار رمز عبور</label>
+            <label htmlFor="confirmPassword">
+              {t("auth.register.confirmPassword")}
+            </label>
+
             <div className="password-input-wrapper">
               <input
                 id="confirmPassword"
@@ -217,15 +229,18 @@ function Register() {
                 autoComplete="new-password"
                 required
               />
+
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword((current) => !current)}
                 aria-label={
-                  showPassword ? "مخفی کردن رمز عبور" : "نمایش رمز عبور"
+                  showPassword
+                    ? t("auth.common.hidePassword")
+                    : t("auth.common.showPassword")
                 }
               >
-                {showPassword ? <LuEye /> : <LuEyeClosed />}{" "}
+                {showPassword ? <LuEye /> : <LuEyeClosed />}
               </button>
             </div>
           </div>
@@ -241,18 +256,27 @@ function Register() {
                 }));
               }}
             />
+
             <span>
-              <Link to="/terms">قوانین سایت</Link> را مطالعه کرده‌ام و می‌پذیرم.
+              <Trans
+                i18nKey="auth.register.acceptTerms"
+                components={{
+                  termsLink: <Link to="/terms" />,
+                }}
+              />
             </span>
           </label>
 
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "در حال ثبت‌نام..." : "ثبت‌نام"}
+            {isSubmitting
+              ? t("auth.register.submitting")
+              : t("auth.register.submit")}
           </Button>
         </form>
 
         <p className="form-footer">
-          حساب کاربری دارید؟ <Link to="/login">ورود</Link>
+          {t("auth.register.hasAccount")}{" "}
+          <Link to="/login">{t("auth.register.login")}</Link>
         </p>
       </section>
     </main>
