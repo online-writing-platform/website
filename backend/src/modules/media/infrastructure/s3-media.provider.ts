@@ -27,13 +27,20 @@ export class S3MediaProvider implements MediaStorageProvider {
     ) {
         this.client = new S3Client({
             region: config.region,
+
             ...(config.endpoint
-                ? { endpoint: config.endpoint, forcePathStyle: true }
+                ? {
+                      endpoint: config.endpoint,
+
+                      forcePathStyle: true,
+                  }
                 : {}),
+
             ...(config.accessKeyId && config.secretAccessKey
                 ? {
                       credentials: {
                           accessKeyId: config.accessKeyId,
+
                           secretAccessKey: config.secretAccessKey,
                       },
                   }
@@ -52,16 +59,23 @@ export class S3MediaProvider implements MediaStorageProvider {
         await this.client.send(
             new PutObjectCommand({
                 Bucket: this.config.bucket,
+
                 Key: objectKey,
+
                 Body: input.bytes,
+
                 ContentType: input.mimeType,
+
                 CacheControl: "public, max-age=31536000, immutable",
             }),
         );
 
         return {
             objectKey,
+
             publicUrl: `${this.config.publicApiUrl}/api/v1/media/public/${input.assetId}`,
+
+            ownerUrl: `${this.config.publicApiUrl}/api/v1/media/owned/${input.assetId}`,
         };
     }
 
@@ -69,6 +83,7 @@ export class S3MediaProvider implements MediaStorageProvider {
         await this.client.send(
             new DeleteObjectCommand({
                 Bucket: this.config.bucket,
+
                 Key: objectKey,
             }),
         );
@@ -79,21 +94,28 @@ export class S3MediaProvider implements MediaStorageProvider {
             const result = await this.client.send(
                 new GetObjectCommand({
                     Bucket: this.config.bucket,
+
                     Key: objectKey,
                 }),
             );
 
-            if (!result.Body) return null;
+            if (!result.Body) {
+                return null;
+            }
+
             const bytes = await result.Body.transformToByteArray();
+
             return Buffer.from(bytes);
         } catch (error) {
             const name =
-                typeof error === "object" &&
-                error !== null &&
-                "name" in error
+                typeof error === "object" && error !== null && "name" in error
                     ? String(error.name)
                     : "";
-            if (name === "NoSuchKey" || name === "NotFound") return null;
+
+            if (name === "NoSuchKey" || name === "NotFound") {
+                return null;
+            }
+
             throw error;
         }
     }
