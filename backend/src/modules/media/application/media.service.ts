@@ -2,16 +2,15 @@ import { randomUUID } from "node:crypto";
 
 import AppError from "../../../errors/app-error.js";
 import logger from "../../../config/logger.js";
+
 import { decodeAndSanitizeImage } from "./image-processor.js";
 
-import type {
-    MediaStorageProvider,
-    MediaStore,
-} from "./media.ports.js";
+import type { MediaStorageProvider, MediaStore } from "./media.ports.js";
 
 export class MediaService {
     public constructor(
         private readonly store: MediaStore,
+
         private readonly provider: MediaStorageProvider,
     ) {}
 
@@ -25,6 +24,7 @@ export class MediaService {
         }
 
         const story = await this.store.findOwnedStory(ownerId, storyId);
+
         if (!story) {
             throw AppError.notFound(
                 "The story was not found.",
@@ -33,26 +33,39 @@ export class MediaService {
         }
 
         const image = await decodeAndSanitizeImage(bytes);
+
         const assetId = randomUUID();
 
         const stored = await this.provider.put({
             assetId,
+
             bytes: image.bytes,
+
             mimeType: image.mimeType,
+
             extension: image.extension,
         });
 
         try {
             const result = await this.store.attachStoryCover({
                 assetId,
+
                 ownerId,
+
                 storyId,
+
                 provider: this.provider.provider,
+
                 objectKey: stored.objectKey,
+
                 publicUrl: stored.publicUrl,
+
                 mimeType: image.mimeType,
+
                 byteSize: image.bytes.length,
+
                 width: image.width,
+
                 height: image.height,
             });
 
@@ -66,8 +79,10 @@ export class MediaService {
                         logger.warn(
                             {
                                 err: error,
+
                                 assetId: result.previousAsset?.id,
                             },
+
                             "Old cover cleanup failed",
                         );
                     });
@@ -75,12 +90,16 @@ export class MediaService {
 
             return {
                 assetId,
-                url: result.publicUrl,
+
+                url: stored.ownerUrl,
+
                 width: image.width,
+
                 height: image.height,
             };
         } catch (error) {
             await this.provider.delete(stored.objectKey).catch(() => undefined);
+
             throw error;
         }
     }
@@ -88,6 +107,24 @@ export class MediaService {
     public async readPublicAsset(assetId: string) {
         const asset = await this.store.findPublicAsset(assetId);
 
+        return this.readAsset(asset);
+    }
+
+    public async readOwnedAsset(ownerId: string, assetId: string) {
+        const asset = await this.store.findOwnedAsset(ownerId, assetId);
+
+        return this.readAsset(asset);
+    }
+
+    private async readAsset(
+        asset: {
+            provider: "LOCAL" | "S3";
+
+            objectKey: string;
+
+            mimeType: string;
+        } | null,
+    ) {
         if (
             !asset ||
             asset.provider !== this.provider.provider ||
@@ -100,6 +137,7 @@ export class MediaService {
         }
 
         const bytes = await this.provider.read(asset.objectKey);
+
         if (!bytes) {
             throw AppError.notFound(
                 "The media asset was not found.",
@@ -107,6 +145,10 @@ export class MediaService {
             );
         }
 
-        return { bytes, mimeType: asset.mimeType };
+        return {
+            bytes,
+
+            mimeType: asset.mimeType,
+        };
     }
 }
