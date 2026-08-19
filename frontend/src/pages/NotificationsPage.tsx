@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import useAuth from "../hooks/useAuth";
@@ -17,12 +18,14 @@ interface Notification {
 
     actor: {
         username: string;
+
         displayName: string;
+
         avatarUrl: string | null;
     } | null;
 }
 
-interface Response {
+interface NotificationsResponse {
     data: {
         items: Notification[];
 
@@ -81,14 +84,24 @@ export default function NotificationsPage() {
 
     const [items, setItems] = useState<Notification[]>([]);
 
+    const [hasMore, setHasMore] = useState(false);
+
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+
+    const [loadingMore, setLoadingMore] = useState(false);
+
     const [error, setError] = useState<string | null>(null);
 
     const load = useCallback(async (): Promise<void> => {
-        const response = await request<Response>(
+        const response = await request<NotificationsResponse>(
             "/api/v1/notifications?limit=50",
         );
 
         setItems(response.data.items);
+
+        setHasMore(response.data.hasMore);
+
+        setNextCursor(response.data.nextCursor);
     }, [request]);
 
     useEffect(() => {
@@ -102,6 +115,36 @@ export default function NotificationsPage() {
             window.clearTimeout(loadTimer);
         };
     }, [load]);
+
+    async function loadMore(): Promise<void> {
+        if (!hasMore || !nextCursor || loadingMore) {
+            return;
+        }
+
+        const cursor = nextCursor;
+
+        setLoadingMore(true);
+
+        setError(null);
+
+        try {
+            const response = await request<NotificationsResponse>(
+                `/api/v1/notifications?limit=50&cursor=${encodeURIComponent(
+                    cursor,
+                )}`,
+            );
+
+            setItems((current) => [...current, ...response.data.items]);
+
+            setHasMore(response.data.hasMore);
+
+            setNextCursor(response.data.nextCursor);
+        } catch (cause: unknown) {
+            setError(getErrorMessage(cause));
+        } finally {
+            setLoadingMore(false);
+        }
+    }
 
     async function markAllRead(): Promise<void> {
         try {
@@ -162,7 +205,12 @@ export default function NotificationsPage() {
             </header>
 
             {error && (
-                <p className="status-message status-message--error">{error}</p>
+                <p
+                    className="status-message status-message--error"
+                    role="alert"
+                >
+                    {error}
+                </p>
             )}
 
             <div className="notification-list">
@@ -208,6 +256,17 @@ export default function NotificationsPage() {
                     ))
                 )}
             </div>
+
+            {hasMore && nextCursor && (
+                <button
+                    className="button button--secondary"
+                    type="button"
+                    disabled={loadingMore}
+                    onClick={() => void loadMore()}
+                >
+                    نمایش اعلان‌های بیشتر
+                </button>
+            )}
         </main>
     );
 }
