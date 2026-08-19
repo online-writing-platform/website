@@ -119,6 +119,20 @@ function PlatformHeader() {
                     <ul className="platform-profile-menu-list">
                       <li>
                         <NavigationMenuLink
+                          render={
+                            <NavLink
+                              to={`/users/${encodeURIComponent(user.username)}`}
+                            />
+                          }
+                          closeOnClick
+                        >
+                          <User />
+                          <span>{t("PlatformHeader.profile")}</span>
+                        </NavigationMenuLink>
+                      </li>
+
+                      <li>
+                        <NavigationMenuLink
                           render={<NavLink to="/library" />}
                           closeOnClick
                         >

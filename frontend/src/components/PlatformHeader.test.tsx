@@ -88,6 +88,9 @@ describe("PlatformHeader profile menu", () => {
       expect(profileTrigger.getAttribute("data-popup-open")).not.toBeNull();
     });
 
+    expect(
+      screen.getByRole("link", { name: "Profile" }).getAttribute("href"),
+    ).toBe("/users/writer");
     expect(await screen.findByRole("link", { name: "Library" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Write" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Notifications" })).toBeTruthy();
