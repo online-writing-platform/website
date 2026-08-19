@@ -122,6 +122,21 @@
   "home": {
     "latest": "Latest",
     "popular": "Popular",
-    "recommended": "Recommended for you"
+    "recommended": "Recommended for you",
+    "stories": {
+      "loading": "Loading stories...",
+      "empty": "There are no stories to display yet.",
+      "emptyForLanguage": "There are no {{language}} stories to display yet.",
+      "viewStory": "View {{title}}",
+      "viewMore": "View more stories",
+      "showLess": "Show less",
+      "author": "Author: {{name}}",
+      "mature": "Mature content",
+      "stats": {
+        "library": "{{value}} library saves",
+        "votes": "{{value}} votes",
+        "comments": "{{value}} comments"
+      }
+    }
   }
 }

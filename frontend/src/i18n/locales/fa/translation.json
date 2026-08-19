@@ -122,6 +122,21 @@
   "home": {
     "latest": "تازه‌ها",
     "popular": "محبوب‌ها",
-    "recommended": "مطابق با سلیقه شما"
+    "recommended": "مطابق با سلیقه شما",
+    "stories": {
+      "loading": "در حال دریافت داستان‌ها...",
+      "empty": "هنوز داستانی برای نمایش وجود ندارد.",
+      "emptyForLanguage": "هنوز داستانی به زبان {{language}} برای نمایش وجود ندارد.",
+      "viewStory": "مشاهده داستان {{title}}",
+      "viewMore": "مشاهده بیشتر داستان‌ها",
+      "showLess": "نمایش کمتر",
+      "author": "نویسنده: {{name}}",
+      "mature": "محتوای ویژه بزرگسالان",
+      "stats": {
+        "library": "{{value}} ذخیره در کتابخانه",
+        "votes": "{{value}} رأی",
+        "comments": "{{value}} نظر"
+      }
+    }
   }
 }
