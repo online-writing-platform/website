@@ -1,0 +1,94 @@
+.settings-profile {
+  max-width: 44rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.settings-profile__header {
+  margin-block-end: 1.5rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--border);
+}
+
+.settings-profile__header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.settings-profile__header p {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.settings-profile__form {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.settings-profile__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.settings-profile__field > span {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.settings-profile__field input,
+.settings-profile__field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--background);
+  color: var(--text);
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.settings-profile__field input:focus,
+.settings-profile__field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.settings-profile__field textarea {
+  min-height: 7rem;
+  resize: vertical;
+  line-height: 1.8;
+}
+
+.settings-profile__field small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.settings-profile__url {
+  direction: ltr;
+  text-align: left;
+}
+
+.settings-profile__actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-block-start: 0.25rem;
+}
+
+.settings-profile__actions .button {
+  min-width: 8rem;
+}
+
+@media (max-width: 600px) {
+  .settings-profile {
+    padding: 1rem;
+  }
+
+  .settings-profile__actions .button {
+    width: 100%;
+  }
+}

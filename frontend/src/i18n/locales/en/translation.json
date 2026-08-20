@@ -139,5 +139,46 @@
         "comments": "{{value}} comments"
       }
     }
+  },
+  "profile": {
+    "loading": "Loading profile...",
+    "avatarAlt": "{{name}}'s profile picture",
+    "noBio": "This user has not written a bio yet.",
+    "joined": "Joined {{date}}",
+    "stats": {
+      "ariaLabel": "Profile statistics",
+      "publishedStories": "Stories",
+      "followers": "Followers",
+      "following": "Following",
+      "viewFollowers": "View followers",
+      "viewFollowing": "View following"
+    },
+    "actions": {
+      "editProfile": "Edit profile",
+      "follow": "Follow",
+      "unfollow": "Unfollow",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "block": "Block",
+      "unblock": "Unblock"
+    },
+    "tabs": {
+      "ariaLabel": "Profile content",
+      "stories": "Published stories",
+      "readingLists": "Reading lists"
+    },
+    "stories": {
+      "title": "Published stories",
+      "count": "{{count}} published stories",
+      "empty": "There are no public stories yet."
+    },
+    "lists": {
+      "title": "Public reading lists",
+      "count": "{{count}} reading lists",
+      "itemCount": "{{count}} stories",
+      "empty": "There are no public reading lists yet.",
+      "noDescription": "No description",
+      "open": "Open {{name}}"
+    }
   }
 }
