@@ -3,7 +3,6 @@ import {
   Ban,
   BookOpen,
   CalendarDays,
-  Edit3,
   Library,
   UserCheck,
   UserMinus,
@@ -13,13 +12,18 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
+import ProfileSettings from "../components/ProfileSettings";
 import ReportForm from "../components/ReportForm";
 import StoryCard from "../components/StoryCard";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
+import {
+  isProfileSettingsSection,
+  type ProfileSettingsSection,
+} from "../lib/profile-settings";
 import type { Story } from "../types/story";
 
 import "./Profile.css";
@@ -81,6 +85,7 @@ type RelationshipAction = "follow" | "block" | "mute";
 
 export default function PublicProfilePage() {
   const { username = "" } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { i18n, t } = useTranslation();
   const { status, user: viewer, request } = useAuth();
 
@@ -240,6 +245,25 @@ export default function PublicProfilePage() {
   const isSelf =
     status === "authenticated" && viewer?.username === profile.username;
 
+  const settingsParameter = searchParams.get("settings");
+  const activeSettingsSection = isProfileSettingsSection(settingsParameter)
+    ? settingsParameter
+    : null;
+
+  function selectSettingsSection(section: ProfileSettingsSection) {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set("settings", section);
+    setSearchParams(nextSearchParams, {
+      replace: activeSettingsSection !== null,
+    });
+  }
+
+  function closeSettings() {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete("settings");
+    setSearchParams(nextSearchParams, { replace: true });
+  }
+
   const avatarFallback =
     profile.displayName.trim().charAt(0) ||
     profile.username.trim().charAt(0).toUpperCase();
@@ -330,13 +354,12 @@ export default function PublicProfilePage() {
 
           <div className="profile-actions" aria-busy={actionIsPending}>
             {isSelf ? (
-              <Link
-                className="profile-action profile-action--secondary"
-                to="/settings"
-              >
-                <Edit3 aria-hidden="true" />
-                {t("profile.actions.editProfile")}
-              </Link>
+              <ProfileSettings
+                activeSection={activeSettingsSection}
+                onSelect={selectSettingsSection}
+                onClose={closeSettings}
+                onProfileUpdated={load}
+              />
             ) : status === "authenticated" && relationship ? (
               <>
                 <button
