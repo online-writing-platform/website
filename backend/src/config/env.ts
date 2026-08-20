@@ -105,9 +105,6 @@ const environmentSchema = z
         SMTP_USER: optionalEnvironmentString,
         SMTP_PASS: optionalEnvironmentString,
 
-        MONETIZATION_ENABLED: z.enum(["true", "false"]).default("false"),
-        ENTITLEMENT_PROVIDER: z.enum(["disabled"]).default("disabled"),
-
         MEDIA_PROVIDER: z.enum(["local", "s3"]).default("local"),
         MEDIA_LOCAL_ROOT: z
             .string()
@@ -215,18 +212,6 @@ const environmentSchema = z
             });
         }
 
-        if (
-            values.MONETIZATION_ENABLED === "true" &&
-            values.ENTITLEMENT_PROVIDER === "disabled"
-        ) {
-            context.addIssue({
-                code: "custom",
-                path: ["ENTITLEMENT_PROVIDER"],
-                message:
-                    "A real entitlement provider must be implemented before monetization can be enabled.",
-            });
-        }
-
         if (values.MEDIA_PROVIDER === "s3") {
             if (!values.S3_BUCKET) {
                 context.addIssue({
@@ -301,8 +286,6 @@ const env = Object.freeze({
     smtpSecure: values.SMTP_SECURE === "true",
     smtpUser: values.SMTP_USER,
     smtpPass: values.SMTP_PASS,
-    monetizationEnabled: values.MONETIZATION_ENABLED === "true",
-    entitlementProvider: values.ENTITLEMENT_PROVIDER,
     mediaProvider: values.MEDIA_PROVIDER,
     mediaLocalRoot: values.MEDIA_LOCAL_ROOT,
     mediaMaxBytes: values.MEDIA_MAX_BYTES,

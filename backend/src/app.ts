@@ -14,27 +14,21 @@ import AppError from "./errors/app-error.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import notFoundHandler from "./middlewares/notFound.middleware.js";
 import { generalApiRateLimiter } from "./middlewares/rate-limit.middleware.js";
-import { analyticsRoutes } from "./modules/analytics/index.js";
-import { authRoutes } from "./modules/auth/index.js";
-import { discoveryRoutes } from "./modules/discovery/index.js";
-import healthRoutes from "./modules/health/health.routes.js";
-import { feedRoutes } from "./modules/discovery/index.js";
-import { entitlementRoutes } from "./modules/entitlements/index.js";
-import { interactionChapterRoutes, commentRoutes } from "./modules/interactions/index.js";
-import {
-    libraryRoutes,
-    progressRoutes,
-    publicUserReadingListRoutes,
-    readingListRoutes,
-} from "./modules/reading/index.js";
-import { mediaRoutes } from "./modules/media/index.js";
-import { moderationRoutes, reportRoutes } from "./modules/moderation/index.js";
-import { notificationRoutes } from "./modules/notifications/index.js";
-import { preferenceRoutes } from "./modules/preferences/index.js";
-import { searchRoutes } from "./modules/discovery/index.js";
-import { socialUserRoutes } from "./modules/social/index.js";
-import { contentRoutes } from "./modules/content/index.js";
-import { userRoutes } from "./modules/users/index.js";
+import analyticsRoutes from "./modules/analytics/analytics.http.js";
+import authRoutes from "./modules/auth/auth.http.js";
+import discoveryRoutes from "./modules/discovery/discovery.http.js";
+import healthRoutes from "./health.http.js";
+import feedRoutes from "./modules/discovery/feed/feed.http.js";
+import { chapterRouter as interactionChapterRoutes, commentRouter as commentRoutes } from "./modules/interactions/interactions.http.js";
+import { libraryRoutes, progressRoutes, publicUserReadingListRoutes, readingListRoutes } from "./modules/reading/reading.http.js";
+import mediaRoutes from "./modules/media/media.http.js";
+import { moderationRoutes, reportRoutes } from "./modules/moderation/moderation.http.js";
+import notificationRoutes from "./modules/notifications/notifications.http.js";
+import preferenceRoutes from "./modules/preferences/preferences.http.js";
+import searchRoutes from "./modules/discovery/search/search.http.js";
+import socialUserRoutes from "./modules/social/social.http.js";
+import storiesRoutes from "./modules/stories/stories.http.js";
+import userRoutes from "./modules/users/users.http.js";
 import openApiRoutes from "./openapi/routes.js";
 
 const app = express();
@@ -112,7 +106,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/users", socialUserRoutes);
 app.use("/api/v1/users", publicUserReadingListRoutes);
-app.use("/api/v1/stories", contentRoutes);
+app.use("/api/v1/stories", storiesRoutes);
 app.use("/api/v1/chapters", interactionChapterRoutes);
 app.use("/api/v1/comments", commentRoutes);
 app.use("/api/v1/library", libraryRoutes);
@@ -123,7 +117,6 @@ app.use("/api/v1/preferences", preferenceRoutes);
 app.use("/api/v1/media", mediaRoutes);
 app.use("/api/v1/search", searchRoutes);
 app.use("/api/v1/feed", feedRoutes);
-app.use("/api/v1/entitlements", entitlementRoutes);
 app.use("/api/v1/discovery", discoveryRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/reports", reportRoutes);

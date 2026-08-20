@@ -2,7 +2,7 @@ import env from "./config/env.js";
 import logger from "./config/logger.js";
 import { closeDatabaseConnection, connectDatabase } from "./db/index.js";
 import { closeRedis, connectRedis } from "./infrastructure/redis/redis.js";
-import { runWorker, stopWorker } from "./modules/jobs/application/worker.js";
+import { runWorker, stopWorker } from "./background/worker.js";
 
 async function shutdown(signal: string): Promise<void> {
     logger.info({ signal }, "Worker shutdown started");

@@ -11,8 +11,8 @@ import {
     scheduleChapterPublicationSchema,
     schedulePublicationSchema,
     updateChapterSchema,
-} from "../modules/content/api/content.schema.js";
-import { progressSchema } from "../modules/reading/api/reading.schema.js";
+} from "../modules/stories/stories.schema.js";
+import { progressSchema } from "../modules/reading/reading.schema.js";
 import { searchQuerySchema } from "../modules/discovery/search/search.schema.js";
 
 extendZodWithOpenApi(z);

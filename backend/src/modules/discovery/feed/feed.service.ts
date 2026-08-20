@@ -1,4 +1,5 @@
-import type { FeedStore } from "./feed.ports.js";
+import { FeedRepository } from "./feed.repo.js";
+import { type FeedStore } from "./feed.types.js";
 
 export class FeedService {
     public constructor(private readonly store: FeedStore) {}
@@ -7,3 +8,7 @@ export class FeedService {
         return this.store.listFollowingFeed(userId, cursor, limit);
     }
 }
+
+const store = new FeedRepository();
+
+export const feedServices = { service: new FeedService(store) };
