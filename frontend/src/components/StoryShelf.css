@@ -1,4 +1,92 @@
-.story-grid {
+.home-story-shelf {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 2rem 1rem;
+}
+
+.home-story-shelf__header {
   display: flex;
-  height: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: 1rem;
+}
+
+.home-story-shelf__header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  line-height: 1.35;
+}
+
+.home-story-shelf__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.home-story-shelf__more:hover {
+  background: var(--accent-soft);
+  color: color-mix(in srgb, var(--accent) 82%, var(--text));
+}
+
+.home-story-shelf__more:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  outline-offset: 2px;
+}
+
+.home-story-shelf__more svg {
+  width: 1rem;
+  height: 1rem;
+}
+.home-story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .home-story-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 48rem) {
+  .home-story-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .home-story-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 30rem) {
+  .home-story-shelf {
+    padding-block: 1.5rem;
+  }
+  .home-story-shelf__header {
+    align-items: flex-start;
+  }
+
+  .home-story-shelf__more {
+    max-width: 9rem;
+    justify-content: flex-end;
+    text-align: start;
+  }
 }
