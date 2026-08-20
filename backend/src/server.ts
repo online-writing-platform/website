@@ -9,7 +9,7 @@ import {
     connectDatabase,
 } from "./db/index.js";
 import { closeRedis, connectRedis } from "./infrastructure/redis/redis.js";
-import { runWorker, stopWorker } from "./modules/jobs/application/worker.js";
+import { runWorker, stopWorker } from "./background/worker.js";
 
 let server: Server | undefined;
 let shutdownPromise: Promise<void> | undefined;

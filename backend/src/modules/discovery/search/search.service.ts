@@ -1,6 +1,6 @@
-import type { SearchStore, SearchType } from "./search.ports.js";
-
 import { normalizeSearchText } from "./search-normalize.js";
+import { SearchRepository } from "./search.repo.js";
+import { type SearchStore, type SearchType } from "./search.types.js";
 
 function paginateItems<T>(
     items: T[],
@@ -130,3 +130,7 @@ export class SearchService {
         };
     }
 }
+
+const store = new SearchRepository();
+
+export const searchServices = { service: new SearchService(store) };

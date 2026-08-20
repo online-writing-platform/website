@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { SearchStore } from "./search.ports.js";
+import type { SearchStore } from "./search.types.js";
 
 import { SearchService } from "./search.service.js";
 
