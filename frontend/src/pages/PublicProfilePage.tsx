@@ -67,7 +67,6 @@ interface ReadingList {
   id: string;
   name: string;
   description: string | null;
-  itemCount: number;
 }
 
 interface ListsResponse {
@@ -102,7 +101,6 @@ export default function PublicProfilePage() {
       const encodedUsername = encodeURIComponent(username);
 
       const storiesPath = `/api/v1/stories?author=${encodedUsername}&limit=24`;
-
       const listsPath = `/api/v1/users/${encodedUsername}/reading-lists`;
 
       const storiesPromise =
@@ -224,9 +222,7 @@ export default function PublicProfilePage() {
   }
 
   const language = i18n.resolvedLanguage?.startsWith("fa") ? "fa" : "en";
-
   const locale = language === "fa" ? "fa-IR" : "en-US";
-  const numberFormatter = new Intl.NumberFormat(locale);
 
   const createdAt = new Date(profile.createdAt);
 
@@ -244,38 +240,11 @@ export default function PublicProfilePage() {
     profile.displayName.trim().charAt(0) ||
     profile.username.trim().charAt(0).toUpperCase();
 
-  const stats = [
-    {
-      key: "stories",
-      label: t("profile.stats.publishedStories"),
-      value: numberFormatter.format(profile.counts.publishedStories),
-      Icon: BookOpen,
-      to: undefined,
-      ariaLabel: undefined,
-    },
-    {
-      key: "followers",
-      label: t("profile.stats.followers"),
-      value: numberFormatter.format(profile.counts.followers),
-      Icon: UsersRound,
-      to: `/users/${encodeURIComponent(profile.username)}/followers`,
-      ariaLabel: t("profile.stats.viewFollowers"),
-    },
-    {
-      key: "following",
-      label: t("profile.stats.following"),
-      value: numberFormatter.format(profile.counts.following),
-      Icon: UserCheck,
-      to: `/users/${encodeURIComponent(profile.username)}/following`,
-      ariaLabel: t("profile.stats.viewFollowing"),
-    },
-  ];
-
   const FollowIcon = relationship?.following ? UserMinus : UserPlus;
-
   const MuteIcon = relationship?.muted ? Volume2 : VolumeX;
-
   const actionIsPending = mutatingAction !== null;
+
+  const encodedProfileUsername = encodeURIComponent(profile.username);
 
   return (
     <main className="profile-page-shell" dir={i18n.dir()} lang={language}>
@@ -396,38 +365,60 @@ export default function PublicProfilePage() {
         </div>
       </header>
 
-      <section
-        className="profile-stats"
-        aria-label={t("profile.stats.ariaLabel")}
+      <nav
+        className="profile-menu surface"
+        aria-label={t("profile.tabs.ariaLabel")}
       >
-        {stats.map(({ key, label, value, Icon, to, ariaLabel }) => {
-          const content = (
-            <>
-              <span className="profile-stat__icon">
-                <Icon aria-hidden="true" />
-              </span>
+        <Link
+          className="profile-menu__item"
+          to={`/users/${encodedProfileUsername}/followers`}
+          aria-label={t("profile.stats.viewFollowers")}
+        >
+          <UsersRound aria-hidden="true" />
+          <span>{t("profile.stats.followers")}</span>
+        </Link>
 
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </>
-          );
+        <Link
+          className="profile-menu__item"
+          to={`/users/${encodedProfileUsername}/following`}
+          aria-label={t("profile.stats.viewFollowing")}
+        >
+          <UserCheck aria-hidden="true" />
+          <span>{t("profile.stats.following")}</span>
+        </Link>
 
-          return to ? (
-            <Link
-              key={key}
-              className="profile-stat surface"
-              to={to}
-              aria-label={ariaLabel}
-            >
-              {content}
-            </Link>
-          ) : (
-            <div key={key} className="profile-stat surface">
-              {content}
-            </div>
-          );
-        })}
-      </section>
+        <button
+          id="profile-menu-stories"
+          className={
+            activeTab === "stories"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "stories"}
+          aria-controls="profile-panel-stories"
+          onClick={() => setActiveTab("stories")}
+        >
+          <BookOpen aria-hidden="true" />
+          <span>{t("profile.tabs.stories")}</span>
+        </button>
+
+        <button
+          id="profile-menu-reading-lists"
+          className={
+            activeTab === "reading-lists"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "reading-lists"}
+          aria-controls="profile-panel-reading-lists"
+          onClick={() => setActiveTab("reading-lists")}
+        >
+          <Library aria-hidden="true" />
+          <span>{t("profile.tabs.readingLists")}</span>
+        </button>
+      </nav>
 
       {status === "authenticated" && !isSelf ? (
         <div className="profile-report">
@@ -446,63 +437,15 @@ export default function PublicProfilePage() {
       ) : null}
 
       <section className="profile-content-card surface">
-        <div
-          className="profile-tabs"
-          role="tablist"
-          aria-label={t("profile.tabs.ariaLabel")}
-        >
-          <button
-            id="profile-tab-stories"
-            className={
-              activeTab === "stories"
-                ? "profile-tab profile-tab--active"
-                : "profile-tab"
-            }
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "stories"}
-            aria-controls="profile-panel-stories"
-            onClick={() => setActiveTab("stories")}
-          >
-            <BookOpen aria-hidden="true" />
-            {t("profile.tabs.stories")}
-          </button>
-
-          <button
-            id="profile-tab-reading-lists"
-            className={
-              activeTab === "reading-lists"
-                ? "profile-tab profile-tab--active"
-                : "profile-tab"
-            }
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "reading-lists"}
-            aria-controls="profile-panel-reading-lists"
-            onClick={() => setActiveTab("reading-lists")}
-          >
-            <Library aria-hidden="true" />
-            {t("profile.tabs.readingLists")}
-          </button>
-        </div>
-
         {activeTab === "stories" ? (
           <div
             id="profile-panel-stories"
             className="profile-tab-panel"
-            role="tabpanel"
-            aria-labelledby="profile-tab-stories"
+            role="region"
+            aria-labelledby="profile-menu-stories"
           >
             <div className="profile-section-heading">
-              <div>
-                <h2>{t("profile.stories.title")}</h2>
-
-                <p>
-                  {t("profile.stories.count", {
-                    count: numberFormatter.format(stories.length),
-                  })}
-                </p>
-              </div>
+              <h2>{t("profile.stories.title")}</h2>
             </div>
 
             {stories.length === 0 ? (
@@ -525,19 +468,11 @@ export default function PublicProfilePage() {
           <div
             id="profile-panel-reading-lists"
             className="profile-tab-panel"
-            role="tabpanel"
-            aria-labelledby="profile-tab-reading-lists"
+            role="region"
+            aria-labelledby="profile-menu-reading-lists"
           >
             <div className="profile-section-heading">
-              <div>
-                <h2>{t("profile.lists.title")}</h2>
-
-                <p>
-                  {t("profile.lists.count", {
-                    count: numberFormatter.format(lists.length),
-                  })}
-                </p>
-              </div>
+              <h2>{t("profile.lists.title")}</h2>
             </div>
 
             {lists.length === 0 ? (
@@ -569,12 +504,6 @@ export default function PublicProfilePage() {
                       <span>
                         {list.description ?? t("profile.lists.noDescription")}
                       </span>
-                    </span>
-
-                    <span className="profile-reading-list__count">
-                      {t("profile.lists.itemCount", {
-                        count: numberFormatter.format(list.itemCount),
-                      })}
                     </span>
                   </Link>
                 ))}
