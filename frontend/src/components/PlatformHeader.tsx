@@ -79,7 +79,7 @@ function PlatformHeader() {
           className="platform-nav"
           aria-label={t("PlatformHeader.mainNavigation")}
         >
-          <NavLink to="/discover" className="platform-nav-link">
+          <NavLink to="/browse" className="platform-nav-link">
             <Compass className="platform-nav-icon" />
             <span>{t("PlatformHeader.discover")}</span>
           </NavLink>
@@ -262,7 +262,7 @@ function PlatformHeader() {
             className="platform-mobile-nav"
             aria-label={t("PlatformHeader.mobileNavigation")}
           >
-            <NavLink to="/discover" onClick={closeMobileMenu}>
+            <NavLink to="/Browse" onClick={closeMobileMenu}>
               <Compass />
               <span>{t("PlatformHeader.discover")}</span>
             </NavLink>
