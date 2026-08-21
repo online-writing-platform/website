@@ -74,6 +74,13 @@
     "ACCOUNT_STATE_CHANGED": "Your account state has changed. Please sign in again.",
     "INACTIVE_ACCOUNT": "This account is not active.",
     "USER_NOT_FOUND": "The requested user was not found.",
+    "IMAGE_REQUIRED": "Choose an image to upload.",
+    "EMPTY_UPLOAD": "The selected image is empty.",
+    "UPLOAD_TOO_LARGE": "The selected image is larger than 5 MB.",
+    "INVALID_MULTIPART_UPLOAD": "The selected image could not be uploaded.",
+    "INVALID_IMAGE": "The selected file is not a valid image.",
+    "IMAGE_LIMIT_EXCEEDED": "Use a JPEG or PNG image between 200 and 8,000 pixels and smaller than 5 MB.",
+    "UPLOAD_RATE_LIMIT_EXCEEDED": "Too many images were uploaded. Please try again later.",
     "UNEXPECTED_ERROR": "An unexpected error occurred."
   },
   "genres": {
@@ -219,7 +226,8 @@
     },
     "common": {
       "loading": "Loading settings...",
-      "save": "Save changes"
+      "save": "Save changes",
+      "saving": "Saving..."
     },
     "sections": {
       "profile": {
@@ -249,6 +257,13 @@
       "bioPlaceholder": "Write a short introduction...",
       "bioCount": "{{count}} of 500 characters",
       "avatarUrl": "Profile image URL",
+      "avatarUpload": {
+        "label": "Or upload an image from your device",
+        "help": "JPEG or PNG, up to 5 MB, with a minimum size of 200 × 200 pixels.",
+        "selected": "Selected file: {{name}}",
+        "invalidType": "Choose a JPEG or PNG image.",
+        "tooLarge": "The selected image must be smaller than 5 MB."
+      },
       "saved": "Your profile was updated.",
       "reading": {
         "title": "Reading preferences",
