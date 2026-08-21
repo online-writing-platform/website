@@ -307,11 +307,9 @@
   overflow: hidden;
 
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 4px);
+  border-radius: calc(var(--radius));
 
   background: var(--surface);
-
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--text) 16%, transparent);
 
   transform-origin: var(--transform-origin);
 
