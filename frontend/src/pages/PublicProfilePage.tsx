@@ -28,6 +28,11 @@ import type { Story } from "../types/story";
 
 import "./Profile.css";
 
+interface Pagination {
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
 interface Profile {
   id: string;
   username: string;
@@ -51,10 +56,7 @@ interface ProfileResponse {
 interface StoriesResponse {
   data: {
     stories: Story[];
-    pagination: {
-      hasMore: boolean;
-      nextCursor: string | null;
-    };
+    pagination: Pagination;
   };
 }
 
@@ -71,7 +73,6 @@ interface ReadingList {
   id: string;
   name: string;
   description: string | null;
-  itemCount: number;
 }
 
 interface ListsResponse {
@@ -80,8 +81,69 @@ interface ListsResponse {
   };
 }
 
-type ProfileTab = "stories" | "reading-lists";
+interface SocialUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+interface SocialPageResponse {
+  data: {
+    users: SocialUser[];
+    pagination: Pagination;
+  };
+}
+
+interface SocialRequestResult {
+  response: SocialPageResponse | null;
+  error: string | null;
+}
+
+type SocialKind = "followers" | "following";
+
+type ProfileTab = "followers" | "following" | "stories" | "reading-lists";
+
 type RelationshipAction = "follow" | "block" | "mute";
+
+function createSocialPaginationState(): Record<SocialKind, Pagination> {
+  return {
+    followers: {
+      hasMore: false,
+      nextCursor: null,
+    },
+    following: {
+      hasMore: false,
+      nextCursor: null,
+    },
+  };
+}
+
+async function fetchSocialPage(
+  path: string,
+  signal?: AbortSignal,
+): Promise<SocialRequestResult> {
+  try {
+    const response = await apiRequest<SocialPageResponse>(path, { signal });
+
+    return {
+      response,
+      error: null,
+    };
+  } catch (cause) {
+    if (signal?.aborted) {
+      return {
+        response: null,
+        error: null,
+      };
+    }
+
+    return {
+      response: null,
+      error: getErrorMessage(cause),
+    };
+  }
+}
 
 export default function PublicProfilePage() {
   const { username = "" } = useParams();
@@ -92,14 +154,33 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [lists, setLists] = useState<ReadingList[]>([]);
+
+  const [followers, setFollowers] = useState<SocialUser[]>([]);
+  const [following, setFollowing] = useState<SocialUser[]>([]);
+
+  const [socialPagination, setSocialPagination] = useState<
+    Record<SocialKind, Pagination>
+  >(createSocialPaginationState);
+
+  const [socialErrors, setSocialErrors] = useState<
+    Record<SocialKind, string | null>
+  >({
+    followers: null,
+    following: null,
+  });
+
+  const [loadingSocial, setLoadingSocial] = useState<SocialKind | null>(null);
+
   const [relationship, setRelationship] = useState<
     RelationshipResponse["data"] | null
   >(null);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("stories");
   const [loading, setLoading] = useState(true);
+
   const [mutatingAction, setMutatingAction] =
     useState<RelationshipAction | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(
@@ -107,8 +188,11 @@ export default function PublicProfilePage() {
       const encodedUsername = encodeURIComponent(username);
 
       const storiesPath = `/api/v1/stories?author=${encodedUsername}&limit=24`;
-
       const listsPath = `/api/v1/users/${encodedUsername}/reading-lists`;
+
+      const followersPath = `/api/v1/users/${encodedUsername}/followers?limit=50`;
+
+      const followingPath = `/api/v1/users/${encodedUsername}/following?limit=50`;
 
       const storiesPromise =
         status === "authenticated"
@@ -128,11 +212,16 @@ export default function PublicProfilePage() {
             )
           : Promise.resolve(null);
 
+      const followersPromise = fetchSocialPage(followersPath, signal);
+      const followingPromise = fetchSocialPage(followingPath, signal);
+
       const [
         profileResponse,
         storiesResponse,
         listsResponse,
         relationshipResponse,
+        followersResult,
+        followingResult,
       ] = await Promise.all([
         apiRequest<ProfileResponse>(`/api/v1/users/${encodedUsername}`, {
           signal,
@@ -140,16 +229,36 @@ export default function PublicProfilePage() {
         storiesPromise,
         listsPromise,
         relationshipPromise,
+        followersPromise,
+        followingPromise,
       ]);
 
       if (signal?.aborted) {
         return;
       }
 
+      const followersData = followersResult.response?.data;
+      const followingData = followingResult.response?.data;
+
       setProfile(profileResponse.data.user);
       setStories(storiesResponse.data.stories);
       setLists(listsResponse.data.lists);
       setRelationship(relationshipResponse?.data ?? null);
+
+      setFollowers(followersData?.users ?? []);
+      setFollowing(followingData?.users ?? []);
+
+      setSocialPagination({
+        followers:
+          followersData?.pagination ?? createSocialPaginationState().followers,
+        following:
+          followingData?.pagination ?? createSocialPaginationState().following,
+      });
+
+      setSocialErrors({
+        followers: followersResult.error,
+        following: followingResult.error,
+      });
     },
     [request, status, username, viewer],
   );
@@ -167,8 +276,16 @@ export default function PublicProfilePage() {
       setProfile(null);
       setStories([]);
       setLists([]);
+      setFollowers([]);
+      setFollowing([]);
       setRelationship(null);
       setActiveTab("stories");
+      setLoadingSocial(null);
+      setSocialPagination(createSocialPaginationState());
+      setSocialErrors({
+        followers: null,
+        following: null,
+      });
 
       void load(controller.signal)
         .catch((cause: unknown) => {
@@ -209,6 +326,69 @@ export default function PublicProfilePage() {
     }
   }
 
+  async function loadSocialPage(
+    kind: SocialKind,
+    cursor?: string,
+  ): Promise<void> {
+    if (loadingSocial !== null) {
+      return;
+    }
+
+    setLoadingSocial(kind);
+
+    try {
+      const encodedUsername = encodeURIComponent(username);
+
+      const cursorQuery = cursor ? `&cursor=${encodeURIComponent(cursor)}` : "";
+
+      const response = await apiRequest<SocialPageResponse>(
+        `/api/v1/users/${encodedUsername}/${kind}?limit=50${cursorQuery}`,
+      );
+
+      const incomingUsers = response.data.users;
+
+      const updateUsers = (currentUsers: SocialUser[]) => {
+        if (!cursor) {
+          return incomingUsers;
+        }
+
+        const existingIds = new Set(
+          currentUsers.map((socialUser) => socialUser.id),
+        );
+
+        return [
+          ...currentUsers,
+          ...incomingUsers.filter(
+            (socialUser) => !existingIds.has(socialUser.id),
+          ),
+        ];
+      };
+
+      if (kind === "followers") {
+        setFollowers(updateUsers);
+      } else {
+        setFollowing(updateUsers);
+      }
+
+      setSocialPagination((current) => ({
+        ...current,
+        [kind]: response.data.pagination,
+      }));
+
+      setSocialErrors((current) => ({
+        ...current,
+        [kind]: null,
+      }));
+    } catch (cause) {
+      setSocialErrors((current) => ({
+        ...current,
+        [kind]: getErrorMessage(cause),
+      }));
+    } finally {
+      setLoadingSocial((current) => (current === kind ? null : current));
+    }
+  }
+
   if (!profile) {
     return (
       <main className="profile-page-shell" dir={i18n.dir()} aria-busy={loading}>
@@ -229,9 +409,7 @@ export default function PublicProfilePage() {
   }
 
   const language = i18n.resolvedLanguage?.startsWith("fa") ? "fa" : "en";
-
   const locale = language === "fa" ? "fa-IR" : "en-US";
-  const numberFormatter = new Intl.NumberFormat(locale);
 
   const createdAt = new Date(profile.createdAt);
 
@@ -268,38 +446,123 @@ export default function PublicProfilePage() {
     profile.displayName.trim().charAt(0) ||
     profile.username.trim().charAt(0).toUpperCase();
 
-  const stats = [
-    {
-      key: "stories",
-      label: t("profile.stats.publishedStories"),
-      value: numberFormatter.format(profile.counts.publishedStories),
-      Icon: BookOpen,
-      to: undefined,
-      ariaLabel: undefined,
-    },
-    {
-      key: "followers",
-      label: t("profile.stats.followers"),
-      value: numberFormatter.format(profile.counts.followers),
-      Icon: UsersRound,
-      to: `/users/${encodeURIComponent(profile.username)}/followers`,
-      ariaLabel: t("profile.stats.viewFollowers"),
-    },
-    {
-      key: "following",
-      label: t("profile.stats.following"),
-      value: numberFormatter.format(profile.counts.following),
-      Icon: UserCheck,
-      to: `/users/${encodeURIComponent(profile.username)}/following`,
-      ariaLabel: t("profile.stats.viewFollowing"),
-    },
-  ];
-
   const FollowIcon = relationship?.following ? UserMinus : UserPlus;
-
   const MuteIcon = relationship?.muted ? Volume2 : VolumeX;
-
   const actionIsPending = mutatingAction !== null;
+
+  function renderSocialPanel(kind: SocialKind) {
+    const users = kind === "followers" ? followers : following;
+    const pagination = socialPagination[kind];
+    const socialError = socialErrors[kind];
+    const isSocialLoading = loadingSocial === kind;
+    const SocialIcon = kind === "followers" ? UsersRound : UserCheck;
+
+    const heading =
+      kind === "followers"
+        ? t("profile.stats.followers")
+        : t("profile.stats.following");
+
+    const emptyMessage =
+      kind === "followers"
+        ? t("profile.social.emptyFollowers")
+        : t("profile.social.emptyFollowing");
+
+    return (
+      <div
+        id={`profile-panel-${kind}`}
+        className="profile-tab-panel"
+        role="region"
+        aria-labelledby={`profile-menu-${kind}`}
+      >
+        <div className="profile-section-heading">
+          <h2>{heading}</h2>
+        </div>
+
+        {socialError ? (
+          <p
+            className="status-message profile-social-error"
+            data-kind="error"
+            role="alert"
+          >
+            {socialError}
+          </p>
+        ) : null}
+
+        {users.length === 0 && !socialError ? (
+          <div className="profile-empty-state">
+            <span className="profile-empty-state__icon">
+              <SocialIcon aria-hidden="true" />
+            </span>
+
+            <p>{emptyMessage}</p>
+          </div>
+        ) : users.length > 0 ? (
+          <ul className="profile-social-list">
+            {users.map((socialUser) => {
+              const socialAvatarFallback =
+                socialUser.displayName.trim().charAt(0) ||
+                socialUser.username.trim().charAt(0).toUpperCase();
+
+              return (
+                <li key={socialUser.id}>
+                  <Link
+                    className="profile-social-user"
+                    to={`/users/${encodeURIComponent(socialUser.username)}`}
+                  >
+                    <span className="profile-social-user__avatar">
+                      {socialUser.avatarUrl ? (
+                        <img
+                          referrerPolicy="no-referrer"
+                          src={socialUser.avatarUrl}
+                          alt={t("profile.avatarAlt", {
+                            name: socialUser.displayName,
+                          })}
+                          width={48}
+                          height={48}
+                        />
+                      ) : (
+                        <span aria-hidden="true">{socialAvatarFallback}</span>
+                      )}
+                    </span>
+
+                    <span className="profile-social-user__content">
+                      <strong>{socialUser.displayName}</strong>
+
+                      <span dir="ltr">@{socialUser.username}</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+
+        {socialError || pagination.hasMore ? (
+          <div className="profile-social-actions">
+            <button
+              className="profile-action profile-action--secondary"
+              type="button"
+              disabled={isSocialLoading}
+              onClick={() =>
+                void loadSocialPage(
+                  kind,
+                  socialError
+                    ? undefined
+                    : (pagination.nextCursor ?? undefined),
+                )
+              }
+            >
+              {isSocialLoading
+                ? t("profile.social.loadingMore")
+                : socialError
+                  ? t("profile.social.retry")
+                  : t("profile.social.loadMore")}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <main className="profile-page-shell" dir={i18n.dir()} lang={language}>
@@ -419,38 +682,74 @@ export default function PublicProfilePage() {
         </div>
       </header>
 
-      <section
-        className="profile-stats"
-        aria-label={t("profile.stats.ariaLabel")}
+      <nav
+        className="profile-menu surface"
+        aria-label={t("profile.tabs.ariaLabel")}
       >
-        {stats.map(({ key, label, value, Icon, to, ariaLabel }) => {
-          const content = (
-            <>
-              <span className="profile-stat__icon">
-                <Icon aria-hidden="true" />
-              </span>
+        <button
+          id="profile-menu-followers"
+          className={
+            activeTab === "followers"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "followers"}
+          aria-controls="profile-panel-followers"
+          onClick={() => setActiveTab("followers")}
+        >
+          <UsersRound aria-hidden="true" />
+          <span>{t("profile.stats.followers")}</span>
+        </button>
 
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </>
-          );
+        <button
+          id="profile-menu-following"
+          className={
+            activeTab === "following"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "following"}
+          aria-controls="profile-panel-following"
+          onClick={() => setActiveTab("following")}
+        >
+          <UserCheck aria-hidden="true" />
+          <span>{t("profile.stats.following")}</span>
+        </button>
 
-          return to ? (
-            <Link
-              key={key}
-              className="profile-stat surface"
-              to={to}
-              aria-label={ariaLabel}
-            >
-              {content}
-            </Link>
-          ) : (
-            <div key={key} className="profile-stat surface">
-              {content}
-            </div>
-          );
-        })}
-      </section>
+        <button
+          id="profile-menu-stories"
+          className={
+            activeTab === "stories"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "stories"}
+          aria-controls="profile-panel-stories"
+          onClick={() => setActiveTab("stories")}
+        >
+          <BookOpen aria-hidden="true" />
+          <span>{t("profile.tabs.stories")}</span>
+        </button>
+
+        <button
+          id="profile-menu-reading-lists"
+          className={
+            activeTab === "reading-lists"
+              ? "profile-menu__item profile-menu__item--active"
+              : "profile-menu__item"
+          }
+          type="button"
+          aria-pressed={activeTab === "reading-lists"}
+          aria-controls="profile-panel-reading-lists"
+          onClick={() => setActiveTab("reading-lists")}
+        >
+          <Library aria-hidden="true" />
+          <span>{t("profile.tabs.readingLists")}</span>
+        </button>
+      </nav>
 
       {status === "authenticated" && !isSelf ? (
         <div className="profile-report">
@@ -469,63 +768,15 @@ export default function PublicProfilePage() {
       ) : null}
 
       <section className="profile-content-card surface">
-        <div
-          className="profile-tabs"
-          role="tablist"
-          aria-label={t("profile.tabs.ariaLabel")}
-        >
-          <button
-            id="profile-tab-stories"
-            className={
-              activeTab === "stories"
-                ? "profile-tab profile-tab--active"
-                : "profile-tab"
-            }
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "stories"}
-            aria-controls="profile-panel-stories"
-            onClick={() => setActiveTab("stories")}
-          >
-            <BookOpen aria-hidden="true" />
-            {t("profile.tabs.stories")}
-          </button>
-
-          <button
-            id="profile-tab-reading-lists"
-            className={
-              activeTab === "reading-lists"
-                ? "profile-tab profile-tab--active"
-                : "profile-tab"
-            }
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "reading-lists"}
-            aria-controls="profile-panel-reading-lists"
-            onClick={() => setActiveTab("reading-lists")}
-          >
-            <Library aria-hidden="true" />
-            {t("profile.tabs.readingLists")}
-          </button>
-        </div>
-
         {activeTab === "stories" ? (
           <div
             id="profile-panel-stories"
             className="profile-tab-panel"
-            role="tabpanel"
-            aria-labelledby="profile-tab-stories"
+            role="region"
+            aria-labelledby="profile-menu-stories"
           >
             <div className="profile-section-heading">
-              <div>
-                <h2>{t("profile.stories.title")}</h2>
-
-                <p>
-                  {t("profile.stories.count", {
-                    count: numberFormatter.format(stories.length),
-                  })}
-                </p>
-              </div>
+              <h2>{t("profile.stories.title")}</h2>
             </div>
 
             {stories.length === 0 ? (
@@ -544,23 +795,15 @@ export default function PublicProfilePage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === "reading-lists" ? (
           <div
             id="profile-panel-reading-lists"
             className="profile-tab-panel"
-            role="tabpanel"
-            aria-labelledby="profile-tab-reading-lists"
+            role="region"
+            aria-labelledby="profile-menu-reading-lists"
           >
             <div className="profile-section-heading">
-              <div>
-                <h2>{t("profile.lists.title")}</h2>
-
-                <p>
-                  {t("profile.lists.count", {
-                    count: numberFormatter.format(lists.length),
-                  })}
-                </p>
-              </div>
+              <h2>{t("profile.lists.title")}</h2>
             </div>
 
             {lists.length === 0 ? (
@@ -593,17 +836,13 @@ export default function PublicProfilePage() {
                         {list.description ?? t("profile.lists.noDescription")}
                       </span>
                     </span>
-
-                    <span className="profile-reading-list__count">
-                      {t("profile.lists.itemCount", {
-                        count: numberFormatter.format(list.itemCount),
-                      })}
-                    </span>
                   </Link>
                 ))}
               </div>
             )}
           </div>
+        ) : (
+          renderSocialPanel(activeTab)
         )}
       </section>
     </main>
