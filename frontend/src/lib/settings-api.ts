@@ -34,6 +34,17 @@ export interface RevokeOtherSessionsResponse {
   data: { revokedCount: number };
 }
 
+export interface ProfileImageUploadResponse {
+  data: {
+    media: {
+      assetId: string;
+      url: string;
+      width: number;
+      height: number;
+    };
+  };
+}
+
 export type SettingsRequest = <T>(
   path: string,
   options?: RequestInit,
@@ -41,6 +52,7 @@ export type SettingsRequest = <T>(
 
 export const SETTINGS_ENDPOINTS = {
   preferences: "/api/v1/preferences",
+  profileImage: "/api/v1/media/profile-images",
   password: "/api/v1/auth/password",
   username: "/api/v1/auth/username",
   emailChange: "/api/v1/auth/email-change/request",
@@ -49,6 +61,19 @@ export const SETTINGS_ENDPOINTS = {
   revokeOtherSessions: "/api/v1/auth/sessions/revoke-others",
   account: "/api/v1/auth/account",
 } as const;
+
+export function uploadProfileImage(
+  request: SettingsRequest,
+  file: File,
+): Promise<ProfileImageUploadResponse> {
+  const body = new FormData();
+  body.append("file", file);
+
+  return request<ProfileImageUploadResponse>(SETTINGS_ENDPOINTS.profileImage, {
+    method: "POST",
+    body,
+  });
+}
 
 export function getPreferences(
   request: SettingsRequest,

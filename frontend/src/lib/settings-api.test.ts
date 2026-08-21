@@ -11,6 +11,7 @@ import {
   resendEmailVerification,
   revokeOtherSessions,
   revokeSession,
+  uploadProfileImage,
   updatePreferences,
   type SettingsRequest,
 } from "./settings-api";
@@ -20,6 +21,25 @@ function createRequestMock() {
 }
 
 describe("settings API contract", () => {
+  it("uploads a device image as multipart data to the profile-image route", async () => {
+    const request = createRequestMock();
+    const file = new File(["avatar"], "avatar.png", { type: "image/png" });
+
+    await uploadProfileImage(request, file);
+
+    expect(request).toHaveBeenCalledWith(SETTINGS_ENDPOINTS.profileImage, {
+      method: "POST",
+      body: expect.any(FormData),
+    });
+
+    const options = (request as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as
+      | RequestInit
+      | undefined;
+    const body = options?.body as FormData;
+
+    expect(body.get("file")).toBe(file);
+  });
+
   it("uses the preferences routes and payloads expected by the backend", async () => {
     const request = createRequestMock();
     const controller = new AbortController();
