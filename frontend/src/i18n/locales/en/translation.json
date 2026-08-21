@@ -179,6 +179,13 @@
       "empty": "There are no public reading lists yet.",
       "noDescription": "No description",
       "open": "Open {{name}}"
+    },
+    "social": {
+      "emptyFollowers": "This user has no followers yet.",
+      "emptyFollowing": "This user is not following anyone yet.",
+      "loadMore": "Load more",
+      "loadingMore": "Loading...",
+      "retry": "Try again"
     }
   }
 }
