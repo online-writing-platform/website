@@ -8,104 +8,190 @@ import type { MediaStorageProvider, MediaStore } from "./media.types.js";
 import { MediaService } from "./media.service.js";
 
 void test("uploading a cover for a draft story must return a URL usable for owner preview", async () => {
-    const ownerId = "11111111-1111-4111-8111-111111111111";
+  const ownerId = "11111111-1111-4111-8111-111111111111";
 
-    const storyId = "22222222-2222-4222-8222-222222222222";
+  const storyId = "22222222-2222-4222-8222-222222222222";
 
-    const pngBytes = await sharp({
-        create: {
-            width: 800,
-            height: 1200,
-            channels: 3,
-            background: {
-                r: 255,
-                g: 255,
-                b: 255,
-            },
-        },
-    })
-        .png()
-        .toBuffer();
+  const pngBytes = await sharp({
+    create: {
+      width: 800,
+      height: 1200,
+      channels: 3,
+      background: {
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+  })
+    .png()
+    .toBuffer();
 
-    let storedAssetId = "";
+  let storedAssetId = "";
 
-    const store: MediaStore = {
-        findOwnedStory: (receivedOwnerId, receivedStoryId) => {
-            assert.equal(receivedOwnerId, ownerId);
+  const store: MediaStore = {
+    findOwnedStory: (receivedOwnerId, receivedStoryId) => {
+      assert.equal(receivedOwnerId, ownerId);
 
-            assert.equal(receivedStoryId, storyId);
+      assert.equal(receivedStoryId, storyId);
 
-            return Promise.resolve({
-                id: storyId,
+      return Promise.resolve({
+        id: storyId,
 
-                coverAssetId: null,
-            });
-        },
+        coverAssetId: null,
+      });
+    },
 
-        attachStoryCover: (input) => {
-            storedAssetId = input.assetId;
+    attachStoryCover: (input) => {
+      storedAssetId = input.assetId;
 
-            return Promise.resolve({
-                publicUrl: input.publicUrl,
+      return Promise.resolve({
+        publicUrl: input.publicUrl,
 
-                previousAsset: null,
-            });
-        },
+        previousAsset: null,
+      });
+    },
 
-        findPublicAsset: () => Promise.resolve(null),
+    attachProfileImage: () => Promise.resolve(null),
 
-        findOwnedAsset: (receivedOwnerId, receivedAssetId) => {
-            assert.equal(receivedOwnerId, ownerId);
+    findPublicAsset: () => Promise.resolve(null),
 
-            assert.equal(receivedAssetId, storedAssetId);
+    findOwnedAsset: (receivedOwnerId, receivedAssetId) => {
+      assert.equal(receivedOwnerId, ownerId);
 
-            return Promise.resolve({
-                provider: "LOCAL",
+      assert.equal(receivedAssetId, storedAssetId);
 
-                objectKey: `covers/${receivedAssetId}.png`,
-
-                mimeType: "image/png",
-            });
-        },
-    };
-
-    const provider: MediaStorageProvider = {
+      return Promise.resolve({
         provider: "LOCAL",
 
-        put: (input) => {
-            storedAssetId = input.assetId;
+        objectKey: `covers/${receivedAssetId}.png`,
 
-            return Promise.resolve({
-                objectKey: `covers/${input.assetId}.png`,
+        mimeType: "image/png",
+      });
+    },
+  };
 
-                publicUrl: `http://localhost:3000/api/v1/media/public/${input.assetId}`,
+  const provider: MediaStorageProvider = {
+    provider: "LOCAL",
 
-                ownerUrl: `http://localhost:3000/api/v1/media/owned/${input.assetId}`,
-            });
-        },
+    put: (input) => {
+      storedAssetId = input.assetId;
 
-        delete: () => Promise.resolve(),
+      assert.equal(input.folder, "covers");
 
-        read: () => Promise.resolve(pngBytes),
-    };
+      return Promise.resolve({
+        objectKey: `covers/${input.assetId}.png`,
 
-    const service = new MediaService(store, provider);
+        publicUrl: `http://localhost:3000/api/v1/media/public/${input.assetId}`,
 
-    const uploaded = await service.uploadStoryCover(ownerId, storyId, pngBytes);
+        ownerUrl: `http://localhost:3000/api/v1/media/owned/${input.assetId}`,
+      });
+    },
 
-    assert.equal(uploaded.assetId, storedAssetId);
+    delete: () => Promise.resolve(),
 
-    assert.ok(uploaded.url.length > 0, "Upload must return a cover URL.");
+    read: () => Promise.resolve(pngBytes),
+  };
 
-    assert.equal(
-        uploaded.url.includes("/api/v1/media/public/"),
-        false,
-        "A draft cover upload must not return the public-only media URL as the author's preview URL.",
-    );
+  const service = new MediaService(store, provider);
 
-    assert.equal(
-        uploaded.url.includes("/api/v1/media/owned/"),
-        true,
-        "A draft cover upload must return the authenticated owner media URL.",
-    );
+  const uploaded = await service.uploadStoryCover(ownerId, storyId, pngBytes);
+
+  assert.equal(uploaded.assetId, storedAssetId);
+
+  assert.ok(uploaded.url.length > 0, "Upload must return a cover URL.");
+
+  assert.equal(
+    uploaded.url.includes("/api/v1/media/public/"),
+    false,
+    "A draft cover upload must not return the public-only media URL as the author's preview URL.",
+  );
+
+  assert.equal(
+    uploaded.url.includes("/api/v1/media/owned/"),
+    true,
+    "A draft cover upload must return the authenticated owner media URL.",
+  );
+});
+
+void test("uploading a profile image returns its public URL and uses avatar storage", async () => {
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+
+  const pngBytes = await sharp({
+    create: {
+      width: 500,
+      height: 500,
+      channels: 3,
+      background: {
+        r: 240,
+        g: 240,
+        b: 240,
+      },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  let storedAssetId = "";
+
+  const store: MediaStore = {
+    findOwnedStory: () => Promise.resolve(null),
+
+    attachStoryCover: () => {
+      throw new Error("Story cover storage must not be used.");
+    },
+
+    attachProfileImage: (input) => {
+      assert.equal(input.ownerId, ownerId);
+
+      assert.equal(input.objectKey, `avatars/${input.assetId}.jpg`);
+
+      return Promise.resolve({
+        publicUrl: input.publicUrl,
+
+        previousAsset: null,
+      });
+    },
+
+    findPublicAsset: () => Promise.resolve(null),
+
+    findOwnedAsset: () => Promise.resolve(null),
+  };
+
+  const provider: MediaStorageProvider = {
+    provider: "LOCAL",
+
+    put: (input) => {
+      storedAssetId = input.assetId;
+
+      assert.equal(input.folder, "avatars");
+
+      return Promise.resolve({
+        objectKey: `avatars/${input.assetId}.jpg`,
+
+        publicUrl: `http://localhost:3000/api/v1/media/public/${input.assetId}`,
+
+        ownerUrl: `http://localhost:3000/api/v1/media/owned/${input.assetId}`,
+      });
+    },
+
+    delete: () => Promise.resolve(),
+
+    read: () => Promise.resolve(pngBytes),
+  };
+
+  const service = new MediaService(store, provider);
+
+  const uploaded = await service.uploadProfileImage(ownerId, pngBytes);
+
+  assert.equal(uploaded.assetId, storedAssetId);
+
+  assert.equal(
+    uploaded.url,
+    `http://localhost:3000/api/v1/media/public/${storedAssetId}`,
+  );
+
+  assert.equal(uploaded.width, 500);
+
+  assert.equal(uploaded.height, 500);
 });

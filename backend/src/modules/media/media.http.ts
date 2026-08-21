@@ -9,131 +9,162 @@ import { uploadRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { validateParams } from "../../middlewares/validate.middleware.js";
 import { authenticate, requireVerifiedEmail } from "../auth/auth.middleware.js";
 import {
-    mediaAssetParamsSchema,
-    storyCoverParamsSchema,
+  mediaAssetParamsSchema,
+  storyCoverParamsSchema,
 } from "./media.schema.js";
 
 function requireUserId(request: Request): string {
-    const userId = request.auth?.userId;
+  const userId = request.auth?.userId;
 
-    if (!userId) {
-        throw AppError.unauthorized();
-    }
+  if (!userId) {
+    throw AppError.unauthorized();
+  }
 
-    return userId;
+  return userId;
 }
 
 export async function uploadStoryCover(
-    request: Request<StoryCoverParams>,
+  request: Request<StoryCoverParams>,
 
-    response: Response,
+  response: Response,
 ): Promise<void> {
-    if (!request.file) {
-        throw AppError.badRequest(
-            "A cover image is required.",
-            "IMAGE_REQUIRED",
-        );
-    }
+  if (!request.file) {
+    throw AppError.badRequest("A cover image is required.", "IMAGE_REQUIRED");
+  }
 
-    const media = await mediaServices.service.uploadStoryCover(
-        requireUserId(request),
+  const media = await mediaServices.service.uploadStoryCover(
+    requireUserId(request),
 
-        request.params.storyId,
+    request.params.storyId,
 
-        request.file.buffer,
-    );
+    request.file.buffer,
+  );
 
-    response.status(201).json({
-        data: {
-            media,
-        },
-    });
+  response.status(201).json({
+    data: {
+      media,
+    },
+  });
+}
+
+export async function uploadProfileImage(
+  request: Request,
+
+  response: Response,
+): Promise<void> {
+  if (!request.file) {
+    throw AppError.badRequest("A profile image is required.", "IMAGE_REQUIRED");
+  }
+
+  const media = await mediaServices.service.uploadProfileImage(
+    requireUserId(request),
+
+    request.file.buffer,
+  );
+
+  response.status(201).json({
+    data: {
+      media,
+    },
+  });
 }
 
 export async function getPublicMedia(
-    request: Request<MediaAssetParams>,
+  request: Request<MediaAssetParams>,
 
-    response: Response,
+  response: Response,
 ): Promise<void> {
-    const asset = await mediaServices.service.readPublicAsset(
-        request.params.assetId,
-    );
+  const asset = await mediaServices.service.readPublicAsset(
+    request.params.assetId,
+  );
 
-    response.setHeader("Content-Type", asset.mimeType);
+  response.setHeader("Content-Type", asset.mimeType);
 
-    response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 
-    response.setHeader("X-Content-Type-Options", "nosniff");
+  response.setHeader("X-Content-Type-Options", "nosniff");
 
-    response.status(200).send(asset.bytes);
+  response.status(200).send(asset.bytes);
 }
 
 export async function getOwnedMedia(
-    request: Request<MediaAssetParams>,
+  request: Request<MediaAssetParams>,
 
-    response: Response,
+  response: Response,
 ): Promise<void> {
-    const asset = await mediaServices.service.readOwnedAsset(
-        requireUserId(request),
+  const asset = await mediaServices.service.readOwnedAsset(
+    requireUserId(request),
 
-        request.params.assetId,
-    );
+    request.params.assetId,
+  );
 
-    response.setHeader("Content-Type", asset.mimeType);
+  response.setHeader("Content-Type", asset.mimeType);
 
-    response.setHeader("Cache-Control", "private, no-store");
+  response.setHeader("Cache-Control", "private, no-store");
 
-    response.setHeader("X-Content-Type-Options", "nosniff");
+  response.setHeader("X-Content-Type-Options", "nosniff");
 
-    response.status(200).send(asset.bytes);
+  response.status(200).send(asset.bytes);
 }
 
 const router = Router();
 
 const upload = multer({
-    storage: multer.memoryStorage(),
+  storage: multer.memoryStorage(),
 
-    limits: {
-        fileSize: env.mediaMaxBytes,
+  limits: {
+    fileSize: env.mediaMaxBytes,
 
-        files: 1,
+    files: 1,
 
-        fields: 0,
-    },
+    fields: 0,
+  },
 });
 
 router.get(
-    "/public/:assetId",
+  "/public/:assetId",
 
-    validateParams(mediaAssetParamsSchema),
+  validateParams(mediaAssetParamsSchema),
 
-    getPublicMedia,
+  getPublicMedia,
 );
 
 router.get(
-    "/owned/:assetId",
+  "/owned/:assetId",
 
-    authenticate,
+  authenticate,
 
-    validateParams(mediaAssetParamsSchema),
+  validateParams(mediaAssetParamsSchema),
 
-    getOwnedMedia,
+  getOwnedMedia,
 );
 
 router.post(
-    "/story-covers/:storyId",
+  "/profile-images",
 
-    uploadRateLimiter,
+  uploadRateLimiter,
 
-    authenticate,
+  authenticate,
 
-    requireVerifiedEmail,
+  upload.single("file"),
 
-    validateParams(storyCoverParamsSchema),
+  uploadProfileImage,
+);
 
-    upload.single("file"),
+router.post(
+  "/story-covers/:storyId",
 
-    uploadStoryCover,
+  uploadRateLimiter,
+
+  authenticate,
+
+  requireVerifiedEmail,
+
+  validateParams(storyCoverParamsSchema),
+
+  upload.single("file"),
+
+  uploadStoryCover,
 );
 
 export default router;

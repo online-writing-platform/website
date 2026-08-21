@@ -1,66 +1,89 @@
 export interface StoredObject {
-    objectKey: string;
-    publicUrl: string;
-    ownerUrl: string;
+  objectKey: string;
+  publicUrl: string;
+  ownerUrl: string;
 }
 
+export type MediaFolder = "covers" | "avatars";
+
 export interface MediaStorageProvider {
-    readonly provider: "LOCAL" | "S3";
+  readonly provider: "LOCAL" | "S3";
 
-    put(input: {
-        assetId: string;
-        bytes: Buffer;
-        mimeType: string;
-        extension: string;
-    }): Promise<StoredObject>;
+  put(input: {
+    assetId: string;
+    bytes: Buffer;
+    mimeType: string;
+    extension: string;
+    folder: MediaFolder;
+  }): Promise<StoredObject>;
 
-    delete(objectKey: string): Promise<void>;
+  delete(objectKey: string): Promise<void>;
 
-    read?(objectKey: string): Promise<Buffer | null>;
+  read?(objectKey: string): Promise<Buffer | null>;
 }
 
 export interface MediaStore {
-    findOwnedStory(
-        ownerId: string,
-        storyId: string,
-    ): Promise<{
-        id: string;
-        coverAssetId: string | null;
-    } | null>;
+  findOwnedStory(
+    ownerId: string,
+    storyId: string,
+  ): Promise<{
+    id: string;
+    coverAssetId: string | null;
+  } | null>;
 
-    attachStoryCover(input: {
-        assetId: string;
-        ownerId: string;
-        storyId: string;
-        provider: "LOCAL" | "S3";
-        objectKey: string;
-        publicUrl: string;
-        mimeType: string;
-        byteSize: number;
-        width: number;
-        height: number;
-    }): Promise<{
-        publicUrl: string;
+  attachStoryCover(input: {
+    assetId: string;
+    ownerId: string;
+    storyId: string;
+    provider: "LOCAL" | "S3";
+    objectKey: string;
+    publicUrl: string;
+    mimeType: string;
+    byteSize: number;
+    width: number;
+    height: number;
+  }): Promise<{
+    publicUrl: string;
 
-        previousAsset: {
-            id: string;
-            provider: "LOCAL" | "S3";
-            objectKey: string;
-        } | null;
-    }>;
+    previousAsset: {
+      id: string;
+      provider: "LOCAL" | "S3";
+      objectKey: string;
+    } | null;
+  }>;
 
-    findPublicAsset(assetId: string): Promise<{
-        provider: "LOCAL" | "S3";
-        objectKey: string;
-        mimeType: string;
-    } | null>;
+  attachProfileImage(input: {
+    assetId: string;
+    ownerId: string;
+    provider: "LOCAL" | "S3";
+    objectKey: string;
+    publicUrl: string;
+    mimeType: string;
+    byteSize: number;
+    width: number;
+    height: number;
+  }): Promise<{
+    publicUrl: string;
 
-    findOwnedAsset(
-        ownerId: string,
-        assetId: string,
-    ): Promise<{
-        provider: "LOCAL" | "S3";
-        objectKey: string;
-        mimeType: string;
-    } | null>;
+    previousAsset: {
+      id: string;
+      provider: "LOCAL" | "S3";
+      objectKey: string;
+    } | null;
+  } | null>;
+
+  findPublicAsset(assetId: string): Promise<{
+    provider: "LOCAL" | "S3";
+    objectKey: string;
+    mimeType: string;
+  } | null>;
+
+  findOwnedAsset(
+    ownerId: string,
+    assetId: string,
+  ): Promise<{
+    provider: "LOCAL" | "S3";
+    objectKey: string;
+    mimeType: string;
+  } | null>;
 }
