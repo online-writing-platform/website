@@ -1,68 +1,480 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  BookOpen,
+  CheckCircle2,
+  Eye,
+  Heart,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
-import StoryCard from "../components/StoryCard";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
-import type { Story } from "../types/story";
 
-interface StoriesResponse {
+import "./BrowsePage.css";
+
+type BrowseSort = "mostRead" | "mostVoted" | "newest";
+
+interface Genre {
+  slug: string;
+  name: string;
+}
+
+interface BrowseStory {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  coverUrl: string | null;
+  language: string;
+  status: "ONGOING" | "COMPLETED" | "HIATUS";
+  isMature: boolean;
+  publishedAt: string;
+
+  author: {
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+
+  genre: Genre | null;
+  libraryCount: number;
+  voteCount: number;
+  commentCount: number;
+  qualifiedViews: number;
+  chapterCount: number;
+}
+
+interface BrowseResponse {
   data: {
-    stories: Story[];
-    pagination: { hasMore: boolean; nextCursor: string | null };
+    stories: BrowseStory[];
+
+    pagination: {
+      page: number;
+      limit: number;
+      hasMore: boolean;
+    };
   };
 }
 
-export default function BrowsePage({
-  kind,
-}: {
-  kind: "genre" | "tag";
-}) {
+interface GenresResponse {
+  data: {
+    genres: Genre[];
+  };
+}
+
+interface BrowsePageProps {
+  kind?: "genre" | "tag";
+}
+
+function isBrowseSort(value: string | null): value is BrowseSort {
+  return value === "mostRead" || value === "mostVoted" || value === "newest";
+}
+
+export default function BrowsePage({ kind }: BrowsePageProps) {
+  const { i18n, t } = useTranslation();
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { status, request } = useAuth();
-  const [stories, setStories] = useState<Story[]>([]);
-  const [error, setError] = useState<string | null>(null);
+
+  const [genres, setGenres] = useState<Genre[]>([]);
+
+  const [browseResult, setBrowseResult] = useState<{
+    path: string;
+    stories: BrowseStory[];
+    error: string | null;
+  } | null>(null);
+
+  const query = (searchParams.get("q") ?? "").trim();
+
+  const selectedGenre =
+    kind === "genre" ? slug : (searchParams.get("genre") ?? "all");
+
+  const selectedTag = kind === "tag" ? slug : (searchParams.get("tag") ?? "");
+
+  const selectedLanguage = searchParams.get("language") ?? "all";
+
+  const sortParam = searchParams.get("sort");
+
+  const selectedSort: BrowseSort = isBrowseSort(sortParam)
+    ? sortParam
+    : "mostRead";
+
+  const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "fa-IR";
+
+  const numberFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }),
+    [locale],
+  );
+
+  const browsePath = useMemo(() => {
+    if (query.length === 1) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      type: "stories",
+      sort: selectedSort,
+      page: "1",
+      limit: "20",
+    });
+
+    if (query) {
+      params.set("q", query);
+    }
+
+    if (selectedGenre !== "all") {
+      params.set("genre", selectedGenre);
+    }
+
+    if (selectedTag) {
+      params.set("tag", selectedTag);
+    }
+
+    if (selectedLanguage !== "all") {
+      params.set("language", selectedLanguage);
+    }
+
+    return `/api/v1/search?${params.toString()}`;
+  }, [query, selectedGenre, selectedLanguage, selectedSort, selectedTag]);
+
+  const currentResult = browseResult?.path === browsePath ? browseResult : null;
+
+  const stories = currentResult?.stories ?? [];
+  const error = currentResult?.error ?? null;
+
+  const loading = browsePath !== null && currentResult === null;
 
   useEffect(() => {
-    let active = true;
-    const path = `/api/v1/stories?${kind}=${encodeURIComponent(slug)}&limit=30`;
-    const pending =
-      status === "authenticated"
-        ? request<StoriesResponse>(path)
-        : apiRequest<StoriesResponse>(path);
+    if (status === "loading") {
+      return;
+    }
 
-    void pending
+    const controller = new AbortController();
+
+    const load =
+      status === "authenticated"
+        ? request<GenresResponse>("/api/v1/stories/genres", {
+            signal: controller.signal,
+          })
+        : apiRequest<GenresResponse>("/api/v1/stories/genres", {
+            signal: controller.signal,
+          });
+
+    void load
       .then((response) => {
-        if (active) {
-          setStories(response.data.stories);
-          setError(null);
-        }
+        setGenres(response.data.genres);
       })
-      .catch((cause) => {
-        if (active) setError(getErrorMessage(cause));
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setGenres([]);
+        }
       });
 
-    return () => {
-      active = false;
-    };
-  }, [kind, request, slug, status]);
+    return () => controller.abort();
+  }, [request, status]);
+
+  useEffect(() => {
+    if (status === "loading" || !browsePath) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const load =
+      status === "authenticated"
+        ? request<BrowseResponse>(browsePath, {
+            signal: controller.signal,
+          })
+        : apiRequest<BrowseResponse>(browsePath, {
+            signal: controller.signal,
+          });
+
+    void load
+      .then((response) => {
+        setBrowseResult({
+          path: browsePath,
+          stories: response.data.stories,
+          error: null,
+        });
+      })
+      .catch((cause: unknown) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setBrowseResult({
+          path: browsePath,
+          stories: [],
+          error: getErrorMessage(cause),
+        });
+      });
+
+    return () => controller.abort();
+  }, [browsePath, request, status]);
+
+  function updateFilter(name: "genre" | "language" | "sort", value: string) {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if ((name === "genre" || name === "language") && value === "all") {
+      nextParams.delete(name);
+    } else if (name === "sort" && value === "mostRead") {
+      nextParams.delete(name);
+    } else {
+      nextParams.set(name, value);
+    }
+
+    if (kind) {
+      if (kind === "tag" && slug) {
+        nextParams.set("tag", slug);
+      }
+
+      navigate(
+        `/browse${nextParams.size > 0 ? `?${nextParams.toString()}` : ""}`,
+      );
+
+      return;
+    }
+
+    setSearchParams(nextParams);
+  }
+
+  function handleSelectChange(
+    name: "genre" | "language" | "sort",
+    event: ChangeEvent<HTMLSelectElement>,
+  ) {
+    updateFilter(name, event.target.value);
+  }
+
+  function translatedGenre(genre: Genre): string {
+    return t(`genres.items.${genre.slug}`, {
+      defaultValue: genre.name,
+    });
+  }
 
   return (
-    <main className="page-shell">
-      <header className="page-heading">
-        <div>
-          <p className="eyebrow">{kind === "genre" ? "ژانر" : "برچسب"}</p>
-          <h1>{slug}</h1>
+    <main className="browse-page">
+      <h1>{t("browse.title")}</h1>
+
+      <div className="browse-filters">
+        <label className="browse-select browse-select--with-icon">
+          <span className="sr-only">{t("browse.filters.genre")}</span>
+
+          <SlidersHorizontal aria-hidden="true" />
+
+          <select
+            value={selectedGenre}
+            onChange={(event) => handleSelectChange("genre", event)}
+          >
+            <option value="all">{t("browse.filters.all")}</option>
+
+            {genres.map((genre) => (
+              <option key={genre.slug} value={genre.slug}>
+                {translatedGenre(genre)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="browse-select">
+          <span className="sr-only">{t("browse.filters.language")}</span>
+
+          <select
+            value={selectedLanguage}
+            onChange={(event) => handleSelectChange("language", event)}
+          >
+            <option value="all">{t("browse.filters.all")}</option>
+
+            <option value="en">{t("browse.languages.en")}</option>
+
+            <option value="fa">{t("browse.languages.fa")}</option>
+
+            <option value="bilingual">{t("browse.languages.bilingual")}</option>
+          </select>
+        </label>
+
+        <label className="browse-select">
+          <span className="sr-only">{t("browse.filters.sort")}</span>
+
+          <select
+            value={selectedSort}
+            onChange={(event) => handleSelectChange("sort", event)}
+          >
+            <option value="mostRead">{t("browse.sort.mostRead")}</option>
+
+            <option value="mostVoted">{t("browse.sort.mostVoted")}</option>
+
+            <option value="newest">{t("browse.sort.newest")}</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="browse-genres" aria-label={t("browse.genreList")}>
+        <button
+          type="button"
+          className={selectedGenre === "all" ? "is-active" : undefined}
+          aria-pressed={selectedGenre === "all"}
+          onClick={() => updateFilter("genre", "all")}
+        >
+          {t("browse.filters.all")}
+        </button>
+
+        {genres.map((genre) => {
+          const isActive = selectedGenre === genre.slug;
+
+          return (
+            <button
+              key={genre.slug}
+              type="button"
+              className={isActive ? "is-active" : undefined}
+              data-genre={genre.slug}
+              aria-pressed={isActive}
+              onClick={() => updateFilter("genre", genre.slug)}
+            >
+              {translatedGenre(genre)}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="browse-result-count" aria-live="polite">
+        {t("browse.resultCount", {
+          count: query.length === 1 ? 0 : stories.length,
+        })}
+      </p>
+
+      {query.length === 1 ? (
+        <div className="browse-empty">
+          <Search aria-hidden="true" />
+
+          <p>{t("browse.searchMinimum")}</p>
         </div>
-      </header>
-      {error ? (
-        <p className="status-message status-message--error" role="alert">{error}</p>
-      ) : stories.length === 0 ? (
-        <p className="empty-state">داستان عمومی‌ای با این فیلتر وجود ندارد.</p>
+      ) : loading ? (
+        <p className="browse-state" aria-live="polite">
+          {t("browse.loading")}
+        </p>
+      ) : error ? (
+        <p className="status-message" data-kind="error" role="alert">
+          {error}
+        </p>
+      ) : stories.length > 0 ? (
+        <div className="browse-story-grid">
+          {stories.map((story) => (
+            <article className="browse-story-card" key={story.id}>
+              <Link
+                className="browse-story-cover"
+                to={`/stories/${encodeURIComponent(story.slug)}`}
+                aria-label={t("browse.card.open", {
+                  title: story.title,
+                })}
+              >
+                {story.coverUrl ? (
+                  <img
+                    src={story.coverUrl}
+                    alt=""
+                    loading="lazy"
+                    width={400}
+                    height={600}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="browse-story-placeholder" aria-hidden="true">
+                    <BookOpen />
+                  </span>
+                )}
+
+                {story.genre ? (
+                  <span
+                    className="browse-story-genre"
+                    data-genre={story.genre.slug}
+                  >
+                    {translatedGenre(story.genre)}
+                  </span>
+                ) : null}
+
+                {story.status === "COMPLETED" ? (
+                  <span className="browse-story-completed">
+                    <CheckCircle2 aria-hidden="true" />
+
+                    {t("browse.card.completed")}
+                  </span>
+                ) : null}
+
+                <span className="browse-story-overlay">
+                  <strong>{story.title}</strong>
+
+                  <span>{story.description}</span>
+                </span>
+              </Link>
+
+              <div className="browse-story-details">
+                <span className="browse-story-author">
+                  {story.author.avatarUrl ? (
+                    <img src={story.author.avatarUrl} alt="" loading="lazy" />
+                  ) : (
+                    <span className="browse-story-avatar" aria-hidden="true">
+                      {story.author.displayName.slice(0, 1)}
+                    </span>
+                  )}
+
+                  <span>
+                    {t("browse.card.by", {
+                      name: story.author.displayName,
+                    })}
+                  </span>
+                </span>
+
+                <span className="browse-story-stats">
+                  <span title={t("browse.card.reads")}>
+                    <Eye aria-hidden="true" />
+
+                    {numberFormatter.format(story.qualifiedViews)}
+                  </span>
+
+                  <span title={t("browse.card.votes")}>
+                    <Heart aria-hidden="true" />
+
+                    {numberFormatter.format(story.voteCount)}
+                  </span>
+
+                  <span title={t("browse.card.chapters")}>
+                    <BookOpen aria-hidden="true" />
+                    {numberFormatter.format(story.chapterCount)}{" "}
+                    {t("browse.card.chapterLabel")}
+                  </span>
+                </span>
+
+                <Link
+                  className="browse-read-button"
+                  to={`/stories/${encodeURIComponent(story.slug)}`}
+                >
+                  <BookOpen aria-hidden="true" />
+
+                  {t("browse.card.readNow")}
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
       ) : (
-        <div className="story-grid">
-          {stories.map((story) => <StoryCard key={story.id} story={story} />)}
+        <div className="browse-empty">
+          <Search aria-hidden="true" />
+
+          <p>{t("browse.empty")}</p>
         </div>
       )}
     </main>
