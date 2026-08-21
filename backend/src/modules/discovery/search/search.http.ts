@@ -9,30 +9,36 @@ import { optionalAuthenticate } from "../../auth/auth.middleware.js";
 import { searchQuerySchema } from "./search.schema.js";
 
 export async function search(
-    request: Request,
-    response: Response,
+  request: Request,
+  response: Response,
 ): Promise<void> {
-    const query = getValidatedQuery<SearchQuery>(request);
+  const query = getValidatedQuery<SearchQuery>(request);
 
-    const data = await discoveryServices.search.search(
-        query.q,
-        query.type,
-        query.limit,
-        query.page,
-        request.auth?.userId,
-    );
+  const data = await discoveryServices.search.search(
+    query.q,
+    query.type,
+    query.limit,
+    query.page,
+    request.auth?.userId,
+    {
+      ...(query.genre ? { genre: query.genre } : {}),
+      ...(query.tag ? { tag: query.tag } : {}),
+      ...(query.language ? { language: query.language } : {}),
+      sort: query.sort,
+    },
+  );
 
-    response.status(200).json({ data });
+  response.status(200).json({ data });
 }
 
 const router = Router();
 
 router.get(
-    "/",
-    searchRateLimiter,
-    optionalAuthenticate,
-    validateQuery(searchQuerySchema),
-    search,
+  "/",
+  searchRateLimiter,
+  optionalAuthenticate,
+  validateQuery(searchQuerySchema),
+  search,
 );
 
 export default router;
