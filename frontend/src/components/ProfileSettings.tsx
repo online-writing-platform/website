@@ -32,6 +32,7 @@ import {
   resendEmailVerification,
   revokeOtherSessions,
   revokeSession,
+  uploadProfileImage,
   updatePreferences,
   type Preferences,
   type Session,
@@ -63,6 +64,9 @@ const notificationKeys = [
   "notifyModeration",
   "notifySecurity",
 ] as const satisfies ReadonlyArray<keyof Preferences>;
+
+const PROFILE_IMAGE_MAX_BYTES = 5_000_000;
+const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
 
 export default function ProfileSettings({
   activeSection,
@@ -100,10 +104,7 @@ export default function ProfileSettings({
                   <li key={id}>
                     <NavigationMenuLink
                       render={
-                        <button
-                          type="button"
-                          onClick={() => onSelect(id)}
-                        />
+                        <button type="button" onClick={() => onSelect(id)} />
                       }
                       className={
                         "danger" in item && item.danger
@@ -140,11 +141,14 @@ function ProfileSettingsDialog({
   onSelect,
   onClose,
   onProfileUpdated,
-}: Required<Pick<ProfileSettingsProps, "activeSection" | "onSelect" | "onClose">> &
+}: Required<
+  Pick<ProfileSettingsProps, "activeSection" | "onSelect" | "onClose">
+> &
   Pick<ProfileSettingsProps, "onProfileUpdated">) {
   const { i18n, t } = useTranslation();
   const { user, request, updateProfile, logout } = useAuth();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -154,6 +158,7 @@ function ProfileSettingsDialog({
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -257,15 +262,57 @@ function ProfileSettingsDialog({
     setError(getErrorMessage(cause));
   }
 
+  function selectAvatarFile(file: File | null) {
+    setError(null);
+    setMessage(null);
+
+    if (!file) {
+      setAvatarFile(null);
+      return;
+    }
+
+    if (!PROFILE_IMAGE_TYPES.has(file.type)) {
+      setAvatarFile(null);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      setError(t("settings.profile.avatarUpload.invalidType"));
+      return;
+    }
+
+    if (file.size > PROFILE_IMAGE_MAX_BYTES) {
+      setAvatarFile(null);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      setError(t("settings.profile.avatarUpload.tooLarge"));
+      return;
+    }
+
+    setAvatarFile(file);
+  }
+
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     beginAction("profile");
+
     try {
+      let nextAvatarUrl = avatarUrl.trim() || null;
+
+      if (avatarFile) {
+        const response = await uploadProfileImage(request, avatarFile);
+        nextAvatarUrl = response.data.media.url;
+        setAvatarUrl(nextAvatarUrl);
+      }
+
       await updateProfile({
         displayName: displayName.trim(),
         bio: bio.trim() || null,
-        avatarUrl: avatarUrl.trim() || null,
+        avatarUrl: nextAvatarUrl,
       });
+
+      setAvatarFile(null);
+
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = "";
+      }
+
       await onProfileUpdated?.();
       setMessage(t("settings.profile.saved"));
     } catch (cause) {
@@ -277,6 +324,7 @@ function ProfileSettingsDialog({
 
   async function savePreference(next: Partial<Preferences>) {
     beginAction("preference");
+
     try {
       const response = await updatePreferences(request, next);
       setPreferences(response.data.preferences);
@@ -291,6 +339,7 @@ function ProfileSettingsDialog({
   async function submitPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     beginAction("password");
+
     try {
       await changePassword(request, currentPassword, newPassword);
       setCurrentPassword("");
@@ -306,6 +355,7 @@ function ProfileSettingsDialog({
   async function submitUsername(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     beginAction("username");
+
     try {
       await changeUsername(request, currentPassword, newUsername);
       setNewUsername("");
@@ -320,6 +370,7 @@ function ProfileSettingsDialog({
   async function submitEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     beginAction("email");
+
     try {
       await requestEmailChange(request, currentPassword, newEmail);
       setNewEmail("");
@@ -333,6 +384,7 @@ function ProfileSettingsDialog({
 
   async function resendVerification() {
     beginAction("verification");
+
     try {
       await resendEmailVerification(request);
       setMessage(t("settings.security.verification.sent"));
@@ -345,6 +397,7 @@ function ProfileSettingsDialog({
 
   async function removeSession(sessionId: string) {
     beginAction(`session-${sessionId}`);
+
     try {
       await revokeSession(request, sessionId);
       await loadSessions();
@@ -358,6 +411,7 @@ function ProfileSettingsDialog({
 
   async function removeOtherSessions() {
     beginAction("other-sessions");
+
     try {
       const response = await revokeOtherSessions(request);
       await loadSessions();
@@ -375,7 +429,9 @@ function ProfileSettingsDialog({
 
   async function removeAccount() {
     if (!confirmDelete || !deletePassword) return;
+
     beginAction("delete");
+
     try {
       await deleteAccount(request, deletePassword);
       await logout().catch(() => undefined);
@@ -407,7 +463,10 @@ function ProfileSettingsDialog({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="profile-settings-window" onMouseDown={(event) => event.stopPropagation()}>
+      <div
+        className="profile-settings-window"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <header className="profile-settings-window__header">
           <div>
             <p>{t("settings.dialog.eyebrow")}</p>
@@ -415,6 +474,7 @@ function ProfileSettingsDialog({
               {t(`settings.sections.${activeSection}.title`)}
             </h2>
           </div>
+
           <button
             className="profile-settings-close"
             type="button"
@@ -450,6 +510,7 @@ function ProfileSettingsDialog({
                 {error}
               </p>
             ) : null}
+
             {message ? (
               <p className="profile-settings-feedback is-success" role="status">
                 {message}
@@ -462,7 +523,10 @@ function ProfileSettingsDialog({
                   {t("settings.sections.profile.description")}
                 </p>
 
-                <form className="profile-settings-form" onSubmit={(event) => void saveProfile(event)}>
+                <form
+                  className="profile-settings-form"
+                  onSubmit={(event) => void saveProfile(event)}
+                >
                   <label>
                     <span>{t("settings.profile.displayName")}</span>
                     <input
@@ -473,6 +537,7 @@ function ProfileSettingsDialog({
                       onChange={(event) => setDisplayName(event.target.value)}
                     />
                   </label>
+
                   <label>
                     <span>{t("settings.profile.bio")}</span>
                     <textarea
@@ -488,6 +553,7 @@ function ProfileSettingsDialog({
                       })}
                     </small>
                   </label>
+
                   <label>
                     <span>{t("settings.profile.avatarUrl")}</span>
                     <input
@@ -496,11 +562,47 @@ function ProfileSettingsDialog({
                       value={avatarUrl}
                       maxLength={2048}
                       placeholder="https://example.com/avatar.jpg"
-                      onChange={(event) => setAvatarUrl(event.target.value)}
+                      onChange={(event) => {
+                        setAvatarUrl(event.target.value);
+                        setAvatarFile(null);
+
+                        if (avatarInputRef.current) {
+                          avatarInputRef.current.value = "";
+                        }
+                      }}
                     />
                   </label>
-                  <button className="profile-settings-primary" type="submit" disabled={pendingAction !== null}>
-                    {t("settings.common.save")}
+
+                  <label>
+                    <span>{t("settings.profile.avatarUpload.label")}</span>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      disabled={pendingAction !== null}
+                      onChange={(event) =>
+                        selectAvatarFile(event.target.files?.[0] ?? null)
+                      }
+                    />
+                    <small>{t("settings.profile.avatarUpload.help")}</small>
+
+                    {avatarFile ? (
+                      <small>
+                        {t("settings.profile.avatarUpload.selected", {
+                          name: avatarFile.name,
+                        })}
+                      </small>
+                    ) : null}
+                  </label>
+
+                  <button
+                    className="profile-settings-primary"
+                    type="submit"
+                    disabled={pendingAction !== null}
+                  >
+                    {pendingAction === "profile"
+                      ? t("settings.common.saving")
+                      : t("settings.common.save")}
                   </button>
                 </form>
 
@@ -514,7 +616,9 @@ function ProfileSettingsDialog({
                   </div>
 
                   {preferencesLoading || !preferences ? (
-                    <p className="profile-settings-loading">{t("settings.common.loading")}</p>
+                    <p className="profile-settings-loading">
+                      {t("settings.common.loading")}
+                    </p>
                   ) : (
                     <div className="profile-settings-options">
                       <label className="profile-settings-check">
@@ -522,26 +626,44 @@ function ProfileSettingsDialog({
                           type="checkbox"
                           checked={preferences.allowMatureContent}
                           disabled={pendingAction !== null}
-                          onChange={(event) => void savePreference({ allowMatureContent: event.target.checked })}
+                          onChange={(event) =>
+                            void savePreference({
+                              allowMatureContent: event.target.checked,
+                            })
+                          }
                         />
-                        <span>{t("settings.profile.reading.matureContent")}</span>
+                        <span>
+                          {t("settings.profile.reading.matureContent")}
+                        </span>
                       </label>
+
                       <label>
                         <span>{t("settings.profile.reading.theme")}</span>
                         <select
                           value={preferences.readerTheme}
                           disabled={pendingAction !== null}
-                          onChange={(event) => void savePreference({ readerTheme: event.target.value as Preferences["readerTheme"] })}
+                          onChange={(event) =>
+                            void savePreference({
+                              readerTheme: event.target
+                                .value as Preferences["readerTheme"],
+                            })
+                          }
                         >
-                          {(["SYSTEM", "LIGHT", "DARK", "SEPIA"] as const).map((theme) => (
-                            <option key={theme} value={theme}>
-                              {t(`settings.profile.reading.themes.${theme}`)}
-                            </option>
-                          ))}
+                          {(["SYSTEM", "LIGHT", "DARK", "SEPIA"] as const).map(
+                            (theme) => (
+                              <option key={theme} value={theme}>
+                                {t(`settings.profile.reading.themes.${theme}`)}
+                              </option>
+                            ),
+                          )}
                         </select>
                       </label>
+
                       <label>
-                        <span>{t("settings.profile.reading.fontScale")}: {preferences.fontScale.toFixed(2)}</span>
+                        <span>
+                          {t("settings.profile.reading.fontScale")}:{" "}
+                          {preferences.fontScale.toFixed(2)}
+                        </span>
                         <input
                           type="range"
                           min="0.75"
@@ -549,11 +671,19 @@ function ProfileSettingsDialog({
                           step="0.05"
                           value={preferences.fontScale}
                           disabled={pendingAction !== null}
-                          onChange={(event) => void savePreference({ fontScale: Number(event.target.value) })}
+                          onChange={(event) =>
+                            void savePreference({
+                              fontScale: Number(event.target.value),
+                            })
+                          }
                         />
                       </label>
+
                       <label>
-                        <span>{t("settings.profile.reading.lineHeight")}: {preferences.lineHeight.toFixed(2)}</span>
+                        <span>
+                          {t("settings.profile.reading.lineHeight")}:{" "}
+                          {preferences.lineHeight.toFixed(2)}
+                        </span>
                         <input
                           type="range"
                           min="1.2"
@@ -561,7 +691,11 @@ function ProfileSettingsDialog({
                           step="0.05"
                           value={preferences.lineHeight}
                           disabled={pendingAction !== null}
-                          onChange={(event) => void savePreference({ lineHeight: Number(event.target.value) })}
+                          onChange={(event) =>
+                            void savePreference({
+                              lineHeight: Number(event.target.value),
+                            })
+                          }
                         />
                       </label>
                     </div>
@@ -575,8 +709,11 @@ function ProfileSettingsDialog({
                 <p className="profile-settings-description">
                   {t("settings.sections.notifications.description")}
                 </p>
+
                 {preferencesLoading || !preferences ? (
-                  <p className="profile-settings-loading">{t("settings.common.loading")}</p>
+                  <p className="profile-settings-loading">
+                    {t("settings.common.loading")}
+                  </p>
                 ) : (
                   <div className="profile-notification-list">
                     {notificationKeys.map((key) => (
@@ -586,7 +723,11 @@ function ProfileSettingsDialog({
                           type="checkbox"
                           checked={preferences[key] as boolean}
                           disabled={pendingAction !== null}
-                          onChange={(event) => void savePreference({ [key]: event.target.checked })}
+                          onChange={(event) =>
+                            void savePreference({
+                              [key]: event.target.checked,
+                            })
+                          }
                         />
                       </label>
                     ))}
@@ -605,10 +746,16 @@ function ProfileSettingsDialog({
                   <div className="profile-settings-notice">
                     <Mail aria-hidden="true" />
                     <div>
-                      <strong>{t("settings.security.verification.title")}</strong>
+                      <strong>
+                        {t("settings.security.verification.title")}
+                      </strong>
                       <p>{t("settings.security.verification.description")}</p>
                     </div>
-                    <button type="button" disabled={pendingAction !== null} onClick={() => void resendVerification()}>
+                    <button
+                      type="button"
+                      disabled={pendingAction !== null}
+                      onClick={() => void resendVerification()}
+                    >
                       {t("settings.security.verification.resend")}
                     </button>
                   </div>
@@ -639,7 +786,14 @@ function ProfileSettingsDialog({
                         onChange={(event) => setNewPassword(event.target.value)}
                       />
                     </label>
-                    <button type="submit" disabled={!currentPassword || !newPassword || pendingAction !== null}>
+                    <button
+                      type="submit"
+                      disabled={
+                        !currentPassword ||
+                        !newPassword ||
+                        pendingAction !== null
+                      }
+                    >
                       {t("settings.security.password.submit")}
                     </button>
                   </form>
@@ -657,7 +811,14 @@ function ProfileSettingsDialog({
                         onChange={(event) => setNewUsername(event.target.value)}
                       />
                     </label>
-                    <button type="submit" disabled={!currentPassword || !newUsername || pendingAction !== null}>
+                    <button
+                      type="submit"
+                      disabled={
+                        !currentPassword ||
+                        !newUsername ||
+                        pendingAction !== null
+                      }
+                    >
                       {t("settings.security.username.submit")}
                     </button>
                   </form>
@@ -675,7 +836,12 @@ function ProfileSettingsDialog({
                         onChange={(event) => setNewEmail(event.target.value)}
                       />
                     </label>
-                    <button type="submit" disabled={!currentPassword || !newEmail || pendingAction !== null}>
+                    <button
+                      type="submit"
+                      disabled={
+                        !currentPassword || !newEmail || pendingAction !== null
+                      }
+                    >
                       {t("settings.security.email.submit")}
                     </button>
                   </form>
@@ -700,27 +866,39 @@ function ProfileSettingsDialog({
                 </div>
 
                 {sessionsLoading ? (
-                  <p className="profile-settings-loading">{t("settings.common.loading")}</p>
+                  <p className="profile-settings-loading">
+                    {t("settings.common.loading")}
+                  </p>
                 ) : sessions.length === 0 ? (
-                  <p className="profile-settings-empty">{t("settings.sessions.empty")}</p>
+                  <p className="profile-settings-empty">
+                    {t("settings.sessions.empty")}
+                  </p>
                 ) : (
                   <ul className="profile-session-list">
                     {sessions.map((session) => (
                       <li key={session.id}>
-                        <span className="profile-session-icon"><Laptop aria-hidden="true" /></span>
+                        <span className="profile-session-icon">
+                          <Laptop aria-hidden="true" />
+                        </span>
                         <div>
                           <strong>
                             {session.current
                               ? t("settings.sessions.current")
                               : t("settings.sessions.other")}
                           </strong>
-                          <span>{session.userAgent ?? t("settings.sessions.unknownDevice")}</span>
+                          <span>
+                            {session.userAgent ??
+                              t("settings.sessions.unknownDevice")}
+                          </span>
                           <small>
                             {t("settings.sessions.lastUsed", {
-                              date: new Date(session.lastUsedAt).toLocaleString(locale),
+                              date: new Date(session.lastUsedAt).toLocaleString(
+                                locale,
+                              ),
                             })}
                           </small>
                         </div>
+
                         {!session.current ? (
                           <button
                             type="button"
@@ -739,9 +917,12 @@ function ProfileSettingsDialog({
 
             {activeSection === "delete" ? (
               <section className="profile-settings-section profile-delete-section">
-                <span className="profile-delete-icon"><Trash2 aria-hidden="true" /></span>
+                <span className="profile-delete-icon">
+                  <Trash2 aria-hidden="true" />
+                </span>
                 <h3>{t("settings.delete.title")}</h3>
                 <p>{t("settings.delete.description")}</p>
+
                 <label>
                   <span>{t("settings.delete.password")}</span>
                   <input
@@ -751,6 +932,7 @@ function ProfileSettingsDialog({
                     onChange={(event) => setDeletePassword(event.target.value)}
                   />
                 </label>
+
                 <label className="profile-settings-check">
                   <input
                     type="checkbox"
@@ -759,10 +941,13 @@ function ProfileSettingsDialog({
                   />
                   <span>{t("settings.delete.confirm")}</span>
                 </label>
+
                 <button
                   className="profile-settings-danger"
                   type="button"
-                  disabled={!confirmDelete || !deletePassword || pendingAction !== null}
+                  disabled={
+                    !confirmDelete || !deletePassword || pendingAction !== null
+                  }
                   onClick={() => void removeAccount()}
                 >
                   {t("settings.delete.submit")}
