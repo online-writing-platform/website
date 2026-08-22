@@ -82,4 +82,23 @@ describe("BrowsePage API connection", () => {
       );
     });
   });
+
+  it("uses relevance sorting for a single title word", async () => {
+    render(
+      <MemoryRouter initialEntries={["/browse?q=last"]}>
+        <Routes>
+          <Route path="/browse" element={<BrowsePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        "/api/v1/search?type=stories&sort=relevance&page=1&limit=20&q=last",
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+        }),
+      );
+    });
+  });
 });
