@@ -21,7 +21,7 @@ import { getErrorMessage } from "../lib/error-message";
 
 import "./BrowsePage.css";
 
-type BrowseSort = "mostRead" | "mostVoted" | "newest";
+type BrowseSort = "relevance" | "mostRead" | "mostVoted" | "newest";
 
 interface Genre {
   slug: string;
@@ -76,7 +76,12 @@ interface BrowsePageProps {
 }
 
 function isBrowseSort(value: string | null): value is BrowseSort {
-  return value === "mostRead" || value === "mostVoted" || value === "newest";
+  return (
+    value === "relevance" ||
+    value === "mostRead" ||
+    value === "mostVoted" ||
+    value === "newest"
+  );
 }
 
 export default function BrowsePage({ kind }: BrowsePageProps) {
@@ -106,9 +111,14 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
 
   const sortParam = searchParams.get("sort");
 
-  const selectedSort: BrowseSort = isBrowseSort(sortParam)
-    ? sortParam
-    : "mostRead";
+  let selectedSort: BrowseSort = query ? "relevance" : "mostRead";
+
+  if (
+    isBrowseSort(sortParam) &&
+    (query.length > 0 || sortParam !== "relevance")
+  ) {
+    selectedSort = sortParam;
+  }
 
   const locale = i18n.resolvedLanguage?.startsWith("en") ? "en-US" : "fa-IR";
 
@@ -230,9 +240,15 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
   function updateFilter(name: "genre" | "language" | "sort", value: string) {
     const nextParams = new URLSearchParams(searchParams);
 
+    if (!query && nextParams.get("sort") === "relevance") {
+      nextParams.delete("sort");
+    }
+
+    const defaultSort = query ? "relevance" : "mostRead";
+
     if ((name === "genre" || name === "language") && value === "all") {
       nextParams.delete(name);
-    } else if (name === "sort" && value === "mostRead") {
+    } else if (name === "sort" && value === defaultSort) {
       nextParams.delete(name);
     } else {
       nextParams.set(name, value);
@@ -298,11 +314,8 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
             onChange={(event) => handleSelectChange("language", event)}
           >
             <option value="all">{t("browse.filters.all")}</option>
-
             <option value="en">{t("browse.languages.en")}</option>
-
             <option value="fa">{t("browse.languages.fa")}</option>
-
             <option value="bilingual">{t("browse.languages.bilingual")}</option>
           </select>
         </label>
@@ -314,10 +327,12 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
             value={selectedSort}
             onChange={(event) => handleSelectChange("sort", event)}
           >
+            {query ? (
+              <option value="relevance">{t("browse.sort.relevance")}</option>
+            ) : null}
+
             <option value="mostRead">{t("browse.sort.mostRead")}</option>
-
             <option value="mostVoted">{t("browse.sort.mostVoted")}</option>
-
             <option value="newest">{t("browse.sort.newest")}</option>
           </select>
         </label>
@@ -360,7 +375,6 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
       {query.length === 1 ? (
         <div className="browse-empty">
           <Search aria-hidden="true" />
-
           <p>{t("browse.searchMinimum")}</p>
         </div>
       ) : loading ? (
@@ -409,14 +423,12 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
                 {story.status === "COMPLETED" ? (
                   <span className="browse-story-completed">
                     <CheckCircle2 aria-hidden="true" />
-
                     {t("browse.card.completed")}
                   </span>
                 ) : null}
 
                 <span className="browse-story-overlay">
                   <strong>{story.title}</strong>
-
                   <span>{story.description}</span>
                 </span>
               </Link>
@@ -441,13 +453,11 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
                 <span className="browse-story-stats">
                   <span title={t("browse.card.reads")}>
                     <Eye aria-hidden="true" />
-
                     {numberFormatter.format(story.qualifiedViews)}
                   </span>
 
                   <span title={t("browse.card.votes")}>
                     <Heart aria-hidden="true" />
-
                     {numberFormatter.format(story.voteCount)}
                   </span>
 
@@ -463,7 +473,6 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
                   to={`/stories/${encodeURIComponent(story.slug)}`}
                 >
                   <BookOpen aria-hidden="true" />
-
                   {t("browse.card.readNow")}
                 </Link>
               </div>
@@ -473,7 +482,6 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
       ) : (
         <div className="browse-empty">
           <Search aria-hidden="true" />
-
           <p>{t("browse.empty")}</p>
         </div>
       )}
