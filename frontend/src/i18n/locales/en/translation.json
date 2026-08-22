@@ -126,6 +126,7 @@
       "bilingual": "Bilingual"
     },
     "sort": {
+      "relevance": "Relevance",
       "mostRead": "Most Read",
       "mostVoted": "Most Voted",
       "newest": "Newest"

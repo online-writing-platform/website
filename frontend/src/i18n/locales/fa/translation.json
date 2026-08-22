@@ -126,6 +126,7 @@
       "bilingual": "دوزبانه"
     },
     "sort": {
+      "relevance": "مرتبط‌ترین",
       "mostRead": "پربازدیدترین",
       "mostVoted": "پرامتیازترین",
       "newest": "جدیدترین"
