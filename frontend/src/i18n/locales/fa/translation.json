@@ -132,14 +132,13 @@
       "newest": "جدیدترین"
     },
     "card": {
-      "open": "مشاهده داستان {{title}}",
+      "open": "باز کردن {{title}}",
       "by": "نوشتهٔ {{name}}",
-      "completed": "کامل‌شده",
+      "completed": "تکمیل‌شده",
       "reads": "تعداد خواندن‌ها",
       "votes": "تعداد رأی‌ها",
       "chapters": "تعداد فصل‌ها",
-      "chapterLabel": "فصل",
-      "readNow": "همین حالا بخوانید"
+      "chapterLabel": "فصل"
     }
   },
   "PlatformHeader": {

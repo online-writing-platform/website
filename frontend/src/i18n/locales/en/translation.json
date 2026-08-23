@@ -132,14 +132,13 @@
       "newest": "Newest"
     },
     "card": {
-      "open": "View {{title}}",
+      "open": "Open {{title}}",
       "by": "by {{name}}",
       "completed": "Completed",
       "reads": "Reads",
       "votes": "Votes",
       "chapters": "Chapters",
-      "chapterLabel": "chapters",
-      "readNow": "Read Now"
+      "chapterLabel": "chapters"
     }
   },
   "PlatformHeader": {

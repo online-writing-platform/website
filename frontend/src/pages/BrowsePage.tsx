@@ -1,25 +1,12 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  BookOpen,
-  CheckCircle2,
-  Eye,
-  Heart,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
+import StoryCard from "../components/StoryCard";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
-
-import "./BrowsePage.css";
 
 type BrowseSort = "relevance" | "mostRead" | "mostVoted" | "newest";
 
@@ -389,93 +376,26 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
         <div className="browse-story-grid">
           {stories.map((story) => (
             <article className="browse-story-card" key={story.id}>
-              <Link
-                className="browse-story-cover"
-                to={`/stories/${encodeURIComponent(story.slug)}`}
-                aria-label={t("browse.card.open", {
-                  title: story.title,
-                })}
-              >
-                {story.coverUrl ? (
-                  <img
-                    src={story.coverUrl}
-                    alt=""
-                    loading="lazy"
-                    width={400}
-                    height={600}
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="browse-story-placeholder" aria-hidden="true">
-                    <BookOpen />
-                  </span>
-                )}
-
-                {story.genre ? (
-                  <span
-                    className="browse-story-genre"
-                    data-genre={story.genre.slug}
-                  >
-                    {translatedGenre(story.genre)}
-                  </span>
-                ) : null}
-
-                {story.status === "COMPLETED" ? (
-                  <span className="browse-story-completed">
-                    <CheckCircle2 aria-hidden="true" />
-                    {t("browse.card.completed")}
-                  </span>
-                ) : null}
-
-                <span className="browse-story-overlay">
-                  <strong>{story.title}</strong>
-                  <span>{story.description}</span>
-                </span>
-              </Link>
-
-              <div className="browse-story-details">
-                <span className="browse-story-author">
-                  {story.author.avatarUrl ? (
-                    <img src={story.author.avatarUrl} alt="" loading="lazy" />
-                  ) : (
-                    <span className="browse-story-avatar" aria-hidden="true">
-                      {story.author.displayName.slice(0, 1)}
-                    </span>
-                  )}
-
-                  <span>
-                    {t("browse.card.by", {
-                      name: story.author.displayName,
-                    })}
-                  </span>
-                </span>
-
-                <span className="browse-story-stats">
-                  <span title={t("browse.card.reads")}>
-                    <Eye aria-hidden="true" />
-                    {numberFormatter.format(story.qualifiedViews)}
-                  </span>
-
-                  <span title={t("browse.card.votes")}>
-                    <Heart aria-hidden="true" />
-                    {numberFormatter.format(story.voteCount)}
-                  </span>
-
-                  <span title={t("browse.card.chapters")}>
-                    <BookOpen aria-hidden="true" />
-                    {numberFormatter.format(story.chapterCount)}{" "}
-                    {t("browse.card.chapterLabel")}
-                  </span>
-                </span>
-
-                <Link
-                  className="browse-read-button"
-                  to={`/stories/${encodeURIComponent(story.slug)}`}
-                >
-                  <BookOpen aria-hidden="true" />
-                  {t("browse.card.readNow")}
-                </Link>
-              </div>
+              {loading ? (
+                <div className="browse-state" role="status">
+                  {t("browse.loading")}
+                </div>
+              ) : error ? (
+                <div className="browse-state" role="alert">
+                  {error}
+                </div>
+              ) : stories.length > 0 ? (
+                <div className="browse-story-grid">
+                  {stories.map((story) => (
+                    <StoryCard key={story.id} story={story} />
+                  ))}
+                </div>
+              ) : (
+                <div className="browse-empty">
+                  <Search aria-hidden="true" />
+                  <p>{t("browse.empty")}</p>
+                </div>
+              )}
             </article>
           ))}
         </div>
