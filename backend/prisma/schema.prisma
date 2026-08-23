@@ -412,6 +412,7 @@ model Story {
   @@index([status, scheduledAt])
   @@index([coverAssetId])
   @@index([searchTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "stories_search_title_trgm_idx")
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "stories_search_text_trgm_idx")
   @@map("stories")
 }
 
