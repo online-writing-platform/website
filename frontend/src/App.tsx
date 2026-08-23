@@ -28,7 +28,9 @@ const ModerationPage = lazy(() => import("./pages/ModerationPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
-const ConfirmEmailChangePage = lazy(() => import("./pages/ConfirmEmailChangePage"));
+const ConfirmEmailChangePage = lazy(
+  () => import("./pages/ConfirmEmailChangePage"),
+);
 const Terms = lazy(() => import("./pages/Terms"));
 const ErrorPage = lazy(() => import("./pages/Error"));
 
@@ -40,34 +42,129 @@ function App() {
   return (
     <BrowserRouter>
       <PlatformHeader />
-      <Suspense fallback={<main className="page-shell"><p>در حال بارگذاری…</p></main>}>
+
+      <Suspense
+        fallback={
+          <main className="page-shell">
+            <p>در حال بارگذاری…</p>
+          </main>
+        }
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/browse/genres/:slug" element={<BrowsePage kind="genre" />} />
-          <Route path="/browse/tags/:slug" element={<BrowsePage kind="tag" />} />
+          <Route path="/browse" element={<BrowsePage />} />
+
+          <Route
+            path="/browse/genres/:slug"
+            element={<BrowsePage kind="genre" />}
+          />
+
+          <Route
+            path="/browse/tags/:slug"
+            element={<BrowsePage kind="tag" />}
+          />
+
           <Route path="/stories/:slug" element={<StoryPage />} />
-          <Route path="/stories/:slug/chapters/:chapterId" element={<ReaderPage />} />
+
+          <Route
+            path="/stories/:slug/chapters/:chapterId"
+            element={<ReaderPage />}
+          />
+
           <Route path="/users/:username" element={<PublicProfilePage />} />
-          <Route path="/users/:username/followers" element={<SocialListPage kind="followers" />} />
-          <Route path="/users/:username/following" element={<SocialListPage kind="following" />} />
+
+          <Route
+            path="/users/:username/followers"
+            element={<SocialListPage kind="followers" />}
+          />
+
+          <Route
+            path="/users/:username/following"
+            element={<SocialListPage kind="following" />}
+          />
+
           <Route path="/reading-lists/:listId" element={<ReadingListPage />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/confirm-email-change" element={<ConfirmEmailChangePage />} />
+
+          <Route
+            path="/confirm-email-change"
+            element={<ConfirmEmailChangePage />}
+          />
+
           <Route path="/terms" element={<Terms />} />
 
-          <Route path="/library" element={<Secure><LibraryPage /></Secure>} />
-          <Route path="/notifications" element={<Secure><NotificationsPage /></Secure>} />
-          <Route path="/settings" element={<Secure><SettingsPage /></Secure>} />
-          <Route path="/write" element={<Secure><WriteDashboard /></Secure>} />
-          <Route path="/write/:storyId" element={<Secure><WriterStoryPage /></Secure>} />
-          <Route path="/write/:storyId/chapters/:chapterId" element={<Secure><ChapterEditorPage /></Secure>} />
-          <Route path="/analytics" element={<Secure><AnalyticsPage /></Secure>} />
+          <Route
+            path="/library"
+            element={
+              <Secure>
+                <LibraryPage />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <Secure>
+                <NotificationsPage />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <Secure>
+                <SettingsPage />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/write"
+            element={
+              <Secure>
+                <WriteDashboard />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/write/:storyId"
+            element={
+              <Secure>
+                <WriterStoryPage />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/write/:storyId/chapters/:chapterId"
+            element={
+              <Secure>
+                <ChapterEditorPage />
+              </Secure>
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <Secure>
+                <AnalyticsPage />
+              </Secure>
+            }
+          />
+
           <Route
             path="/moderation"
             element={

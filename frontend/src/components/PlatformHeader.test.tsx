@@ -11,7 +11,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import i18n from "../i18n";
 import PlatformHeader from "./PlatformHeader";
+import { useLocation } from "react-router-dom";
 
+function CurrentLocation() {
+  const location = useLocation();
+
+  return (
+    <output data-testid="current-location">
+      {location.pathname}
+      {location.search}
+    </output>
+  );
+}
 const { logoutMock, useAuthMock } = vi.hoisted(() => ({
   logoutMock: vi.fn(() => Promise.resolve()),
   useAuthMock: vi.fn(),
@@ -46,6 +57,7 @@ function renderHeader() {
   return render(
     <MemoryRouter>
       <PlatformHeader />
+      <CurrentLocation />
     </MemoryRouter>,
   );
 }
@@ -131,5 +143,33 @@ describe("PlatformHeader profile menu", () => {
     expect(
       screen.queryByRole("navigation", { name: "Account menu" }),
     ).toBeNull();
+  });
+  it("submits the header search to the browse page", async () => {
+    useAuthMock.mockReturnValue({
+      status: "anonymous",
+      user: null,
+      logout: logoutMock,
+    });
+
+    renderHeader();
+
+    fireEvent.change(
+      screen.getByRole("searchbox", {
+        name: "Search stories",
+      }),
+      {
+        target: {
+          value: "  hidden city  ",
+        },
+      },
+    );
+
+    fireEvent.submit(screen.getByRole("search"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("current-location").textContent).toBe(
+        "/browse?q=hidden+city",
+      );
+    });
   });
 });

@@ -1,0 +1,457 @@
+.browse-page {
+  width: min(100% - 2rem, var(--content-max));
+  margin-inline: auto;
+  padding-block: 2rem 3rem;
+}
+
+.browse-page h1 {
+  margin: 0 0 1.5rem;
+  font-size: 1.875rem;
+  line-height: 1.2;
+}
+
+.browse-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.browse-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.browse-select > svg {
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  z-index: 1;
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.browse-select select {
+  width: 10rem;
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding-inline: 0.75rem 2rem;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.browse-select--with-icon select {
+  padding-inline-start: 2.25rem;
+}
+
+.browse-select select:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+.browse-select select:focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  outline-offset: 1px;
+}
+
+.browse-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.browse-genres button {
+  min-height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.browse-genres button:hover,
+.browse-genres button.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.browse-genres button:not(.is-active)[data-genre="romance"],
+.browse-story-genre[data-genre="romance"] {
+  border-color: #fecdd3;
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.browse-genres button:not(.is-active)[data-genre="fantasy"],
+.browse-story-genre[data-genre="fantasy"] {
+  border-color: #ddd6fe;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.browse-genres button:not(.is-active)[data-genre="science-fiction"],
+.browse-story-genre[data-genre="science-fiction"] {
+  border-color: #a5f3fc;
+  background: #cffafe;
+  color: #0e7490;
+}
+
+.browse-genres button:not(.is-active)[data-genre="mystery"],
+.browse-story-genre[data-genre="mystery"] {
+  border-color: #fde68a;
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.browse-genres button:not(.is-active)[data-genre="thriller"],
+.browse-story-genre[data-genre="thriller"] {
+  border-color: #fecaca;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.browse-genres button:not(.is-active)[data-genre="horror"],
+.browse-story-genre[data-genre="horror"] {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.browse-genres button:not(.is-active)[data-genre="adventure"],
+.browse-story-genre[data-genre="adventure"] {
+  border-color: #a7f3d0;
+  background: #d1fae5;
+  color: #047857;
+}
+
+.browse-genres button:not(.is-active)[data-genre="historical-fiction"],
+.browse-story-genre[data-genre="historical-fiction"] {
+  border-color: #fed7aa;
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.browse-genres button:not(.is-active)[data-genre="young-adult"],
+.browse-story-genre[data-genre="young-adult"] {
+  border-color: #bfdbfe;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.browse-genres button:not(.is-active)[data-genre="humor"],
+.browse-story-genre[data-genre="humor"] {
+  border-color: #fef08a;
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.browse-genres button:not(.is-active)[data-genre="poetry"],
+.browse-story-genre[data-genre="poetry"] {
+  border-color: #fbcfe8;
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.browse-genres button:not(.is-active)[data-genre="fan-fiction"],
+.browse-story-genre[data-genre="fan-fiction"] {
+  border-color: #c7d2fe;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.browse-genres button:not(.is-active)[data-genre="non-fiction"],
+.browse-story-genre[data-genre="non-fiction"] {
+  border-color: #cbd5e1;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.browse-genres button:not(.is-active)[data-genre="short-story"],
+.browse-story-genre[data-genre="short-story"] {
+  border-color: #99f6e4;
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.dark .browse-genres button:not(.is-active)[data-genre],
+.dark .browse-story-genre[data-genre] {
+  border-color: color-mix(in srgb, currentColor 42%, var(--border));
+  background: color-mix(in srgb, currentColor 18%, var(--surface));
+}
+
+.browse-result-count {
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.browse-story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.browse-story-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.browse-story-card:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%);
+}
+
+.browse-story-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: var(--primary-soft);
+}
+
+.browse-story-cover > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 200ms ease;
+}
+
+.browse-story-card:hover .browse-story-cover > img {
+  transform: scale(1.03);
+}
+
+.browse-story-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--primary);
+}
+
+.browse-story-placeholder svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.browse-story-genre,
+.browse-story-completed {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 0.75rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.browse-story-genre {
+  inset-inline-start: 0.75rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.browse-story-completed {
+  inset-inline-end: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--text);
+  backdrop-filter: blur(4px);
+}
+
+.browse-story-completed svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.browse-story-overlay {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 0.25rem;
+  padding: 2.5rem 0.75rem 0.75rem;
+  background: linear-gradient(to top, rgb(0 0 0 / 85%), transparent);
+  color: #fff;
+}
+
+.browse-story-overlay strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.browse-story-overlay > span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgb(255 255 255 / 78%);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.browse-story-details {
+  padding: 0.7rem;
+}
+
+.browse-story-author {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.browse-story-author > img,
+.browse-story-avatar {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.browse-story-avatar {
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.browse-story-author > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-story-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.browse-story-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  font-size: 0.65rem;
+}
+
+.browse-story-stats svg {
+  width: 0.72rem;
+  height: 0.72rem;
+}
+
+.browse-read-button {
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  border-radius: 0.45rem;
+  background: linear-gradient(90deg, var(--accent), var(--danger));
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.browse-read-button svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.browse-read-button:hover {
+  filter: brightness(0.96);
+}
+
+.browse-state,
+.browse-empty {
+  display: grid;
+  min-height: 15rem;
+  place-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.browse-empty svg {
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.45;
+}
+
+.browse-empty p {
+  margin: 0;
+}
+
+@media (min-width: 40rem) {
+  .browse-story-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 48rem) {
+  .browse-story-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .browse-story-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .browse-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .browse-select,
+  .browse-select select {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browse-story-cover > img,
+  .browse-story-card {
+    transition: none;
+  }
+
+  .browse-story-card:hover {
+    transform: none;
+  }
+
+  .browse-story-card:hover .browse-story-cover > img {
+    transform: none;
+  }
+}

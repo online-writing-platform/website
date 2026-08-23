@@ -682,10 +682,7 @@ export default function PublicProfilePage() {
         </div>
       </header>
 
-      <nav
-        className="profile-menu surface"
-        aria-label={t("profile.tabs.ariaLabel")}
-      >
+      <nav className="profile-menu" aria-label={t("profile.tabs.ariaLabel")}>
         <button
           id="profile-menu-followers"
           className={
@@ -767,7 +764,7 @@ export default function PublicProfilePage() {
         </p>
       ) : null}
 
-      <section className="profile-content-card surface">
+      <section className="profile-content-card">
         {activeTab === "stories" ? (
           <div
             id="profile-panel-stories"

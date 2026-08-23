@@ -1,19 +1,19 @@
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { type FormEvent, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
+  BarChart3,
+  Bell,
   BookOpen,
-  PenTool,
-  Search,
-  Menu,
-  X,
   Compass,
   Library,
-  User,
-  Bell,
-  BarChart3,
-  Settings,
   LogOut,
+  Menu,
+  PenTool,
+  Search,
+  Settings,
+  User,
+  X,
 } from "lucide-react";
 
 import useAuth from "../hooks/useAuth";
@@ -27,13 +27,31 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "./ui/navigation-menu";
+
 import "./PlatformHeader.css";
 
 function PlatformHeader() {
   const { t } = useTranslation();
   const { status, user, logout } = useAuth();
+  const navigate = useNavigate();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const query = searchQuery.trim();
+    const params = new URLSearchParams();
+
+    if (query) {
+      params.set("q", query);
+    }
+
+    navigate(params.size > 0 ? `/browse?${params.toString()}` : "/browse");
+
+    setMobileMenuOpen(false);
+  };
 
   const handleLogout = () => {
     void logout();
@@ -47,7 +65,6 @@ function PlatformHeader() {
   return (
     <header className="platform-header">
       <div className="platform-header-inner">
-        {/* Brand */}
         <Link
           to="/"
           className="platform-brand"
@@ -58,12 +75,11 @@ function PlatformHeader() {
           <span>{t("PlatformHeader.brand")}</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav
           className="platform-nav"
           aria-label={t("PlatformHeader.mainNavigation")}
         >
-          <NavLink to="/discover" className="platform-nav-link">
+          <NavLink to="/browse" className="platform-nav-link">
             <Compass className="platform-nav-icon" />
             <span>{t("PlatformHeader.discover")}</span>
           </NavLink>
@@ -78,8 +94,7 @@ function PlatformHeader() {
             )}
         </nav>
 
-        {/* Search */}
-        <div className="platform-search">
+        <form className="platform-search" role="search" onSubmit={handleSearch}>
           <Search className="platform-search-icon" />
 
           <input
@@ -89,12 +104,10 @@ function PlatformHeader() {
             placeholder={t("PlatformHeader.searchPlaceholder")}
             aria-label={t("PlatformHeader.searchAriaLabel")}
           />
-        </div>
+        </form>
 
-        {/* Account */}
         <div className="platform-account">
           <ThemeButton />
-
           <LanguageSwitcher />
 
           {status === "authenticated" && user ? (
@@ -211,7 +224,6 @@ function PlatformHeader() {
             <span className="muted">...</span>
           )}
 
-          {/* Mobile menu button */}
           <button
             type="button"
             className="platform-mobile-button"
@@ -228,11 +240,13 @@ function PlatformHeader() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="platform-mobile-menu">
-          {/* Mobile Search */}
-          <div className="platform-mobile-search">
+          <form
+            className="platform-mobile-search"
+            role="search"
+            onSubmit={handleSearch}
+          >
             <Search className="platform-search-icon" />
 
             <input
@@ -242,13 +256,13 @@ function PlatformHeader() {
               placeholder={t("PlatformHeader.searchPlaceholder")}
               aria-label={t("PlatformHeader.searchAriaLabel")}
             />
-          </div>
+          </form>
 
           <nav
             className="platform-mobile-nav"
             aria-label={t("PlatformHeader.mobileNavigation")}
           >
-            <NavLink to="/discover" onClick={closeMobileMenu}>
+            <NavLink to="/Browse" onClick={closeMobileMenu}>
               <Compass />
               <span>{t("PlatformHeader.discover")}</span>
             </NavLink>

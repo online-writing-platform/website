@@ -107,6 +107,41 @@
       "short-story": "Short Story"
     }
   },
+  "browse": {
+    "title": "Browse Stories",
+    "loading": "Loading stories...",
+    "empty": "No stories found matching your filters.",
+    "searchMinimum": "Enter at least two characters to search.",
+    "resultCount": "{{count}} stories found",
+    "genreList": "Quick genre filters",
+    "filters": {
+      "genre": "Genre",
+      "language": "Language",
+      "sort": "Sort",
+      "all": "All"
+    },
+    "languages": {
+      "en": "English",
+      "fa": "Persian",
+      "bilingual": "Bilingual"
+    },
+    "sort": {
+      "relevance": "Relevance",
+      "mostRead": "Most Read",
+      "mostVoted": "Most Voted",
+      "newest": "Newest"
+    },
+    "card": {
+      "open": "View {{title}}",
+      "by": "by {{name}}",
+      "completed": "Completed",
+      "reads": "Reads",
+      "votes": "Votes",
+      "chapters": "Chapters",
+      "chapterLabel": "chapters",
+      "readNow": "Read Now"
+    }
+  },
   "PlatformHeader": {
     "brand": "Story",
     "home": "Home page",

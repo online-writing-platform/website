@@ -380,7 +380,7 @@
   padding: 0.65rem 0.75rem;
 
   border: 0;
-  border-radius: var(--radius);
+  border-radius: calc(var(--radius) - 6px);
 
   background: transparent;
 
@@ -448,7 +448,7 @@
 
   border: 1px solid var(--border);
 
-  border-radius: 999px;
+  border-radius: var(--radius);
 
   background: var(--surface);
 
