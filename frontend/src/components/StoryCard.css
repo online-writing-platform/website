@@ -1,6 +1,9 @@
 .story-card {
+  display: flex;
+  width: 100%;
   min-width: 0;
   height: 100%;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -19,7 +22,10 @@
 
 .story-card-link {
   display: flex;
+  width: 100%;
+  min-width: 0;
   height: 100%;
+  flex: 1;
   flex-direction: column;
   color: inherit;
   text-decoration: none;
@@ -34,12 +40,15 @@
 .story-card-cover {
   position: relative;
   display: block;
+  width: 100%;
   aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
   overflow: hidden;
   background: var(--primary-soft);
 }
 
 .story-card-cover > img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -138,6 +147,7 @@
 
 .story-card-details {
   display: flex;
+  min-width: 0;
   flex: 1;
   flex-direction: column;
   padding: 0.7rem;
@@ -178,6 +188,7 @@
 
 .story-card-stats {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.75rem;
   margin-block-start: auto;

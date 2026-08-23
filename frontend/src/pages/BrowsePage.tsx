@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import StoryCard from "../components/StoryCard";
+import "./BrowsePage.css";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
@@ -375,28 +376,7 @@ export default function BrowsePage({ kind }: BrowsePageProps) {
       ) : stories.length > 0 ? (
         <div className="browse-story-grid">
           {stories.map((story) => (
-            <article className="browse-story-card" key={story.id}>
-              {loading ? (
-                <div className="browse-state" role="status">
-                  {t("browse.loading")}
-                </div>
-              ) : error ? (
-                <div className="browse-state" role="alert">
-                  {error}
-                </div>
-              ) : stories.length > 0 ? (
-                <div className="browse-story-grid">
-                  {stories.map((story) => (
-                    <StoryCard key={story.id} story={story} />
-                  ))}
-                </div>
-              ) : (
-                <div className="browse-empty">
-                  <Search aria-hidden="true" />
-                  <p>{t("browse.empty")}</p>
-                </div>
-              )}
-            </article>
+            <StoryCard key={story.id} story={story} />
           ))}
         </div>
       ) : (

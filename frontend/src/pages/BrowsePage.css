@@ -1,5 +1,5 @@
 .browse-page {
-  width: min(100% - 2rem, var(--content-max));
+  width: min(calc(100% - 2rem), 80rem);
   margin-inline: auto;
   padding-block: 2rem 3rem;
 }
@@ -75,6 +75,7 @@
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .browse-genres button:hover,
@@ -84,106 +85,91 @@
   color: var(--primary-foreground);
 }
 
-.browse-genres button:not(.is-active)[data-genre="romance"],
-.browse-story-genre[data-genre="romance"] {
+.browse-genres button:not(.is-active)[data-genre="romance"] {
   border-color: #fecdd3;
   background: #ffe4e6;
   color: #be123c;
 }
 
-.browse-genres button:not(.is-active)[data-genre="fantasy"],
-.browse-story-genre[data-genre="fantasy"] {
+.browse-genres button:not(.is-active)[data-genre="fantasy"] {
   border-color: #ddd6fe;
   background: #ede9fe;
   color: #6d28d9;
 }
 
-.browse-genres button:not(.is-active)[data-genre="science-fiction"],
-.browse-story-genre[data-genre="science-fiction"] {
+.browse-genres button:not(.is-active)[data-genre="science-fiction"] {
   border-color: #a5f3fc;
   background: #cffafe;
   color: #0e7490;
 }
 
-.browse-genres button:not(.is-active)[data-genre="mystery"],
-.browse-story-genre[data-genre="mystery"] {
+.browse-genres button:not(.is-active)[data-genre="mystery"] {
   border-color: #fde68a;
   background: #fef3c7;
   color: #b45309;
 }
 
-.browse-genres button:not(.is-active)[data-genre="thriller"],
-.browse-story-genre[data-genre="thriller"] {
+.browse-genres button:not(.is-active)[data-genre="thriller"] {
   border-color: #fecaca;
   background: #fee2e2;
   color: #b91c1c;
 }
 
-.browse-genres button:not(.is-active)[data-genre="horror"],
-.browse-story-genre[data-genre="horror"] {
+.browse-genres button:not(.is-active)[data-genre="horror"] {
   border-color: #d1d5db;
   background: #f3f4f6;
   color: #374151;
 }
 
-.browse-genres button:not(.is-active)[data-genre="adventure"],
-.browse-story-genre[data-genre="adventure"] {
+.browse-genres button:not(.is-active)[data-genre="adventure"] {
   border-color: #a7f3d0;
   background: #d1fae5;
   color: #047857;
 }
 
-.browse-genres button:not(.is-active)[data-genre="historical-fiction"],
-.browse-story-genre[data-genre="historical-fiction"] {
+.browse-genres button:not(.is-active)[data-genre="historical-fiction"] {
   border-color: #fed7aa;
   background: #ffedd5;
   color: #c2410c;
 }
 
-.browse-genres button:not(.is-active)[data-genre="young-adult"],
-.browse-story-genre[data-genre="young-adult"] {
+.browse-genres button:not(.is-active)[data-genre="young-adult"] {
   border-color: #bfdbfe;
   background: #dbeafe;
   color: #1d4ed8;
 }
 
-.browse-genres button:not(.is-active)[data-genre="humor"],
-.browse-story-genre[data-genre="humor"] {
+.browse-genres button:not(.is-active)[data-genre="humor"] {
   border-color: #fef08a;
   background: #fef9c3;
   color: #a16207;
 }
 
-.browse-genres button:not(.is-active)[data-genre="poetry"],
-.browse-story-genre[data-genre="poetry"] {
+.browse-genres button:not(.is-active)[data-genre="poetry"] {
   border-color: #fbcfe8;
   background: #fce7f3;
   color: #be185d;
 }
 
-.browse-genres button:not(.is-active)[data-genre="fan-fiction"],
-.browse-story-genre[data-genre="fan-fiction"] {
+.browse-genres button:not(.is-active)[data-genre="fan-fiction"] {
   border-color: #c7d2fe;
   background: #e0e7ff;
   color: #4338ca;
 }
 
-.browse-genres button:not(.is-active)[data-genre="non-fiction"],
-.browse-story-genre[data-genre="non-fiction"] {
+.browse-genres button:not(.is-active)[data-genre="non-fiction"] {
   border-color: #cbd5e1;
   background: #e2e8f0;
   color: #334155;
 }
 
-.browse-genres button:not(.is-active)[data-genre="short-story"],
-.browse-story-genre[data-genre="short-story"] {
+.browse-genres button:not(.is-active)[data-genre="short-story"] {
   border-color: #99f6e4;
   background: #ccfbf1;
   color: #0f766e;
 }
 
-.dark .browse-genres button:not(.is-active)[data-genre],
-.dark .browse-story-genre[data-genre] {
+.dark .browse-genres button:not(.is-active)[data-genre] {
   border-color: color-mix(in srgb, currentColor 42%, var(--border));
   background: color-mix(in srgb, currentColor 18%, var(--surface));
 }
@@ -194,10 +180,28 @@
   font-size: 0.9rem;
 }
 
-.browse-story-grid {
+/*
+ * دقیقاً مطابق ساختار مرجع:
+ * mobile: 2
+ * sm: 3
+ * md: 4
+ * lg: 5
+ */
+.browse-page .browse-story-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: 1rem;
+}
+
+/*
+ * جلوگیری از تأثیر max-width یا width استایل‌های عمومی روی کارت.
+ */
+.browse-story-grid > .story-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  align-self: stretch;
 }
 
 .browse-state,
@@ -222,19 +226,19 @@
 }
 
 @media (min-width: 40rem) {
-  .browse-story-grid {
+  .browse-page .browse-story-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 48rem) {
-  .browse-story-grid {
+  .browse-page .browse-story-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 64rem) {
-  .browse-story-grid {
+  .browse-page .browse-story-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
@@ -248,20 +252,5 @@
   .browse-select,
   .browse-select select {
     width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .browse-story-cover > img,
-  .browse-story-card {
-    transition: none;
-  }
-
-  .browse-story-card:hover {
-    transform: none;
-  }
-
-  .browse-story-card:hover .browse-story-cover > img {
-    transform: none;
   }
 }
