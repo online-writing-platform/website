@@ -73,7 +73,7 @@ describe("PlatformHeader profile menu", () => {
     cleanup();
   });
 
-  it("opens the authenticated account actions when the profile is hovered", async () => {
+  it("opens the authenticated account actions from the profile trigger", async () => {
     useAuthMock.mockReturnValue({
       status: "authenticated",
       user: authenticatedUser,
@@ -94,7 +94,7 @@ describe("PlatformHeader profile menu", () => {
     });
     expect(profileTrigger.getAttribute("data-popup-open")).toBeNull();
 
-    fireEvent.mouseEnter(profileTrigger);
+    fireEvent.click(profileTrigger);
 
     await waitFor(() => {
       expect(profileTrigger.getAttribute("data-popup-open")).not.toBeNull();
@@ -123,7 +123,7 @@ describe("PlatformHeader profile menu", () => {
     const profileTrigger = screen.getByRole("button", {
       name: "Test Writer",
     });
-    fireEvent.mouseEnter(profileTrigger);
+    fireEvent.click(profileTrigger);
     fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
 
     expect(logoutMock).toHaveBeenCalledTimes(1);
