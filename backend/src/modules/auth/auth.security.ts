@@ -1,9 +1,10 @@
+import { createHmac, randomInt } from "node:crypto";
+
+import env from "../../config/env.js";
 import { generateOpaqueToken, hashOpaqueToken } from "../../security/opaque-token.js";
 import { hashPassword, verifyPassword } from "../../security/password.js";
 import { calculateSessionExpiration, createAccessToken, generateRefreshToken, hashRefreshToken, verifyAccessToken } from "../../security/token.js";
 import { type AccessTokenContext, type AuthSecurity } from "./auth.types.js";
-
-const EMAIL_VERIFICATION_TOKEN_BYTES = 32;
 
 const PASSWORD_RESET_TOKEN_BYTES = 32;
 
@@ -41,12 +42,17 @@ export class DefaultAuthSecurity implements AuthSecurity {
         return calculateSessionExpiration();
     }
 
-    public generateVerificationToken(): string {
-        return generateOpaqueToken(EMAIL_VERIFICATION_TOKEN_BYTES);
+    public generateVerificationCode(): string {
+        return randomInt(0, 1_000_000).toString().padStart(6, "0");
     }
 
-    public hashVerificationToken(token: string): string {
-        return hashOpaqueToken(token);
+    public hashVerificationCode(email: string, code: string): string {
+        return createHmac("sha256", env.emailVerificationSecret)
+            .update("email-verification-code\0", "utf8")
+            .update(email, "utf8")
+            .update("\0", "utf8")
+            .update(code, "utf8")
+            .digest("hex");
     }
 
     public generatePasswordResetToken(): string {

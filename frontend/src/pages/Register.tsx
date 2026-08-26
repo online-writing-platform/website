@@ -68,7 +68,7 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      await register({
+      const result = await register({
         username: form.username.trim().toLowerCase(),
         email: form.email.trim().toLowerCase(),
         birthDate: form.birthDate,
@@ -76,7 +76,12 @@ function Register() {
         acceptTerms: true,
       });
 
-      navigate("/settings", { replace: true });
+      const search = new URLSearchParams({ email: result.email }).toString();
+
+      navigate(`/verify-email?${search}`, {
+        replace: true,
+        state: { deliveryStatus: result.deliveryStatus },
+      });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {

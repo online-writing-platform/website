@@ -66,7 +66,7 @@ describe("settings API contract", () => {
       "current-password",
       "  WRITER@EXAMPLE.COM  ",
     );
-    await resendEmailVerification(request);
+    await resendEmailVerification(request, "  WRITER@EXAMPLE.COM  ");
 
     expect(request).toHaveBeenNthCalledWith(1, SETTINGS_ENDPOINTS.password, {
       method: "PATCH",
@@ -92,7 +92,10 @@ describe("settings API contract", () => {
     expect(request).toHaveBeenNthCalledWith(
       4,
       SETTINGS_ENDPOINTS.emailVerification,
-      { method: "POST" },
+      {
+        method: "POST",
+        body: JSON.stringify({ email: "writer@example.com" }),
+      },
     );
   });
 

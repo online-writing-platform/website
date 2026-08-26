@@ -286,7 +286,8 @@ model ConsumedRefreshToken {
 model EmailVerificationToken {
   userId String @id @map("user_id") @db.Uuid
 
-  tokenHash String @unique @map("token_hash") @db.Char(64)
+  tokenHash      String @unique @map("token_hash") @db.Char(64)
+  failedAttempts Int    @default(0) @map("failed_attempts")
 
   expiresAt DateTime @map("expires_at")
   sentAt    DateTime @default(now()) @map("sent_at")

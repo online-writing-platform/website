@@ -71,9 +71,11 @@ export default class AppError extends Error {
     public static forbidden(
         message = "You do not have permission to perform this action.",
         code = "FORBIDDEN",
+        details?: unknown,
     ): AppError {
         return new AppError(403, message, {
             code,
+            details,
         });
     }
 

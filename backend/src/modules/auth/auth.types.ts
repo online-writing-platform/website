@@ -68,6 +68,12 @@ export interface AuthenticationResult {
     sessionExpiresAt: Date;
 }
 
+export interface RegistrationResult {
+    email: string;
+    verificationRequired: true;
+    deliveryStatus: "sent" | "failed";
+}
+
 export interface SessionView {
     id: string;
     userAgent: string | null;
@@ -83,7 +89,7 @@ export interface IdentityConflictRecord {
     usernameNormalized: string;
 }
 
-export interface CreateUserWithSessionInput {
+export interface CreateUserInput {
     email: string;
     username: string;
     usernameNormalized: string;
@@ -91,12 +97,6 @@ export interface CreateUserWithSessionInput {
     displayName: string;
     birthDate: Date;
     termsVersion: string;
-    session: {
-        refreshTokenHash: string;
-        expiresAt: Date;
-        userAgent?: string;
-        ipAddress?: string;
-    };
 }
 
 export interface CreateSessionInput {
@@ -123,6 +123,7 @@ export interface ConsumedRefreshSessionRecord {
 }
 
 export interface VerificationUserRecord {
+    id: string;
     email: string;
     emailVerifiedAt: Date | null;
     status: UserStatusValue;
@@ -130,11 +131,10 @@ export interface VerificationUserRecord {
 
 export interface EmailVerificationRecord {
     userId: string;
+    tokenHash: string;
+    failedAttempts: number;
     expiresAt: Date;
-    user: {
-        status: UserStatusValue;
-        emailVerifiedAt: Date | null;
-    };
+    user: AuthUserRecord;
 }
 
 export interface PasswordResetUserRecord {
@@ -180,8 +180,8 @@ export interface AuthSecurity {
     generateRefreshToken(): string;
     hashRefreshToken(token: string): string;
     calculateSessionExpiration(): Date;
-    generateVerificationToken(): string;
-    hashVerificationToken(token: string): string;
+    generateVerificationCode(): string;
+    hashVerificationCode(email: string, code: string): string;
     generatePasswordResetToken(): string;
     hashPasswordResetToken(token: string): string;
     generateEmailChangeToken(): string;

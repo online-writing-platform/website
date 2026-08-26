@@ -19,8 +19,11 @@ import type {
   AuthUser,
   LoginInput,
   RegisterInput,
+  RegistrationResponse,
+  RegistrationResult,
   UpdateProfileInput,
   UserResponse,
+  VerifyEmailInput,
 } from "../types/auth";
 
 interface AuthProviderProps {
@@ -109,17 +112,45 @@ function AuthProvider({ children }: AuthProviderProps) {
   }, [clearAuthentication, refreshSession]);
 
   const register = useCallback(
-    async (input: RegisterInput): Promise<AuthUser> => {
-      const response = await apiRequest<AuthResponse>("/api/v1/auth/register", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
+    async (input: RegisterInput): Promise<RegistrationResult> => {
+      const response = await apiRequest<RegistrationResponse>(
+        "/api/v1/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      );
+
+      return response.data;
+    },
+    [],
+  );
+
+  const verifyEmail = useCallback(
+    async (input: VerifyEmailInput): Promise<AuthUser> => {
+      const response = await apiRequest<AuthResponse>(
+        "/api/v1/auth/email-verification/verify",
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      );
 
       applyAuthentication(response);
 
       return response.data.user;
     },
     [applyAuthentication],
+  );
+
+  const resendVerificationEmail = useCallback(
+    async (email: string): Promise<void> => {
+      await apiRequest("/api/v1/auth/email-verification/resend", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
+    [],
   );
 
   const login = useCallback(
@@ -208,11 +239,23 @@ function AuthProvider({ children }: AuthProviderProps) {
       status,
       login,
       register,
+      verifyEmail,
+      resendVerificationEmail,
       logout,
       updateProfile,
       request,
     }),
-    [user, status, login, register, logout, updateProfile, request],
+    [
+      user,
+      status,
+      login,
+      register,
+      verifyEmail,
+      resendVerificationEmail,
+      logout,
+      updateProfile,
+      request,
+    ],
   );
 
   return (

@@ -4,7 +4,9 @@ import type {
   AuthUser,
   LoginInput,
   RegisterInput,
+  RegistrationResult,
   UpdateProfileInput,
+  VerifyEmailInput,
 } from "../types/auth";
 
 export type AuthStatus = "loading" | "authenticated" | "anonymous";
@@ -15,7 +17,11 @@ export interface AuthContextValue {
 
   login(input: LoginInput): Promise<AuthUser>;
 
-  register(input: RegisterInput): Promise<AuthUser>;
+  register(input: RegisterInput): Promise<RegistrationResult>;
+
+  verifyEmail(input: VerifyEmailInput): Promise<AuthUser>;
+
+  resendVerificationEmail(email: string): Promise<void>;
 
   logout(): Promise<void>;
 

@@ -47,6 +47,19 @@
         "passwordsMismatch": "The passwords do not match.",
         "termsRequired": "You must accept the Terms of Service to register."
       }
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "subtitle": "Enter the six-digit code sent to your email address.",
+      "email": "Email",
+      "code": "Verification code",
+      "verifying": "Verifying…",
+      "submit": "Verify and continue",
+      "resending": "Sending…",
+      "resend": "Resend code",
+      "resendAccepted": "If this email is awaiting verification, a new code has been sent.",
+      "initialDeliveryFailed": "The first email could not be sent. Request a new code below.",
+      "backToLogin": "Back to login"
     }
   },
   "errors": {
@@ -69,6 +82,9 @@
     "EMAIL_DELIVERY_FAILED": "The email could not be sent. Please try again later.",
     "EMAIL_ALREADY_VERIFIED": "Your email address is already verified.",
     "EMAIL_VERIFICATION_COOLDOWN": "Please wait before requesting another verification email.",
+    "EMAIL_VERIFICATION_REQUIRED": "Verify your email address before signing in.",
+    "INVALID_EMAIL_VERIFICATION_CODE": "The verification code is incorrect.",
+    "EMAIL_VERIFICATION_CODE_EXPIRED": "The verification code has expired. Request a new code.",
     "MATURE_CONTENT_AGE_RESTRICTED": "Mature content is not available for this account.",
     "SESSION_NOT_FOUND": "The requested session was not found.",
     "ACCOUNT_STATE_CHANGED": "Your account state has changed. Please sign in again.",

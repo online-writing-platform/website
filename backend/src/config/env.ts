@@ -36,6 +36,7 @@ const environmentSchema = z
                 32,
                 "ACCESS_TOKEN_SECRET must contain at least 32 characters",
             ),
+        EMAIL_VERIFICATION_SECRET: optionalEnvironmentString,
         ACCESS_TOKEN_TTL_SECONDS: z.coerce
             .number()
             .int()
@@ -54,12 +55,12 @@ const environmentSchema = z
             .min(1)
             .default("writing_refresh_token"),
 
-        EMAIL_VERIFICATION_TTL_HOURS: z.coerce
+        EMAIL_VERIFICATION_TTL_MINUTES: z.coerce
             .number()
             .int()
             .min(1)
-            .max(168)
-            .default(24),
+            .max(60)
+            .default(10),
         EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS: z.coerce
             .number()
             .int()
@@ -183,6 +184,18 @@ const environmentSchema = z
         }
         if (
             values.NODE_ENV === "production" &&
+            (!values.EMAIL_VERIFICATION_SECRET ||
+                values.EMAIL_VERIFICATION_SECRET.length < 32)
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["EMAIL_VERIFICATION_SECRET"],
+                message:
+                    "EMAIL_VERIFICATION_SECRET must contain at least 32 characters in production.",
+            });
+        }
+        if (
+            values.NODE_ENV === "production" &&
             values.MAIL_TRANSPORT !== "smtp"
         ) {
             context.addIssue({
@@ -267,10 +280,12 @@ const env = Object.freeze({
     webAppUrl: values.WEB_APP_URL,
     publicApiUrl: values.PUBLIC_API_URL.replace(/\/+$/u, ""),
     accessTokenSecret: values.ACCESS_TOKEN_SECRET,
+    emailVerificationSecret:
+        values.EMAIL_VERIFICATION_SECRET ?? values.ACCESS_TOKEN_SECRET,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     sessionTtlDays: values.SESSION_TTL_DAYS,
     refreshCookieName: values.REFRESH_COOKIE_NAME,
-    emailVerificationTtlHours: values.EMAIL_VERIFICATION_TTL_HOURS,
+    emailVerificationTtlMinutes: values.EMAIL_VERIFICATION_TTL_MINUTES,
     emailVerificationResendCooldownSeconds:
         values.EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS,
     passwordResetTtlMinutes: values.PASSWORD_RESET_TTL_MINUTES,

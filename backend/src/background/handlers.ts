@@ -1,5 +1,6 @@
 import { prisma } from "../db/index.js";
 import { NotificationRepository } from "../modules/notifications/notifications.repo.js";
+import { handleVerificationEmailOutbox } from "../modules/auth/verification-email-outbox.js";
 import type {
     ClaimedJob,
     ClaimedOutbox,
@@ -239,6 +240,11 @@ export async function handleJob(
 }
 
 export async function handleOutbox(message: ClaimedOutbox): Promise<void> {
+    if (message.eventType === "EMAIL_VERIFICATION_REQUESTED") {
+        await handleVerificationEmailOutbox(message);
+        return;
+    }
+
     if (message.eventType === "STORY_PUBLISHED") {
         const story = await prisma.story.findUnique({
             where: {

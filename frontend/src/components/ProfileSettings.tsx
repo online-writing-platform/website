@@ -383,10 +383,12 @@ function ProfileSettingsDialog({
   }
 
   async function resendVerification() {
+    if (!user) return;
+
     beginAction("verification");
 
     try {
-      await resendEmailVerification(request);
+      await resendEmailVerification(request, user.email);
       setMessage(t("settings.security.verification.sent"));
     } catch (cause) {
       failAction(cause);

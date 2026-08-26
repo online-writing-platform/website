@@ -1,6 +1,9 @@
 import env from "../../config/env.js";
 import { sendMail } from "../../mail/mailer.js";
-import { type AccountEmailSender, type PasswordRecoveryEmailSender, type VerificationEmailSender } from "./auth.types.js";
+import type {
+    AccountEmailSender,
+    PasswordRecoveryEmailSender,
+} from "./auth.types.js";
 
 function escapeHtml(value: string): string {
     return value
@@ -54,66 +57,58 @@ export class DefaultAccountEmailSender implements AccountEmailSender {
     }
 }
 
-function createVerificationUrl(token: string): string {
-    const url = new URL("/verify-email", env.webAppUrl);
+export function buildVerificationCodeEmail(
+    code: string,
+    ttlMinutes = env.emailVerificationTtlMinutes,
+): {
+    subject: string;
+    text: string;
+    html: string;
+} {
+    const safeCode = escapeHtml(code);
 
-    url.searchParams.set("token", token);
-
-    return url.toString();
-}
-
-export class DefaultVerificationEmailSender implements VerificationEmailSender {
-    public async send(email: string, token: string): Promise<void> {
-        const verificationUrl = createVerificationUrl(token);
-
-        const safeVerificationUrl = escapeHtml(verificationUrl);
-
-        await sendMail({
-            to: email,
-
-            subject: "Verify your email address",
-
-            text: [
-                "Welcome to Writing Platform.",
-                "",
-                "Verify your email address by opening the following link:",
-                verificationUrl,
-                "",
-                "If you did not create this account, you can ignore this email.",
-            ].join("\n"),
-
-            html: `
+    return {
+        subject: "Verify your email address",
+        text: [
+            "Welcome to Writing Platform.",
+            "",
+            "Enter this six-digit code to verify your email address:",
+            code,
+            "",
+            `This code expires in ${ttlMinutes} minutes.`,
+            "",
+            "If you did not create this account, you can ignore this email.",
+        ].join("\n"),
+        html: `
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Verify your email</title>
 </head>
 <body>
     <p>Welcome to Writing Platform.</p>
-
-    <p>
-        Please verify your email address to finish setting up your account.
-    </p>
-
-    <p>
-        <a href="${safeVerificationUrl}">
-            Verify email
-        </a>
-    </p>
-
-    <p>
-        If you did not create this account, you can ignore this email.
-    </p>
+    <p>Enter this six-digit code to verify your email address:</p>
+    <p><strong style="font-size: 24px; letter-spacing: 0.3em;">${safeCode}</strong></p>
+    <p>This code expires in ${ttlMinutes} minutes.</p>
+    <p>If you did not create this account, you can ignore this email.</p>
 </body>
 </html>
-            `.trim(),
-        });
-    }
+        `.trim(),
+    };
+}
+
+export async function sendVerificationCodeEmail(
+    email: string,
+    code: string,
+): Promise<void> {
+    const message = buildVerificationCodeEmail(code);
+
+    await sendMail({
+        to: email,
+        ...message,
+    });
 }
 
 function createPasswordResetUrl(token: string): string {

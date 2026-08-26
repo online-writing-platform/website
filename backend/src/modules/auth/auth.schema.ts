@@ -54,7 +54,21 @@ export const loginSchema = z
     })
     .strict();
 
-export const verifyEmailSchema = z.object({ token: opaqueTokenSchema }).strict();
+const emailVerificationCodeSchema = z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/u, "Verification code must contain exactly six digits.");
+
+export const verifyEmailSchema = z
+    .object({
+        email: emailSchema,
+        code: emailVerificationCodeSchema,
+    })
+    .strict();
+
+export const resendVerificationEmailSchema = z
+    .object({ email: emailSchema })
+    .strict();
 
 export const requestPasswordResetSchema = z
     .object({
@@ -111,6 +125,9 @@ export const deleteAccountSchema = z
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type ResendVerificationEmailInput = z.infer<
+    typeof resendVerificationEmailSchema
+>;
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

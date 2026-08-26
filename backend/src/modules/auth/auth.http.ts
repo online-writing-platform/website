@@ -17,6 +17,7 @@ import type {
     DeleteAccountInput,
     LoginInput,
     RegisterInput,
+    ResendVerificationEmailInput,
     RequestEmailChangeInput,
     RequestPasswordResetInput,
     ResetPasswordInput,
@@ -47,6 +48,7 @@ import {
     deleteAccountSchema,
     loginSchema,
     registerSchema,
+    resendVerificationEmailSchema,
     requestEmailChangeSchema,
     requestPasswordResetSchema,
     resetPasswordSchema,
@@ -76,22 +78,10 @@ export async function register(
     request: Request<Record<string, never>, unknown, RegisterInput>,
     response: Response,
 ): Promise<void> {
-    const result = await authService.register(
-        request.body,
-        getClientInformation(request),
-    );
-
-    setRefreshTokenCookie(
-        response,
-        result.refreshToken,
-        result.sessionExpiresAt,
-    );
+    const result = await authService.register(request.body);
 
     response.status(201).json({
-        data: {
-            user: result.user,
-            accessToken: result.accessToken,
-        },
+        data: result,
     });
 }
 
@@ -160,18 +150,35 @@ export async function verifyEmail(
     request: Request<Record<string, never>, unknown, VerifyEmailInput>,
     response: Response,
 ): Promise<void> {
-    await authService.verifyEmail(request.body.token);
+    const result = await authService.verifyEmail(
+        request.body.email,
+        request.body.code,
+        getClientInformation(request),
+    );
+
+    setRefreshTokenCookie(
+        response,
+        result.refreshToken,
+        result.sessionExpiresAt,
+    );
 
     response.status(200).json({
-        data: { emailVerified: true },
+        data: {
+            user: result.user,
+            accessToken: result.accessToken,
+        },
     });
 }
 
 export async function resendVerificationEmail(
-    request: Request,
+    request: Request<
+        Record<string, never>,
+        unknown,
+        ResendVerificationEmailInput
+    >,
     response: Response,
 ): Promise<void> {
-    await authService.resendVerificationEmail(requireAuth(request).userId);
+    await authService.resendVerificationEmail(request.body.email);
 
     response.status(202).json({
         data: { status: "sent" },
@@ -354,7 +361,7 @@ router.post(
 router.post(
     "/email-verification/resend",
     verificationEmailResendRateLimiter,
-    authenticate,
+    validateBody(resendVerificationEmailSchema),
     resendVerificationEmail,
 );
 

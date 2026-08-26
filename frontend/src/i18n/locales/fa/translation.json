@@ -47,6 +47,19 @@
         "passwordsMismatch": "رمز عبور و تکرار آن یکسان نیستند.",
         "termsRequired": "برای ثبت‌نام باید قوانین سایت را بپذیرید."
       }
+    },
+    "verifyEmail": {
+      "title": "تأیید ایمیل",
+      "subtitle": "کد شش‌رقمی ارسال‌شده به ایمیل خود را وارد کنید.",
+      "email": "ایمیل",
+      "code": "کد تأیید",
+      "verifying": "در حال تأیید…",
+      "submit": "تأیید و ادامه",
+      "resending": "در حال ارسال…",
+      "resend": "ارسال مجدد کد",
+      "resendAccepted": "اگر این ایمیل در انتظار تأیید باشد، کد جدید برای آن ارسال شده است.",
+      "initialDeliveryFailed": "ارسال اولیه ایمیل ناموفق بود. از دکمه زیر کد جدید بگیرید.",
+      "backToLogin": "بازگشت به ورود"
     }
   },
   "errors": {
@@ -69,6 +82,9 @@
     "EMAIL_DELIVERY_FAILED": "ارسال ایمیل ناموفق بود. کمی بعد دوباره تلاش کنید.",
     "EMAIL_ALREADY_VERIFIED": "ایمیل شما قبلاً تأیید شده است.",
     "EMAIL_VERIFICATION_COOLDOWN": "برای ارسال دوباره ایمیل تأیید کمی صبر کنید.",
+    "EMAIL_VERIFICATION_REQUIRED": "پیش از ورود باید ایمیل خود را تأیید کنید.",
+    "INVALID_EMAIL_VERIFICATION_CODE": "کد تأیید واردشده نادرست است.",
+    "EMAIL_VERIFICATION_CODE_EXPIRED": "کد تأیید منقضی شده است. کد جدید دریافت کنید.",
     "MATURE_CONTENT_AGE_RESTRICTED": "محتوای بزرگسال برای این حساب در دسترس نیست.",
     "SESSION_NOT_FOUND": "نشست موردنظر پیدا نشد.",
     "ACCOUNT_STATE_CHANGED": "وضعیت حساب شما تغییر کرده است. دوباره وارد شوید.",

@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LuEyeClosed, LuEye } from "react-icons/lu";
 
 import useAuth from "../hooks/useAuth";
+import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 
 import "./Login.css";
@@ -45,6 +46,21 @@ function Login() {
       });
       navigate(redirectPath, { replace: true });
     } catch (error) {
+      if (
+        error instanceof ApiError &&
+        error.code === "EMAIL_VERIFICATION_REQUIRED" &&
+        typeof error.details === "object" &&
+        error.details !== null &&
+        "email" in error.details &&
+        typeof error.details.email === "string"
+      ) {
+        const search = new URLSearchParams({
+          email: error.details.email,
+        }).toString();
+        navigate(`/verify-email?${search}`, { replace: true });
+        return;
+      }
+
       setErrorMessage(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);

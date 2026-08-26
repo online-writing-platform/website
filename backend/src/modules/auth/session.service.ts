@@ -1,7 +1,7 @@
 import AppError from "../../errors/app-error.js";
 import { DefaultAuthSecurity } from "./auth.security.js";
 import { SessionRepository } from "./session.repo.js";
-import { mapAuthenticatedUser } from "./auth.service.js";
+import { mapAuthenticatedUser } from "./auth-user.mapper.js";
 import type { AuthContext, AuthenticationResult, AuthSecurity, SessionView } from "./auth.types.js";
 
 export class AuthenticateSessionUseCase {
@@ -32,6 +32,13 @@ export class AuthenticateSessionUseCase {
             throw AppError.unauthorized(
                 "The session is no longer active.",
                 "INACTIVE_SESSION",
+            );
+        }
+
+        if (!principal.emailVerified) {
+            throw AppError.forbidden(
+                "Email verification is required before using this session.",
+                "EMAIL_VERIFICATION_REQUIRED",
             );
         }
 
@@ -117,6 +124,15 @@ export class RefreshSessionUseCase {
             throw AppError.unauthorized(
                 "The session is no longer active.",
                 "INACTIVE_SESSION",
+            );
+        }
+
+        if (session.user.emailVerifiedAt === null) {
+            await this.sessions.revokeSessionById(session.id, now);
+
+            throw AppError.forbidden(
+                "Email verification is required before using this session.",
+                "EMAIL_VERIFICATION_REQUIRED",
             );
         }
 

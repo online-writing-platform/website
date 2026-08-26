@@ -95,6 +95,29 @@
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
+.form-group input[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+.form-message {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  line-height: 1.6;
+}
+
+.form-message-error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.form-message-success {
+  border-color: var(--success);
+  color: var(--success);
+}
+
 /* ==========================
    Checkbox
 ========================== */

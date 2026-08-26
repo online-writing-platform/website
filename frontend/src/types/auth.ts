@@ -21,6 +21,17 @@ export interface RegisterInput {
   acceptTerms: true;
 }
 
+export interface RegistrationResult {
+  email: string;
+  verificationRequired: true;
+  deliveryStatus: "sent" | "failed";
+}
+
+export interface VerifyEmailInput {
+  email: string;
+  code: string;
+}
+
 export interface LoginInput {
   identifier: string;
   password: string;
@@ -37,6 +48,10 @@ export interface AuthResponse {
     user: AuthUser;
     accessToken: string;
   };
+}
+
+export interface RegistrationResponse {
+  data: RegistrationResult;
 }
 
 export interface UserResponse {

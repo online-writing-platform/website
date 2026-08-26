@@ -1,6 +1,13 @@
 import { prisma } from "../../db/index.js";
 import { isPrismaErrorCode } from "../../utils/prisma-error.js";
-import type { CreateUserWithSessionInput, EmailVerificationRecord, IdentityConflictRecord, VerificationUserRecord, AuthUserRecord, AuthUserWithPassword } from "./auth.types.js";
+import type {
+    AuthUserRecord,
+    AuthUserWithPassword,
+    CreateUserInput,
+    EmailVerificationRecord,
+    IdentityConflictRecord,
+    VerificationUserRecord,
+} from "./auth.types.js";
 import { IdentityAlreadyExistsError } from "./auth.types.js";
 
 const authUserSelect = {
@@ -33,43 +40,19 @@ export class AuthRepository {
         });
     }
 
-    public async createUserWithSession(
-        input: CreateUserWithSessionInput,
-    ): Promise<{ user: AuthUserRecord; sessionId: string }> {
+    public async createUser(input: CreateUserInput): Promise<AuthUserRecord> {
         try {
-            return await prisma.$transaction(async (transaction) => {
-                const user = await transaction.user.create({
-                    data: {
-                        email: input.email,
-                        username: input.username,
-                        usernameNormalized: input.usernameNormalized,
-                        passwordHash: input.passwordHash,
-                        displayName: input.displayName,
-                        birthDate: input.birthDate,
-                        termsVersion: input.termsVersion,
-                    },
-                    select: authUserSelect,
-                });
-
-                const session = await transaction.session.create({
-                    data: {
-                        userId: user.id,
-                        refreshTokenHash: input.session.refreshTokenHash,
-                        expiresAt: input.session.expiresAt,
-                        ...(input.session.userAgent
-                            ? { userAgent: input.session.userAgent }
-                            : {}),
-                        ...(input.session.ipAddress
-                            ? { ipAddress: input.session.ipAddress }
-                            : {}),
-                    },
-                    select: { id: true },
-                });
-
-                return {
-                    user,
-                    sessionId: session.id,
-                };
+            return await prisma.user.create({
+                data: {
+                    email: input.email,
+                    username: input.username,
+                    usernameNormalized: input.usernameNormalized,
+                    passwordHash: input.passwordHash,
+                    displayName: input.displayName,
+                    birthDate: input.birthDate,
+                    termsVersion: input.termsVersion,
+                },
+                select: authUserSelect,
             });
         } catch (error) {
             if (isPrismaErrorCode(error, "P2002")) {
@@ -110,17 +93,29 @@ export class AuthRepository {
     ): Promise<void> {
         await prisma.emailVerificationToken.upsert({
             where: { userId },
-            create: { userId, tokenHash, expiresAt, sentAt },
-            update: { tokenHash, expiresAt, sentAt },
+            create: {
+                userId,
+                tokenHash,
+                expiresAt,
+                sentAt,
+                failedAttempts: 0,
+            },
+            update: {
+                tokenHash,
+                expiresAt,
+                sentAt,
+                failedAttempts: 0,
+            },
         });
     }
 
-    public findVerificationUser(
-        userId: string,
+    public findVerificationUserByEmail(
+        email: string,
     ): Promise<VerificationUserRecord | null> {
         return prisma.user.findUnique({
-            where: { id: userId },
+            where: { email },
             select: {
+                id: true,
                 email: true,
                 emailVerifiedAt: true,
                 status: true,
@@ -128,7 +123,7 @@ export class AuthRepository {
         });
     }
 
-    public async deleteVerificationToken(
+    public async deleteVerificationCode(
         userId: string,
         tokenHash?: string,
     ): Promise<void> {
@@ -140,39 +135,88 @@ export class AuthRepository {
         });
     }
 
-    public findVerificationByTokenHash(
-        tokenHash: string,
+    public findVerificationByEmail(
+        email: string,
     ): Promise<EmailVerificationRecord | null> {
-        return prisma.emailVerificationToken.findUnique({
-            where: { tokenHash },
+        return prisma.emailVerificationToken.findFirst({
+            where: { user: { email } },
             select: {
                 userId: true,
+                tokenHash: true,
+                failedAttempts: true,
                 expiresAt: true,
                 user: {
-                    select: {
-                        status: true,
-                        emailVerifiedAt: true,
-                    },
+                    select: authUserSelect,
                 },
             },
         });
     }
 
-    public async verifyEmailAndConsumeTokens(
+    public async recordFailedVerificationAttempt(
         userId: string,
+        tokenHash: string,
+        maxAttempts: number,
+    ): Promise<boolean> {
+        return prisma.$transaction(async (transaction) => {
+            const updated = await transaction.emailVerificationToken.updateMany({
+                where: { userId, tokenHash },
+                data: { failedAttempts: { increment: 1 } },
+            });
+
+            if (updated.count !== 1) {
+                return false;
+            }
+
+            const current = await transaction.emailVerificationToken.findUnique({
+                where: { userId },
+                select: { failedAttempts: true, tokenHash: true },
+            });
+
+            if (
+                !current ||
+                current.tokenHash !== tokenHash ||
+                current.failedAttempts >= maxAttempts
+            ) {
+                await transaction.emailVerificationToken.deleteMany({
+                    where: { userId, tokenHash },
+                });
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    public async verifyEmailAndConsumeCode(
+        userId: string,
+        codeHash: string,
         verifiedAt: Date,
-    ): Promise<void> {
-        await prisma.$transaction(async (transaction) => {
-            await transaction.user.updateMany({
+    ): Promise<AuthUserRecord | null> {
+        return prisma.$transaction(async (transaction) => {
+            const consumed = await transaction.emailVerificationToken.deleteMany({
+                where: { userId, tokenHash: codeHash },
+            });
+
+            if (consumed.count !== 1) {
+                return null;
+            }
+
+            const verified = await transaction.user.updateMany({
                 where: {
                     id: userId,
-                    status: { not: "DELETED" },
+                    status: "ACTIVE",
+                    emailVerifiedAt: null,
                 },
                 data: { emailVerifiedAt: verifiedAt },
             });
 
-            await transaction.emailVerificationToken.deleteMany({
-                where: { userId },
+            if (verified.count !== 1) {
+                return null;
+            }
+
+            return transaction.user.findUnique({
+                where: { id: userId },
+                select: authUserSelect,
             });
         });
     }

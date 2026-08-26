@@ -1,6 +1,5 @@
 import type { Server } from "node:http";
 
-import app from "./app.js";
 import env from "./config/env.js";
 import logger from "./config/logger.js";
 import {
@@ -18,8 +17,9 @@ async function startServer(): Promise<void> {
     await connectDatabase();
     await connectRedis();
 
-    const databaseTime = await checkDatabaseConnection();
+    const { default: app } = await import("./app.js");
 
+    const databaseTime = await checkDatabaseConnection();
     logger.info(
         {
             databaseTime: databaseTime.toISOString(),

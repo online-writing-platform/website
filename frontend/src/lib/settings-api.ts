@@ -135,10 +135,14 @@ export function requestEmailChange(
 
 export function resendEmailVerification(
   request: SettingsRequest,
+  email: string,
 ): Promise<{ data: { status: "sent" } }> {
   return request<{ data: { status: "sent" } }>(
     SETTINGS_ENDPOINTS.emailVerification,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    },
   );
 }
 

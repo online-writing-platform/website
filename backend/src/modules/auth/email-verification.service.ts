@@ -1,37 +1,44 @@
 import AppError from "../../errors/app-error.js";
+import { normalizeEmail } from "../../utils/normalize.js";
 import type { AuthRepository } from "./auth.repo.js";
-import type { AuthLogger, AuthSecurity, VerificationEmailSender } from "./auth.types.js";
+import type {
+    AuthLogger,
+    AuthSecurity,
+    AuthUserRecord,
+    VerificationEmailSender,
+} from "./auth.types.js";
 
 interface EmailVerificationOptions {
-    ttlHours: number;
+    ttlMinutes: number;
     resendCooldownSeconds: number;
+    maxAttempts?: number;
 }
 
-interface IssuedVerification {
-    token: string;
-    tokenHash: string;
+const DEFAULT_MAX_ATTEMPTS = 5;
+
+interface IssuedVerificationCode {
+    code: string;
+    codeHash: string;
 }
+
+type Clock = () => Date;
 
 export class EmailVerificationService {
     public constructor(
         private readonly users: AuthRepository,
-
         private readonly security: AuthSecurity,
-
         private readonly sender: VerificationEmailSender,
-
         private readonly logger: AuthLogger,
-
         private readonly options: EmailVerificationOptions,
+        private readonly now: Clock = () => new Date(),
     ) {}
 
     private calculateExpiration(now: Date): Date {
-        return new Date(now.getTime() + this.options.ttlHours * 60 * 60 * 1000);
+        return new Date(now.getTime() + this.options.ttlMinutes * 60 * 1000);
     }
 
     private calculateCooldown(sentAt: Date, now: Date): number {
         const elapsedMilliseconds = now.getTime() - sentAt.getTime();
-
         const cooldownMilliseconds = this.options.resendCooldownSeconds * 1000;
 
         return Math.max(
@@ -40,133 +47,171 @@ export class EmailVerificationService {
         );
     }
 
-    private async issueToken(
+    private async issueCode(
         userId: string,
+        email: string,
         enforceCooldown: boolean,
-    ): Promise<IssuedVerification> {
-        const now = new Date();
+    ): Promise<IssuedVerificationCode> {
+        const issuedAt = this.now();
 
         if (enforceCooldown) {
             const existing = await this.users.findVerificationState(userId);
 
-            if (existing) {
-                const retryAfterSeconds = this.calculateCooldown(
-                    existing.sentAt,
-                    now,
+            if (
+                existing &&
+                this.calculateCooldown(existing.sentAt, issuedAt) > 0
+            ) {
+                throw AppError.tooManyRequests(
+                    "A verification email was sent recently.",
+                    "EMAIL_VERIFICATION_COOLDOWN",
                 );
-
-                if (retryAfterSeconds > 0) {
-                    throw AppError.tooManyRequests(
-                        "A verification email was sent recently.",
-                        "EMAIL_VERIFICATION_COOLDOWN",
-                        {
-                            retryAfterSeconds,
-                        },
-                    );
-                }
             }
         }
 
-        const token = this.security.generateVerificationToken();
-
-        const tokenHash = this.security.hashVerificationToken(token);
+        const code = this.security.generateVerificationCode();
+        const codeHash = this.security.hashVerificationCode(email, code);
 
         await this.users.upsertVerificationToken(
             userId,
-            tokenHash,
-            this.calculateExpiration(now),
-            now,
+            codeHash,
+            this.calculateExpiration(issuedAt),
+            issuedAt,
         );
 
-        return {
-            token,
-            tokenHash,
-        };
+        return { code, codeHash };
     }
 
-    public async sendInitial(userId: string, email: string): Promise<void> {
+    private async removeFailedCode(
+        userId: string,
+        codeHash: string,
+    ): Promise<void> {
         try {
-            const { token } = await this.issueToken(userId, false);
-
-            await this.sender.send(email, token);
-        } catch (error) {
+            await this.users.deleteVerificationCode(userId, codeHash);
+        } catch (cleanupError) {
             this.logger.error(
-                error,
-                {
-                    userId,
-                },
-                "Failed to send initial email verification",
+                cleanupError,
+                { userId },
+                "Failed to remove an undelivered email verification code",
             );
         }
     }
 
-    public async resend(userId: string): Promise<void> {
-        const user = await this.users.findVerificationUser(userId);
-
-        if (!user || user.status === "DELETED") {
-            throw AppError.notFound(
-                "The user account was not found.",
-                "USER_NOT_FOUND",
-            );
-        }
-
-        if (user.emailVerifiedAt !== null) {
-            throw AppError.conflict(
-                "The email address is already verified.",
-                "EMAIL_ALREADY_VERIFIED",
-            );
-        }
-
-        const { token, tokenHash } = await this.issueToken(userId, true);
+    public async sendInitial(userId: string, email: string): Promise<boolean> {
+        let issued: IssuedVerificationCode | undefined;
 
         try {
-            await this.sender.send(user.email, token);
+            issued = await this.issueCode(userId, email, false);
+            await this.sender.send(email, issued.code);
+            return true;
         } catch (error) {
-            await this.users.deleteVerificationToken(userId, tokenHash);
+            if (issued) {
+                await this.removeFailedCode(userId, issued.codeHash);
+            }
 
             this.logger.error(
                 error,
-                {
-                    userId,
-                },
-                "Failed to resend email verification",
+                { userId },
+                "Failed to send initial email verification code",
             );
+            return false;
+        }
+    }
 
-            throw AppError.serviceUnavailable(
-                "The verification email could not be sent.",
-                "EMAIL_DELIVERY_FAILED",
+    public async resend(emailInput: string): Promise<void> {
+        const email = normalizeEmail(emailInput);
+        const user = await this.users.findVerificationUserByEmail(email);
+
+        if (
+            !user ||
+            user.status === "DELETED" ||
+            user.emailVerifiedAt !== null
+        ) {
+            return;
+        }
+
+        let issued: IssuedVerificationCode;
+
+        try {
+            issued = await this.issueCode(user.id, user.email, true);
+        } catch (error) {
+            if (
+                error instanceof AppError &&
+                error.code === "EMAIL_VERIFICATION_COOLDOWN"
+            ) {
+                return;
+            }
+
+            throw error;
+        }
+
+        try {
+            await this.sender.send(user.email, issued.code);
+        } catch (error) {
+            await this.removeFailedCode(user.id, issued.codeHash);
+            this.logger.error(
                 error,
+                { userId: user.id },
+                "Failed to resend email verification code",
             );
         }
     }
 
-    public async verify(token: string): Promise<void> {
-        const tokenHash = this.security.hashVerificationToken(token);
-
+    public async verify(
+        emailInput: string,
+        code: string,
+    ): Promise<AuthUserRecord> {
+        const email = normalizeEmail(emailInput);
+        const codeHash = this.security.hashVerificationCode(email, code);
         const verification =
-            await this.users.findVerificationByTokenHash(tokenHash);
+            await this.users.findVerificationByEmail(email);
 
         if (!verification || verification.user.status === "DELETED") {
             throw AppError.badRequest(
-                "The verification token is invalid.",
-                "INVALID_EMAIL_VERIFICATION_TOKEN",
+                "The email verification code is invalid.",
+                "INVALID_EMAIL_VERIFICATION_CODE",
             );
         }
 
-        const now = new Date();
+        const verifiedAt = this.now();
 
-        if (verification.expiresAt <= now) {
-            await this.users.deleteVerificationToken(
+        if (verification.expiresAt <= verifiedAt) {
+            await this.users.deleteVerificationCode(
                 verification.userId,
-                tokenHash,
+                verification.tokenHash,
             );
 
             throw AppError.badRequest(
-                "The verification token has expired.",
-                "EMAIL_VERIFICATION_TOKEN_EXPIRED",
+                "The email verification code has expired.",
+                "EMAIL_VERIFICATION_CODE_EXPIRED",
             );
         }
 
-        await this.users.verifyEmailAndConsumeTokens(verification.userId, now);
+        if (verification.tokenHash !== codeHash) {
+            await this.users.recordFailedVerificationAttempt(
+                verification.userId,
+                verification.tokenHash,
+                this.options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
+            );
+
+            throw AppError.badRequest(
+                "The email verification code is invalid.",
+                "INVALID_EMAIL_VERIFICATION_CODE",
+            );
+        }
+
+        const user = await this.users.verifyEmailAndConsumeCode(
+            verification.userId,
+            codeHash,
+            verifiedAt,
+        );
+
+        if (!user) {
+            throw AppError.badRequest(
+                "The email verification code is invalid.",
+                "INVALID_EMAIL_VERIFICATION_CODE",
+            );
+        }
+
+        return user;
     }
 }
