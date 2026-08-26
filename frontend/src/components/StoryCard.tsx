@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 
 import {
   getActiveStoryLanguage,
-  normalizeStoryLanguage,
+  getStoryTextAttributes,
 } from "../lib/story-language";
 
 import "./StoryCard.css";
@@ -46,17 +46,8 @@ export interface StoryCardStory {
 interface StoryCardProps {
   story: StoryCardStory;
   reason?: string;
-
-  /**
-   * اکشن‌هایی مانند مدیریت، حذف یا ویرایش.
-   * این بخش عمداً بیرون از لینک اصلی قرار می‌گیرد.
-   */
+  variant?: "home" | "browse";
   actions?: ReactNode;
-
-  /**
-   * مقصد سفارشی کارت.
-   * اگر مشخص نشود، صفحه عمومی داستان باز می‌شود.
-   */
   to?: string;
 }
 
@@ -64,8 +55,7 @@ function StoryCard({ story, reason, actions, to }: StoryCardProps) {
   const { i18n, t } = useTranslation();
 
   const interfaceLanguage = getActiveStoryLanguage(i18n.resolvedLanguage);
-  const storyLanguage =
-    normalizeStoryLanguage(story.language) ?? interfaceLanguage;
+  const storyTextAttributes = getStoryTextAttributes(story.language);
 
   const destination = to ?? `/stories/${encodeURIComponent(story.slug)}`;
 
@@ -147,11 +137,7 @@ function StoryCard({ story, reason, actions, to }: StoryCardProps) {
     story.author.username.trim().slice(0, 1);
 
   return (
-    <article
-      className="story-card"
-      dir={storyLanguage === "fa" ? "rtl" : "ltr"}
-      lang={storyLanguage}
-    >
+    <article className="story-card">
       <Link
         className="story-card-link"
         to={destination}
@@ -202,7 +188,7 @@ function StoryCard({ story, reason, actions, to }: StoryCardProps) {
             </span>
           ) : null}
 
-          <span className="story-card-overlay">
+          <span className="story-card-overlay" {...storyTextAttributes}>
             <h3>{story.title}</h3>
 
             {story.description?.trim() ? (

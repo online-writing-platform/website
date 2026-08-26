@@ -25,7 +25,7 @@ function StoryShelf({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const headingId = useId();
-  const isRtl = !i18n.resolvedLanguage?.startsWith("en");
+  const isRtl = i18n.dir() === "rtl";
 
   const visibleStories = isExpanded ? stories : stories.slice(0, initialCount);
 

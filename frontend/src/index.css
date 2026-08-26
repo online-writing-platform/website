@@ -240,8 +240,8 @@ body {
   background: var(--background);
   color: var(--text);
   font-family: "Estedad", system-ui, sans-serif;
-  direction: rtl;
-  text-align: right;
+  direction: inherit;
+  text-align: start;
   line-height: 1.6;
 }
 

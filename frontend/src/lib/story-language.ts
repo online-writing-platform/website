@@ -1,4 +1,10 @@
 export type SupportedStoryLanguage = "fa" | "en";
+export type StoryDirection = "rtl" | "ltr" | "auto";
+
+export interface StoryTextAttributes {
+  dir: StoryDirection;
+  lang?: SupportedStoryLanguage;
+}
 
 export function normalizeStoryLanguage(
   language?: string,
@@ -27,6 +33,7 @@ export function normalizeStoryLanguage(
   ) {
     return "en";
   }
+
   return null;
 }
 
@@ -34,6 +41,20 @@ export function getActiveStoryLanguage(
   interfaceLanguage?: string,
 ): SupportedStoryLanguage {
   return normalizeStoryLanguage(interfaceLanguage) ?? "fa";
+}
+
+export function getStoryTextAttributes(language?: string): StoryTextAttributes {
+  const normalizedLanguage = normalizeStoryLanguage(language);
+
+  if (normalizedLanguage === "fa") {
+    return { dir: "rtl", lang: "fa" };
+  }
+
+  if (normalizedLanguage === "en") {
+    return { dir: "ltr", lang: "en" };
+  }
+
+  return { dir: "auto" };
 }
 
 export function matchesStoryLanguage(
