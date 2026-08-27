@@ -13,6 +13,8 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 import type { ChapterResponse, StoryResponse } from "../types/story";
+import { useTranslation } from "react-i18next";
+import { getStoryTextAttributes } from "../lib/story-language";
 
 import "./ReaderPage.css";
 
@@ -40,14 +42,6 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   lineHeight: 1.75,
 };
 
-const RTL_LANGUAGES = new Set(["fa", "ar", "ur", "he", "ps", "ku"]);
-
-function contentDirection(language: string): "rtl" | "ltr" {
-  return RTL_LANGUAGES.has(language.toLowerCase().split("-")[0] ?? "")
-    ? "rtl"
-    : "ltr";
-}
-
 export default function ReaderPage() {
   const { slug = "", chapterId = "" } = useParams();
   const { status, request } = useAuth();
@@ -62,6 +56,7 @@ export default function ReaderPage() {
 
   const story = storyResponse?.data.story;
   const chapter = chapterResponse?.data.chapter;
+  const { i18n } = useTranslation();
 
   useDocumentMeta({
     title: chapter && story ? `${chapter.title} — ${story.title}` : "مطالعه",
@@ -82,14 +77,14 @@ export default function ReaderPage() {
       const chapterPath = `/api/v1/stories/${encodeURIComponent(slug)}/chapters/${encodeURIComponent(chapterId)}`;
 
       const storyResult =
-          status === "authenticated"
-              ? await request<StoryResponse>(storyPath)
-              : await apiRequest<StoryResponse>(storyPath);
+        status === "authenticated"
+          ? await request<StoryResponse>(storyPath)
+          : await apiRequest<StoryResponse>(storyPath);
 
       const chapterResult =
-          status === "authenticated"
-              ? await request<ChapterResponse>(chapterPath)
-              : await apiRequest<ChapterResponse>(chapterPath);
+        status === "authenticated"
+          ? await request<ChapterResponse>(chapterPath)
+          : await apiRequest<ChapterResponse>(chapterPath);
 
       if (!active) return;
       setStoryResponse(storyResult);
@@ -214,8 +209,11 @@ export default function ReaderPage() {
     );
   }
 
-  const direction = contentDirection(story.language);
+  const storyTextAttributes = getStoryTextAttributes(story.language);
 
+  const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
+    ? "en-US"
+    : "fa-IR";
   return (
     <main
       className={`reader reader--${settings.theme.toLowerCase()}`}
@@ -227,7 +225,10 @@ export default function ReaderPage() {
       }
     >
       <div className="reader__toolbar" aria-label="تنظیمات مطالعه">
-        <Link to={`/stories/${story.slug}`}>← {story.title}</Link>
+        <Link to={`/stories/${story.slug}`}>
+          <span aria-hidden="true">{i18n.dir() === "rtl" ? "→" : "←"}</span>{" "}
+          <bdi {...storyTextAttributes}>{story.title}</bdi>
+        </Link>{" "}
         <label>
           پوسته
           <select
@@ -270,12 +271,14 @@ export default function ReaderPage() {
         </label>
       </div>
 
-      <article className="reader__paper" dir={direction}>
+      <article className="reader__paper" {...storyTextAttributes}>
         <header className="reader__heading">
           <p>{story.title}</p>
           <h1>{chapter.title}</h1>
-          <span>{chapter.wordCount.toLocaleString("fa-IR")} واژه</span>
+
+          <span>{chapter.wordCount.toLocaleString(interfaceLocale)} واژه</span>
         </header>
+
         <div className="reader__content">
           {(chapter.content ?? "").split(/\n{2,}/u).map((paragraph, index) => (
             <p key={`${index}-${paragraph.slice(0, 20)}`}>{paragraph}</p>

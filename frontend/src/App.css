@@ -501,7 +501,6 @@ td {
   resize: vertical;
   line-height: 1.9;
   padding: 1.25rem;
-  direction: auto;
 }
 .chapter-editor footer {
   display: flex;
