@@ -10,7 +10,6 @@ import RoleRoute from "./components/RoleRoute";
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
-const StoryPage = lazy(() => import("./pages/StoryPage"));
 const ReaderPage = lazy(() => import("./pages/ReaderPage"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
 const SocialListPage = lazy(() => import("./pages/SocialListPage"));
@@ -52,7 +51,9 @@ function App() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
+
           <Route path="/search" element={<SearchPage />} />
+
           <Route path="/browse" element={<BrowsePage />} />
 
           <Route
@@ -65,8 +66,17 @@ function App() {
             element={<BrowsePage kind="tag" />}
           />
 
-          <Route path="/stories/:slug" element={<StoryPage />} />
+          {/*
+           * صفحهٔ معرفی داستان و صفحهٔ خواندن دیگر مجزا نیستند.
+           * ورود به آدرس اصلی داستان، اولین فصل منتشرشده را در همان
+           * صفحهٔ یکپارچه نمایش می‌دهد.
+           */}
+          <Route path="/stories/:slug" element={<ReaderPage />} />
 
+          {/*
+           * آدرس مستقیم فصل‌ها برای لینک‌های قدیمی، اشتراک‌گذاری،
+           * تاریخچهٔ مرورگر و SEO حفظ شده است.
+           */}
           <Route
             path="/stories/:slug/chapters/:chapterId"
             element={<ReaderPage />}
@@ -87,6 +97,7 @@ function App() {
           <Route path="/reading-lists/:listId" element={<ReadingListPage />} />
 
           <Route path="/login" element={<Login />} />
+
           <Route path="/register" element={<Register />} />
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
