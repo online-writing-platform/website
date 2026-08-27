@@ -123,6 +123,261 @@
       "short-story": "Short Story"
     }
   },
+  "reader": {
+    "document": {
+      "defaultTitle": "Read",
+      "chapterTitle": "{{chapter}} — {{story}}"
+    },
+    "loading": {
+      "story": "Loading story…",
+      "chapter": "Loading chapter…"
+    },
+    "errors": {
+      "loadStoryTitle": "Unable to load this story"
+    },
+    "actions": {
+      "back": "Back",
+      "backHome": "Back to home",
+      "share": "Share"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SCHEDULED": "Scheduled",
+      "ONGOING": "Ongoing",
+      "COMPLETED": "Completed",
+      "HIATUS": "On hiatus"
+    },
+    "story": {
+      "coverAlt": "Cover of {{title}}",
+      "mature": "Mature content",
+      "matureWarning": "This story contains mature content. Access to its chapters is controlled by the server according to your account and content preferences.",
+      "by": "by",
+      "chapterCount": "{{value}} chapters",
+      "tagsAriaLabel": "Story tags"
+    },
+    "library": {
+      "add": "Add to library",
+      "remove": "Remove from library",
+      "checking": "Checking…",
+      "pending": "Working…",
+      "added": "The story was added to your library.",
+      "removed": "The story was removed from your library."
+    },
+    "share": {
+      "shared": "The story was shared.",
+      "copied": "The story link was copied.",
+      "failed": "The story link could not be copied."
+    },
+    "toc": {
+      "eyebrow": "Story",
+      "title": "Table of contents",
+      "close": "Close the table of contents",
+      "empty": "This story has no published chapters yet."
+    },
+    "toolbar": {
+      "ariaLabel": "Reading tools and settings",
+      "chapters": "Chapters",
+      "settings": "Settings"
+    },
+    "settings": {
+      "ariaLabel": "Reading settings",
+      "theme": "Theme",
+      "fontScale": "Text size: {{value}}%",
+      "lineHeight": "Line height: {{value}}",
+      "themes": {
+        "SYSTEM": "System",
+        "LIGHT": "Light",
+        "DARK": "Dark",
+        "SEPIA": "Sepia"
+      }
+    },
+    "chapter": {
+      "fallbackTitle": "Chapter",
+      "emptyTitle": "No chapters have been published yet",
+      "emptyDescription": "The story text will appear on this page after the first chapter is published.",
+      "position": "Chapter {{current}} of {{total}}",
+      "wordCount": "{{value}} words"
+    },
+    "navigation": {
+      "ariaLabel": "Chapter navigation",
+      "previous": "Previous chapter",
+      "next": "Next chapter"
+    },
+    "interactions": {
+      "vote": "Vote",
+      "removeVote": "Remove vote",
+      "voteCount": "{{value}} votes",
+      "title": "Discussion about this chapter",
+      "yourComment": "Your comment",
+      "submit": "Post comment",
+      "submitting": "Posting…",
+      "loginPrefix": "To vote or write a comment,",
+      "loginLink": "log in",
+      "loginSuffix": ".",
+      "empty": "No comments have been posted yet.",
+      "deletedUser": "Deleted user",
+      "unavailableComment": "This comment is unavailable.",
+      "replyCount": "{{value}} replies"
+    }
+  },
+  "report": {
+    "actions": {
+      "open": "Report content",
+      "close": "Close report",
+      "submit": "Submit report",
+      "submitting": "Submitting…"
+    },
+    "fields": {
+      "reason": "Reason",
+      "details": "Additional details",
+      "detailsPlaceholder": "Add any useful details…"
+    },
+    "reasons": {
+      "SPAM": "Spam",
+      "HARASSMENT": "Harassment",
+      "HATE_OR_ABUSE": "Hate or abuse",
+      "SEXUAL_CONTENT": "Sexual content",
+      "VIOLENCE": "Violence",
+      "COPYRIGHT": "Copyright infringement",
+      "IMPERSONATION": "Impersonation",
+      "OTHER": "Other"
+    },
+    "messages": {
+      "submitted": "Your report was submitted for moderation review."
+    }
+  },
+  "writer": {
+    "loading": {
+      "story": "Loading story…",
+      "chapter": "Loading chapter…"
+    },
+    "header": {
+      "eyebrow": "Writer workspace"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SCHEDULED": "Scheduled",
+      "ONGOING": "Ongoing",
+      "COMPLETED": "Completed",
+      "HIATUS": "On hiatus"
+    },
+    "visibility": {
+      "public": "Published",
+      "private": "Private"
+    },
+    "actions": {
+      "backToStories": "My stories",
+      "preview": "Preview",
+      "publishStory": "Publish story",
+      "unpublishStory": "Unpublish story",
+      "saveMetadata": "Save details",
+      "saving": "Saving…",
+      "save": "Save",
+      "publishChapter": "Publish chapter",
+      "unpublishChapter": "Unpublish chapter"
+    },
+    "messages": {
+      "metadataSaved": "The story details were saved.",
+      "coverSaved": "The cover image was saved.",
+      "storyPublished": "The story was published.",
+      "storyUnpublished": "The story was unpublished.",
+      "chapterPublished": "The chapter was published.",
+      "chapterUnpublished": "The chapter was returned to draft."
+    },
+    "details": {
+      "title": "Story details",
+      "description": "Configure the story's main information and public presentation."
+    },
+    "fields": {
+      "storyTitle": "Story title",
+      "language": "Story language",
+      "description": "Story description",
+      "descriptionCount": "{{value}} of 5,000 characters",
+      "genre": "Genre",
+      "status": "Story status",
+      "rights": "Story rights",
+      "tags": "Tags",
+      "tagsPlaceholder": "fantasy, adventure, romance",
+      "tagsHelp": "Separate tags with commas."
+    },
+    "languages": {
+      "fa": "Persian",
+      "en": "English"
+    },
+    "genres": {
+      "none": "No genre"
+    },
+    "rights": {
+      "ALL_RIGHTS_RESERVED": "All rights reserved",
+      "CREATIVE_COMMONS": "Creative Commons",
+      "PUBLIC_DOMAIN": "Public domain"
+    },
+    "mature": {
+      "title": "Mature content",
+      "description": "Do not show this story to users below the permitted age."
+    },
+    "cover": {
+      "title": "Story cover",
+      "alt": "Cover of {{title}}",
+      "empty": "No cover image",
+      "preview": "Preview",
+      "select": "Choose image",
+      "selectedFile": "Selected file: {{name}}",
+      "upload": "Upload cover",
+      "uploading": "Uploading…",
+      "help": "Choose a JPEG or PNG image."
+    },
+    "chapters": {
+      "title": "Story chapters",
+      "description": "Create a new chapter or edit an existing one.",
+      "count": "{{value}} chapters",
+      "newTitleLabel": "New chapter title",
+      "newTitlePlaceholder": "New chapter title",
+      "create": "Create chapter",
+      "wordCount": "{{value}} words",
+      "version": "Version {{value}}",
+      "editing": "Editing",
+      "edit": "Edit",
+      "emptyTitle": "There are no chapters yet",
+      "emptyDescription": "Enter the first chapter title to start writing your story."
+    },
+    "chapterStatus": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published"
+    },
+    "editor": {
+      "chapterNumber": "Chapter {{value}}",
+      "ready": "Ready to edit",
+      "titleLabel": "Chapter title",
+      "contentLabel": "Chapter text",
+      "contentPlaceholder": "Start writing this chapter…",
+      "wordCount": "{{value}} words",
+      "characterCount": "{{value}} of 100,000 characters",
+      "version": "Version {{value}}",
+      "emptyTitle": "Select a chapter to edit",
+      "emptyDescription": "Select a chapter above or create a new one.",
+      "loadedVersion": "Version {{version}} was loaded from the server.",
+      "savingServer": "Saving to the server…",
+      "savedVersion": "Saved · Version {{version}}",
+      "savingNewerChanges": "The previous version was saved; newer changes are now being saved…",
+      "saveStoppedConflict": "Saving stopped because a newer server version exists.",
+      "saveFailedLocalKept": "The server save failed; the local recovery copy was preserved.",
+      "localSavedPending": "Changes were saved locally and are waiting to be saved to the server…",
+      "localRecovered": "The local copy was restored and is ready to be saved."
+    },
+    "recovery": {
+      "title": "A local recovery copy was found",
+      "description": "This copy was saved at {{date}} and differs from the server version.",
+      "restore": "Restore copy",
+      "discard": "Discard"
+    },
+    "conflict": {
+      "title": "Editing conflict",
+      "description": "This chapter was changed elsewhere. Autosave has stopped to prevent data loss, and your local copy remains in the browser.",
+      "serverVersion": "Latest server version: {{version}}",
+      "loadServer": "Load server version"
+    }
+  },
   "browse": {
     "title": "Browse Stories",
     "loading": "Loading stories...",

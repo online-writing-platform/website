@@ -11,7 +11,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Heart,
   Library,
   List,
   Settings2,
@@ -66,14 +65,6 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   lineHeight: 1.75,
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "پیش‌نویس",
-  SCHEDULED: "زمان‌بندی‌شده",
-  ONGOING: "در حال انتشار",
-  COMPLETED: "تکمیل‌شده",
-  HIATUS: "متوقف‌شده",
-};
-
 function getChapterPath(slug: string, chapterId: string): string {
   return `/stories/${encodeURIComponent(
     slug,
@@ -84,7 +75,7 @@ function getInitials(value: string): string {
   const normalizedValue = value.trim();
 
   if (!normalizedValue) {
-    return "؟";
+    return "?";
   }
 
   return normalizedValue.slice(0, 1).toUpperCase();
@@ -93,7 +84,7 @@ function getInitials(value: string): string {
 export default function ReaderPage() {
   const { slug = "", chapterId } = useParams();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { status, request, user } = useAuth();
 
   const [storyResponse, setStoryResponse] = useState<StoryResponse | null>(
@@ -124,6 +115,10 @@ export default function ReaderPage() {
 
   const story = storyResponse?.data.story;
   const chapter = chapterResponse?.data.chapter;
+
+  const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
+    ? "en-US"
+    : "fa-IR";
 
   const publishedChapters = useMemo(
     () =>
@@ -159,10 +154,6 @@ export default function ReaderPage() {
     [currentChapterIndex, publishedChapters],
   );
 
-  const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
-    ? "en-US"
-    : "fa-IR";
-
   const storyTextAttributes = story
     ? getStoryTextAttributes(story.language)
     : undefined;
@@ -177,13 +168,22 @@ export default function ReaderPage() {
       ? libraryState.inLibrary
       : null;
 
+  const storyStatusLabel = story
+    ? t(`reader.status.${story.status}`, {
+        defaultValue: story.status,
+      })
+    : "";
+
   useDocumentMeta({
     title:
       story && chapter
-        ? `${chapter.title} — ${story.title}`
+        ? t("reader.document.chapterTitle", {
+            chapter: chapter.title,
+            story: story.title,
+          })
         : story
           ? story.title
-          : "مطالعه",
+          : t("reader.document.defaultTitle"),
 
     description: story?.description.slice(0, 160),
 
@@ -196,7 +196,7 @@ export default function ReaderPage() {
   });
 
   /*
-   * ابتدا اطلاعات کلی داستان و فهرست فصل‌های منتشرشده دریافت می‌شود.
+   * دریافت اطلاعات داستان و فهرست فصل‌ها.
    */
   useEffect(() => {
     const controller = new AbortController();
@@ -207,6 +207,7 @@ export default function ReaderPage() {
       setChapterResponse(null);
       setLibraryState(null);
       setLibraryMessage(null);
+      setShareMessage(null);
       lastProgressRef.current = -1;
 
       const path = `/api/v1/stories/${encodeURIComponent(slug)}`;
@@ -243,8 +244,10 @@ export default function ReaderPage() {
   }, [request, slug, status]);
 
   /*
-   * بعد از دریافت داستان، فصل انتخاب‌شده یا اولین فصل منتشرشده
-   * در همان صفحه دریافت می‌شود.
+   * دریافت فصل انتخاب‌شده یا اولین فصل منتشرشده.
+   *
+   * currentStory باعث می‌شود TypeScript بداند مقدار story در
+   * تابع async نیز undefined نیست.
    */
   useEffect(() => {
     if (!story || !requestedChapterId) {
@@ -252,10 +255,6 @@ export default function ReaderPage() {
       return;
     }
 
-    /*
-     * پس از این بررسی، یک ارجاع ثابت می‌سازیم تا TypeScript
-     * بداند مقدار داستان داخل تابع async نیز تعریف‌شده است.
-     */
     const currentStory = story;
     const currentChapterId = requestedChapterId;
     const controller = new AbortController();
@@ -285,10 +284,6 @@ export default function ReaderPage() {
 
         setChapterResponse(result);
 
-        /*
-         * اگر کاربر از مسیر اصلی داستان وارد شده باشد،
-         * آدرس مرورگر با شناسهٔ فصل واقعی هماهنگ می‌شود.
-         */
         if (!chapterId) {
           navigate(getChapterPath(currentStory.slug, result.data.chapter.id), {
             replace: true,
@@ -319,8 +314,9 @@ export default function ReaderPage() {
 
     return () => controller.abort();
   }, [chapterId, navigate, request, requestedChapterId, status, story]);
+
   /*
-   * تنظیمات مطالعه فقط برای کاربر واردشده از سرور دریافت می‌شود.
+   * دریافت تنظیمات مطالعه برای کاربر واردشده.
    */
   useEffect(() => {
     if (status !== "authenticated") {
@@ -346,8 +342,8 @@ export default function ReaderPage() {
       })
       .catch(() => {
         /*
-         * در صورت خطای تنظیمات، خواندن داستان با تنظیمات پیش‌فرض
-         * همچنان ممکن خواهد بود.
+         * در صورت شکست دریافت تنظیمات، صفحه با مقادیر پیش‌فرض
+         * همچنان قابل استفاده است.
          */
       });
 
@@ -355,7 +351,7 @@ export default function ReaderPage() {
   }, [request, status]);
 
   /*
-   * وضعیت حضور داستان در کتابخانه.
+   * بررسی حضور داستان در کتابخانه.
    */
   useEffect(() => {
     if (status !== "authenticated" || !story || !libraryKey) {
@@ -389,7 +385,7 @@ export default function ReaderPage() {
   }, [libraryKey, request, status, story]);
 
   /*
-   * ذخیرهٔ پیشرفت مطالعه.
+   * ذخیره پیشرفت مطالعه.
    */
   useEffect(() => {
     if (status !== "authenticated" || !story || !chapter) {
@@ -412,6 +408,7 @@ export default function ReaderPage() {
         contentElement.getBoundingClientRect().top + window.scrollY;
 
       const contentHeight = Math.max(1, contentElement.offsetHeight);
+
       const currentPosition = window.scrollY + window.innerHeight - contentTop;
 
       const progress = Math.min(
@@ -503,9 +500,7 @@ export default function ReaderPage() {
       });
 
       setLibraryMessage(
-        shouldAdd
-          ? "داستان به کتابخانه اضافه شد."
-          : "داستان از کتابخانه حذف شد.",
+        shouldAdd ? t("reader.library.added") : t("reader.library.removed"),
       );
     } catch (cause) {
       setLibraryMessage(getErrorMessage(cause));
@@ -533,22 +528,18 @@ export default function ReaderPage() {
           url: shareUrl,
         });
 
-        setShareMessage("داستان به اشتراک گذاشته شد.");
+        setShareMessage(t("reader.share.shared"));
         return;
       }
 
       await navigator.clipboard.writeText(shareUrl);
-      setShareMessage("پیوند داستان کپی شد.");
+      setShareMessage(t("reader.share.copied"));
     } catch (cause) {
-      /*
-       * بستن پنجرهٔ اشتراک‌گذاری توسط کاربر نباید به‌عنوان خطای
-       * اصلی صفحه نمایش داده شود.
-       */
       if (cause instanceof DOMException && cause.name === "AbortError") {
         return;
       }
 
-      setShareMessage("کپی‌کردن پیوند امکان‌پذیر نبود.");
+      setShareMessage(t("reader.share.failed"));
     }
   }
 
@@ -575,12 +566,12 @@ export default function ReaderPage() {
         <div className="reader-status-card" role="alert">
           <BookOpen aria-hidden="true" size={40} />
 
-          <h1>امکان دریافت داستان وجود ندارد</h1>
+          <h1>{t("reader.errors.loadStoryTitle")}</h1>
 
           <p>{error}</p>
 
           <Link className="reader-button reader-button--primary" to="/">
-            بازگشت به صفحهٔ اصلی
+            {t("reader.actions.backHome")}
           </Link>
         </div>
       </main>
@@ -597,7 +588,7 @@ export default function ReaderPage() {
             size={40}
           />
 
-          <p>در حال دریافت داستان…</p>
+          <p>{t("reader.loading.story")}</p>
         </div>
       </main>
     );
@@ -616,7 +607,8 @@ export default function ReaderPage() {
       <div className="reader__container">
         <Link className="reader__back-link" to="/">
           <span aria-hidden="true">{i18n.dir() === "rtl" ? "→" : "←"}</span>
-          بازگشت
+
+          {t("reader.actions.back")}
         </Link>
 
         <section className="reader-story" aria-labelledby="reader-story-title">
@@ -625,7 +617,9 @@ export default function ReaderPage() {
               {story.coverUrl ? (
                 <img
                   src={story.coverUrl}
-                  alt={`جلد ${story.title}`}
+                  alt={t("reader.story.coverAlt", {
+                    title: story.title,
+                  })}
                   referrerPolicy="no-referrer"
                 />
               ) : (
@@ -634,7 +628,6 @@ export default function ReaderPage() {
                   {...storyTextAttributes}
                 >
                   <BookOpen aria-hidden="true" size={40} />
-
                   <span>{story.title}</span>
                 </div>
               )}
@@ -648,13 +641,13 @@ export default function ReaderPage() {
                   className="reader-badge reader-badge--genre"
                   to={`/browse/genres/${encodeURIComponent(story.genre.slug)}`}
                 >
-                  {story.genre.name}
+                  {t(`genres.items.${story.genre.slug}`, {
+                    defaultValue: story.genre.name,
+                  })}
                 </Link>
               ) : null}
 
-              <span className="reader-badge">
-                {STATUS_LABELS[story.status] ?? story.status}
-              </span>
+              <span className="reader-badge">{storyStatusLabel}</span>
 
               <span className="reader-badge" dir="ltr">
                 {story.language.toUpperCase()}
@@ -662,7 +655,7 @@ export default function ReaderPage() {
 
               {story.isMature ? (
                 <span className="reader-badge reader-badge--mature">
-                  محتوای +۱۸
+                  {t("reader.story.mature")}
                 </span>
               ) : null}
             </div>
@@ -696,20 +689,25 @@ export default function ReaderPage() {
               </span>
 
               <span>
-                نوشتهٔ <bdi>{story.author.displayName}</bdi>
+                {t("reader.story.by")} <bdi>{story.author.displayName}</bdi>
               </span>
             </Link>
 
             <div className="reader-story__statistics">
               <span>
                 <BookOpen aria-hidden="true" size={17} />
-                {publishedChapters.length.toLocaleString(interfaceLocale)} فصل
+
+                {t("reader.story.chapterCount", {
+                  count: publishedChapters.length,
+                  value:
+                    publishedChapters.length.toLocaleString(interfaceLocale),
+                })}
               </span>
 
               {story.status === "COMPLETED" ? (
                 <span>
                   <Check aria-hidden="true" size={17} />
-                  تکمیل‌شده
+                  {t("reader.status.COMPLETED")}
                 </span>
               ) : null}
             </div>
@@ -717,7 +715,7 @@ export default function ReaderPage() {
             {story.tags.length > 0 ? (
               <ul
                 className="reader-story__tags"
-                aria-label="برچسب‌های داستان"
+                aria-label={t("reader.story.tagsAriaLabel")}
                 {...storyTextAttributes}
               >
                 {story.tags.map((tag) => (
@@ -746,12 +744,12 @@ export default function ReaderPage() {
                   <Library aria-hidden="true" size={17} />
 
                   {libraryPending
-                    ? "در حال انجام…"
+                    ? t("reader.library.pending")
                     : isInLibrary === null
-                      ? "در حال بررسی…"
+                      ? t("reader.library.checking")
                       : isInLibrary
-                        ? "حذف از کتابخانه"
-                        : "افزودن به کتابخانه"}
+                        ? t("reader.library.remove")
+                        : t("reader.library.add")}
                 </button>
               ) : (
                 <Link
@@ -759,7 +757,7 @@ export default function ReaderPage() {
                   to="/login"
                 >
                   <Library aria-hidden="true" size={17} />
-                  افزودن به کتابخانه
+                  {t("reader.library.add")}
                 </Link>
               )}
 
@@ -771,7 +769,7 @@ export default function ReaderPage() {
                 onClick={() => setShowTableOfContents((current) => !current)}
               >
                 <List aria-hidden="true" size={17} />
-                فهرست فصل‌ها
+                {t("reader.toc.title")}
               </button>
 
               <button
@@ -780,7 +778,7 @@ export default function ReaderPage() {
                 onClick={() => void shareStory()}
               >
                 <Share2 aria-hidden="true" size={17} />
-                اشتراک‌گذاری
+                {t("reader.actions.share")}
               </button>
             </div>
 
@@ -800,8 +798,7 @@ export default function ReaderPage() {
 
         {story.isMature ? (
           <div className="reader-warning">
-            محتوای این داستان برای حساب‌های بزرگسال است. دسترسی به متن فصل‌ها در
-            سمت سرور و براساس تنظیمات حساب کنترل می‌شود.
+            {t("reader.story.matureWarning")}
           </div>
         ) : null}
 
@@ -813,14 +810,15 @@ export default function ReaderPage() {
           >
             <header className="reader-toc__header">
               <div>
-                <span>داستان</span>
-                <h2 id="reader-toc-title">فهرست فصل‌ها</h2>
+                <span>{t("reader.toc.eyebrow")}</span>
+
+                <h2 id="reader-toc-title">{t("reader.toc.title")}</h2>
               </div>
 
               <button
                 className="reader-icon-button"
                 type="button"
-                aria-label="بستن فهرست فصل‌ها"
+                aria-label={t("reader.toc.close")}
                 onClick={() => setShowTableOfContents(false)}
               >
                 <X aria-hidden="true" size={20} />
@@ -859,7 +857,10 @@ export default function ReaderPage() {
                         </span>
 
                         <span className="reader-toc__words">
-                          {item.wordCount.toLocaleString(interfaceLocale)} واژه
+                          {t("reader.chapter.wordCount", {
+                            value:
+                              item.wordCount.toLocaleString(interfaceLocale),
+                          })}
                         </span>
                       </button>
                     </li>
@@ -867,18 +868,21 @@ export default function ReaderPage() {
                 })}
               </ol>
             ) : (
-              <p className="reader-empty-message">
-                هنوز فصل منتشرشده‌ای برای این داستان وجود ندارد.
-              </p>
+              <p className="reader-empty-message">{t("reader.toc.empty")}</p>
             )}
           </section>
         ) : null}
 
-        <div className="reader__toolbar" aria-label="ابزارها و تنظیمات مطالعه">
+        <div
+          className="reader__toolbar"
+          aria-label={t("reader.toolbar.ariaLabel")}
+        >
           <div className="reader__toolbar-chapter">
             <BookOpen aria-hidden="true" size={18} />
 
-            <span {...storyTextAttributes}>{chapter?.title ?? "فصل"}</span>
+            <span {...storyTextAttributes}>
+              {chapter?.title ?? t("reader.chapter.fallbackTitle")}
+            </span>
           </div>
 
           <div className="reader__toolbar-actions">
@@ -889,7 +893,7 @@ export default function ReaderPage() {
               onClick={() => setShowTableOfContents((current) => !current)}
             >
               <List aria-hidden="true" size={18} />
-              <span>فصل‌ها</span>
+              <span>{t("reader.toolbar.chapters")}</span>
             </button>
 
             <button
@@ -900,7 +904,7 @@ export default function ReaderPage() {
               onClick={() => setShowReaderSettings((current) => !current)}
             >
               <Settings2 aria-hidden="true" size={18} />
-              <span>تنظیمات</span>
+              <span>{t("reader.toolbar.settings")}</span>
             </button>
           </div>
         </div>
@@ -909,10 +913,10 @@ export default function ReaderPage() {
           <section
             id="reader-settings"
             className="reader-settings"
-            aria-label="تنظیمات مطالعه"
+            aria-label={t("reader.settings.ariaLabel")}
           >
             <label className="reader-settings__field">
-              <span>پوسته</span>
+              <span>{t("reader.settings.theme")}</span>
 
               <select
                 value={settings.theme}
@@ -922,20 +926,29 @@ export default function ReaderPage() {
                   })
                 }
               >
-                <option value="SYSTEM">سیستم</option>
-                <option value="LIGHT">روشن</option>
-                <option value="DARK">تیره</option>
-                <option value="SEPIA">سپیا</option>
+                <option value="SYSTEM">
+                  {t("reader.settings.themes.SYSTEM")}
+                </option>
+
+                <option value="LIGHT">
+                  {t("reader.settings.themes.LIGHT")}
+                </option>
+
+                <option value="DARK">{t("reader.settings.themes.DARK")}</option>
+
+                <option value="SEPIA">
+                  {t("reader.settings.themes.SEPIA")}
+                </option>
               </select>
             </label>
 
             <label className="reader-settings__field">
               <span>
-                اندازهٔ متن:{" "}
-                {Math.round(settings.fontScale * 100).toLocaleString(
-                  interfaceLocale,
-                )}
-                ٪
+                {t("reader.settings.fontScale", {
+                  value: Math.round(settings.fontScale * 100).toLocaleString(
+                    interfaceLocale,
+                  ),
+                })}
               </span>
 
               <input
@@ -954,8 +967,9 @@ export default function ReaderPage() {
 
             <label className="reader-settings__field">
               <span>
-                فاصلهٔ خطوط:{" "}
-                {settings.lineHeight.toLocaleString(interfaceLocale)}
+                {t("reader.settings.lineHeight", {
+                  value: settings.lineHeight.toLocaleString(interfaceLocale),
+                })}
               </span>
 
               <input
@@ -984,12 +998,9 @@ export default function ReaderPage() {
           <section className="reader-empty-chapter">
             <BookOpen aria-hidden="true" size={42} />
 
-            <h2>هنوز فصلی منتشر نشده است</h2>
+            <h2>{t("reader.chapter.emptyTitle")}</h2>
 
-            <p>
-              پس از انتشار اولین فصل، متن داستان در همین صفحه نمایش داده خواهد
-              شد.
-            </p>
+            <p>{t("reader.chapter.emptyDescription")}</p>
 
             <ReportForm targetType="STORY" targetId={story.id} />
           </section>
@@ -1001,7 +1012,7 @@ export default function ReaderPage() {
               size={42}
             />
 
-            <p>در حال دریافت فصل…</p>
+            <p>{t("reader.loading.chapter")}</p>
           </section>
         ) : (
           <>
@@ -1017,16 +1028,24 @@ export default function ReaderPage() {
 
                 <div className="reader__chapter-meta">
                   <span>
-                    فصل{" "}
-                    {(currentChapterIndex + 1).toLocaleString(interfaceLocale)}{" "}
-                    از{" "}
-                    {publishedChapters.length.toLocaleString(interfaceLocale)}
+                    {t("reader.chapter.position", {
+                      current: (currentChapterIndex + 1).toLocaleString(
+                        interfaceLocale,
+                      ),
+
+                      total:
+                        publishedChapters.length.toLocaleString(
+                          interfaceLocale,
+                        ),
+                    })}
                   </span>
 
                   <span aria-hidden="true">•</span>
 
                   <span>
-                    {chapter.wordCount.toLocaleString(interfaceLocale)} واژه
+                    {t("reader.chapter.wordCount", {
+                      value: chapter.wordCount.toLocaleString(interfaceLocale),
+                    })}
                   </span>
                 </div>
               </header>
@@ -1042,7 +1061,10 @@ export default function ReaderPage() {
               </div>
             </article>
 
-            <nav className="reader__navigation" aria-label="حرکت میان فصل‌ها">
+            <nav
+              className="reader__navigation"
+              aria-label={t("reader.navigation.ariaLabel")}
+            >
               {navigation.previous ? (
                 <Link
                   className="reader-chapter-link"
@@ -1061,7 +1083,7 @@ export default function ReaderPage() {
                   />
 
                   <span>
-                    <small>فصل قبل</small>
+                    <small>{t("reader.navigation.previous")}</small>
 
                     <bdi {...storyTextAttributes}>
                       {navigation.previous.title}
@@ -1084,7 +1106,7 @@ export default function ReaderPage() {
                   }
                 >
                   <span>
-                    <small>فصل بعد</small>
+                    <small>{t("reader.navigation.next")}</small>
 
                     <bdi {...storyTextAttributes}>{navigation.next.title}</bdi>
                   </span>
@@ -1105,7 +1127,10 @@ export default function ReaderPage() {
             </section>
 
             <div className="reader__discussion">
-              <ReaderInteractions chapterId={chapter.id} />
+              <ReaderInteractions
+                chapterId={chapter.id}
+                contentLanguage={story.language}
+              />
             </div>
           </>
         )}

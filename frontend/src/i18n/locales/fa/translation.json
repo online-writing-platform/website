@@ -123,6 +123,261 @@
       "short-story": "داستان کوتاه"
     }
   },
+  "reader": {
+    "document": {
+      "defaultTitle": "مطالعه",
+      "chapterTitle": "{{chapter}} — {{story}}"
+    },
+    "loading": {
+      "story": "در حال دریافت داستان…",
+      "chapter": "در حال دریافت فصل…"
+    },
+    "errors": {
+      "loadStoryTitle": "امکان دریافت داستان وجود ندارد"
+    },
+    "actions": {
+      "back": "بازگشت",
+      "backHome": "بازگشت به صفحهٔ اصلی",
+      "share": "اشتراک‌گذاری"
+    },
+    "status": {
+      "DRAFT": "پیش‌نویس",
+      "SCHEDULED": "زمان‌بندی‌شده",
+      "ONGOING": "در حال انتشار",
+      "COMPLETED": "تکمیل‌شده",
+      "HIATUS": "متوقف‌شده"
+    },
+    "story": {
+      "coverAlt": "جلد {{title}}",
+      "mature": "محتوای +۱۸",
+      "matureWarning": "محتوای این داستان برای حساب‌های بزرگسال است. دسترسی به متن فصل‌ها در سمت سرور و براساس تنظیمات حساب کنترل می‌شود.",
+      "by": "نوشتهٔ",
+      "chapterCount": "{{value}} فصل",
+      "tagsAriaLabel": "برچسب‌های داستان"
+    },
+    "library": {
+      "add": "افزودن به کتابخانه",
+      "remove": "حذف از کتابخانه",
+      "checking": "در حال بررسی…",
+      "pending": "در حال انجام…",
+      "added": "داستان به کتابخانه اضافه شد.",
+      "removed": "داستان از کتابخانه حذف شد."
+    },
+    "share": {
+      "shared": "داستان به اشتراک گذاشته شد.",
+      "copied": "پیوند داستان کپی شد.",
+      "failed": "کپی‌کردن پیوند امکان‌پذیر نبود."
+    },
+    "toc": {
+      "eyebrow": "داستان",
+      "title": "فهرست فصل‌ها",
+      "close": "بستن فهرست فصل‌ها",
+      "empty": "هنوز فصل منتشرشده‌ای برای این داستان وجود ندارد."
+    },
+    "toolbar": {
+      "ariaLabel": "ابزارها و تنظیمات مطالعه",
+      "chapters": "فصل‌ها",
+      "settings": "تنظیمات"
+    },
+    "settings": {
+      "ariaLabel": "تنظیمات مطالعه",
+      "theme": "پوسته",
+      "fontScale": "اندازهٔ متن: {{value}}٪",
+      "lineHeight": "فاصلهٔ خطوط: {{value}}",
+      "themes": {
+        "SYSTEM": "سیستم",
+        "LIGHT": "روشن",
+        "DARK": "تیره",
+        "SEPIA": "سپیا"
+      }
+    },
+    "chapter": {
+      "fallbackTitle": "فصل",
+      "emptyTitle": "هنوز فصلی منتشر نشده است",
+      "emptyDescription": "پس از انتشار اولین فصل، متن داستان در همین صفحه نمایش داده خواهد شد.",
+      "position": "فصل {{current}} از {{total}}",
+      "wordCount": "{{value}} واژه"
+    },
+    "navigation": {
+      "ariaLabel": "حرکت میان فصل‌ها",
+      "previous": "فصل قبل",
+      "next": "فصل بعد"
+    },
+    "interactions": {
+      "vote": "رأی",
+      "removeVote": "برداشتن رأی",
+      "voteCount": "{{value}} رأی",
+      "title": "گفت‌وگو درباره این فصل",
+      "yourComment": "نظر شما",
+      "submit": "ارسال نظر",
+      "submitting": "در حال ارسال…",
+      "loginPrefix": "برای رأی دادن یا نوشتن نظر",
+      "loginLink": "وارد شوید",
+      "loginSuffix": ".",
+      "empty": "هنوز نظری ثبت نشده است.",
+      "deletedUser": "کاربر حذف‌شده",
+      "unavailableComment": "این نظر در دسترس نیست.",
+      "replyCount": "{{value}} پاسخ"
+    }
+  },
+  "report": {
+    "actions": {
+      "open": "گزارش محتوا",
+      "close": "بستن گزارش",
+      "submit": "ثبت گزارش",
+      "submitting": "در حال ثبت…"
+    },
+    "fields": {
+      "reason": "دلیل",
+      "details": "توضیح تکمیلی",
+      "detailsPlaceholder": "در صورت نیاز جزئیات بیشتری بنویسید…"
+    },
+    "reasons": {
+      "SPAM": "هرزنامه",
+      "HARASSMENT": "آزار و مزاحمت",
+      "HATE_OR_ABUSE": "نفرت یا سوءاستفاده",
+      "SEXUAL_CONTENT": "محتوای جنسی",
+      "VIOLENCE": "خشونت",
+      "COPYRIGHT": "نقض حق نشر",
+      "IMPERSONATION": "جعل هویت",
+      "OTHER": "سایر"
+    },
+    "messages": {
+      "submitted": "گزارش ثبت شد و برای بررسی در صف مدیریت قرار گرفت."
+    }
+  },
+  "writer": {
+    "loading": {
+      "story": "در حال دریافت داستان…",
+      "chapter": "در حال دریافت فصل…"
+    },
+    "header": {
+      "eyebrow": "فضای نویسنده"
+    },
+    "status": {
+      "DRAFT": "پیش‌نویس",
+      "SCHEDULED": "زمان‌بندی‌شده",
+      "ONGOING": "در حال انتشار",
+      "COMPLETED": "کامل‌شده",
+      "HIATUS": "در حال وقفه"
+    },
+    "visibility": {
+      "public": "منتشرشده",
+      "private": "خصوصی"
+    },
+    "actions": {
+      "backToStories": "داستان‌های من",
+      "preview": "پیش‌نمایش",
+      "publishStory": "انتشار داستان",
+      "unpublishStory": "خارج‌کردن از انتشار",
+      "saveMetadata": "ذخیره مشخصات",
+      "saving": "در حال ذخیره…",
+      "save": "ذخیره",
+      "publishChapter": "انتشار فصل",
+      "unpublishChapter": "خارج‌کردن فصل از انتشار"
+    },
+    "messages": {
+      "metadataSaved": "مشخصات داستان ذخیره شد.",
+      "coverSaved": "تصویر جلد ذخیره شد.",
+      "storyPublished": "داستان منتشر شد.",
+      "storyUnpublished": "داستان از انتشار خارج شد.",
+      "chapterPublished": "فصل منتشر شد.",
+      "chapterUnpublished": "فصل به پیش‌نویس برگشت."
+    },
+    "details": {
+      "title": "جزئیات داستان",
+      "description": "مشخصات اصلی و نحوهٔ نمایش داستان را تنظیم کنید."
+    },
+    "fields": {
+      "storyTitle": "عنوان داستان",
+      "language": "زبان داستان",
+      "description": "معرفی داستان",
+      "descriptionCount": "{{value}} از ۵٬۰۰۰ نویسه",
+      "genre": "ژانر",
+      "status": "وضعیت داستان",
+      "rights": "حقوق اثر",
+      "tags": "برچسب‌ها",
+      "tagsPlaceholder": "فانتزی، ماجراجویی، عاشقانه",
+      "tagsHelp": "برچسب‌ها را با ویرگول جدا کنید."
+    },
+    "languages": {
+      "fa": "فارسی",
+      "en": "انگلیسی"
+    },
+    "genres": {
+      "none": "بدون ژانر"
+    },
+    "rights": {
+      "ALL_RIGHTS_RESERVED": "تمام حقوق محفوظ است",
+      "CREATIVE_COMMONS": "کریتیو کامنز",
+      "PUBLIC_DOMAIN": "مالکیت عمومی"
+    },
+    "mature": {
+      "title": "محتوای بزرگسال",
+      "description": "این داستان برای کاربران زیر سن مجاز نمایش داده نشود."
+    },
+    "cover": {
+      "title": "جلد داستان",
+      "alt": "جلد {{title}}",
+      "empty": "بدون تصویر جلد",
+      "preview": "پیش‌نمایش",
+      "select": "انتخاب تصویر",
+      "selectedFile": "فایل انتخاب‌شده: {{name}}",
+      "upload": "بارگذاری جلد",
+      "uploading": "در حال بارگذاری…",
+      "help": "تصویر JPEG یا PNG انتخاب کنید."
+    },
+    "chapters": {
+      "title": "فصل‌های داستان",
+      "description": "فصل جدید بسازید یا یکی از فصل‌های موجود را ویرایش کنید.",
+      "count": "{{value}} فصل",
+      "newTitleLabel": "عنوان فصل جدید",
+      "newTitlePlaceholder": "عنوان فصل جدید",
+      "create": "ساخت فصل",
+      "wordCount": "{{value}} واژه",
+      "version": "نسخه {{value}}",
+      "editing": "در حال ویرایش",
+      "edit": "ویرایش",
+      "emptyTitle": "هنوز فصلی وجود ندارد",
+      "emptyDescription": "عنوان اولین فصل را وارد کنید تا نوشتن داستان را شروع کنید."
+    },
+    "chapterStatus": {
+      "DRAFT": "پیش‌نویس",
+      "PUBLISHED": "منتشرشده"
+    },
+    "editor": {
+      "chapterNumber": "فصل {{value}}",
+      "ready": "آمادهٔ ویرایش",
+      "titleLabel": "عنوان فصل",
+      "contentLabel": "متن فصل",
+      "contentPlaceholder": "نوشتن این فصل را شروع کنید…",
+      "wordCount": "{{value}} واژه",
+      "characterCount": "{{value}} از ۱۰۰٬۰۰۰ نویسه",
+      "version": "نسخه {{value}}",
+      "emptyTitle": "یک فصل را برای ویرایش انتخاب کنید",
+      "emptyDescription": "از فهرست بالا یک فصل را انتخاب کنید یا فصل جدیدی بسازید.",
+      "loadedVersion": "نسخه {{version}} از سرور دریافت شد.",
+      "savingServer": "در حال ذخیره روی سرور…",
+      "savedVersion": "ذخیره شد · نسخه {{version}}",
+      "savingNewerChanges": "نسخهٔ قبلی ذخیره شد؛ تغییرات جدیدتر در حال ذخیره است…",
+      "saveStoppedConflict": "ذخیره متوقف شد؛ نسخهٔ جدیدتری روی سرور وجود دارد.",
+      "saveFailedLocalKept": "ذخیره روی سرور ناموفق بود؛ نسخهٔ محلی حفظ شده است.",
+      "localSavedPending": "تغییرات محلی ذخیره شد؛ در انتظار ذخیره روی سرور…",
+      "localRecovered": "نسخهٔ محلی بازیابی شد و آمادهٔ ذخیره است."
+    },
+    "recovery": {
+      "title": "یک نسخهٔ محلی پیدا شد",
+      "description": "این نسخه در {{date}} ذخیره شده و با نسخهٔ سرور متفاوت است.",
+      "restore": "بازیابی نسخه",
+      "discard": "کنار گذاشتن"
+    },
+    "conflict": {
+      "title": "تعارض ویرایش",
+      "description": "این فصل در جای دیگری تغییر کرده است. برای جلوگیری از ازدست‌رفتن نوشته‌ها، ذخیرهٔ خودکار متوقف شده و نسخهٔ محلی در مرورگر باقی مانده است.",
+      "serverVersion": "آخرین نسخهٔ سرور: {{version}}",
+      "loadServer": "دریافت نسخهٔ سرور"
+    }
+  },
   "browse": {
     "title": "مرور داستان‌ها",
     "loading": "در حال دریافت داستان‌ها...",

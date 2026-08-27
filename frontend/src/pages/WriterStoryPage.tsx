@@ -84,19 +84,11 @@ type EditorSaveState =
   | "error"
   | "conflict";
 
-const STORY_STATUS_LABELS: Record<Story["status"], string> = {
-  DRAFT: "پیش‌نویس",
-  SCHEDULED: "زمان‌بندی‌شده",
-  ONGOING: "در حال انتشار",
-  COMPLETED: "کامل‌شده",
-  HIATUS: "در حال وقفه",
-};
-
-const RIGHTS_LABELS: Record<StoryRights, string> = {
-  ALL_RIGHTS_RESERVED: "تمام حقوق محفوظ است",
-  CREATIVE_COMMONS: "Creative Commons",
-  PUBLIC_DOMAIN: "مالکیت عمومی",
-};
+const STORY_RIGHTS: StoryRights[] = [
+  "ALL_RIGHTS_RESERVED",
+  "CREATIVE_COMMONS",
+  "PUBLIC_DOMAIN",
+];
 
 function draftKey(storyId: string, chapterId: string): string {
   return `writing-platform:draft:${storyId}:${chapterId}`;
@@ -105,17 +97,13 @@ function draftKey(storyId: string, chapterId: string): string {
 function countWords(content: string): number {
   const normalizedContent = content.trim();
 
-  if (!normalizedContent) {
-    return 0;
-  }
-
-  return normalizedContent.split(/\s+/u).length;
+  return normalizedContent ? normalizedContent.split(/\s+/u).length : 0;
 }
 
 export default function WriterStoryPage() {
   const { storyId = "", chapterId } = useParams();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { request } = useAuth();
 
   const [story, setStory] = useState<Story | null>(null);
@@ -181,6 +169,7 @@ export default function WriterStoryPage() {
   const loadStory = useCallback(async (): Promise<void> => {
     const [storyResponse, genreResponse] = await Promise.all([
       request<StoryResponse>(`/api/v1/stories/mine/${storyId}`),
+
       request<GenresResponse>("/api/v1/stories/genres"),
     ]);
 
@@ -253,6 +242,7 @@ export default function WriterStoryPage() {
         const serverContent = chapter.content ?? "";
 
         chapterRef.current = chapter;
+
         latestDraftRef.current = {
           title: chapter.title,
           content: serverContent,
@@ -263,7 +253,11 @@ export default function WriterStoryPage() {
         setEditorTitle(chapter.title);
         setEditorContent(serverContent);
         setSaveState("saved");
-        setSaveMessage(`نسخه ${chapter.version} از سرور دریافت شد.`);
+        setSaveMessage(
+          t("writer.editor.loadedVersion", {
+            version: chapter.version,
+          }),
+        );
 
         const rawDraft = localStorage.getItem(
           draftKey(storyId, targetChapterId),
@@ -296,7 +290,7 @@ export default function WriterStoryPage() {
         setChapterLoading(false);
       }
     },
-    [request, resetEditorRefs, storyId],
+    [request, resetEditorRefs, storyId, t],
   );
 
   useEffect(() => {
@@ -322,6 +316,7 @@ export default function WriterStoryPage() {
     }
 
     const objectUrl = URL.createObjectURL(cover);
+
     setCoverPreviewUrl(objectUrl);
 
     return () => {
@@ -363,7 +358,7 @@ export default function WriterStoryPage() {
       const expectedVersion = currentChapter.version;
 
       setSaveState("saving");
-      setSaveMessage("در حال ذخیره روی سرور…");
+      setSaveMessage(t("writer.editor.savingServer"));
       setError(null);
 
       try {
@@ -371,8 +366,10 @@ export default function WriterStoryPage() {
           `/api/v1/stories/${storyId}/chapters/${chapterId}`,
           {
             method: "PATCH",
+
             body: JSON.stringify({
               title: sentTitle.trim() || currentChapter.title,
+
               content: sentContent,
               expectedVersion,
             }),
@@ -391,6 +388,7 @@ export default function WriterStoryPage() {
 
           return {
             ...currentStory,
+
             chapters: currentStory.chapters.map((item) =>
               item.id === value.id
                 ? {
@@ -411,13 +409,19 @@ export default function WriterStoryPage() {
 
           setLocalDraft(null);
           setSaveState("saved");
-          setSaveMessage(`ذخیره شد · نسخه ${value.version}`);
+
+          setSaveMessage(
+            t("writer.editor.savedVersion", {
+              version: value.version,
+            }),
+          );
 
           return true;
         }
 
         setSaveState("saving");
-        setSaveMessage("نسخهٔ قبلی ذخیره شد؛ تغییرات جدیدتر در حال ذخیره است…");
+
+        setSaveMessage(t("writer.editor.savingNewerChanges"));
       } catch (cause) {
         if (
           cause instanceof ApiError &&
@@ -425,19 +429,22 @@ export default function WriterStoryPage() {
           cause.code === "CHAPTER_EDIT_CONFLICT"
         ) {
           const details = cause.details as ConflictInfo | undefined;
+
           const nextConflict = details ?? {};
 
           conflictRef.current = nextConflict;
+
           setConflict(nextConflict);
           setSaveState("conflict");
-          setSaveMessage("ذخیره متوقف شد؛ نسخهٔ جدیدتری روی سرور وجود دارد.");
+          setSaveMessage(t("writer.editor.saveStoppedConflict"));
 
           return false;
         }
 
         setError(getErrorMessage(cause));
         setSaveState("error");
-        setSaveMessage("ذخیره روی سرور ناموفق بود؛ نسخهٔ محلی حفظ شده است.");
+
+        setSaveMessage(t("writer.editor.saveFailedLocalKept"));
 
         return false;
       }
@@ -486,7 +493,7 @@ export default function WriterStoryPage() {
     persistRecoveryDraft(nextTitle, nextContent);
 
     setSaveState("local");
-    setSaveMessage("تغییرات محلی ذخیره شد؛ در انتظار ذخیره روی سرور…");
+    setSaveMessage(t("writer.editor.localSavedPending"));
 
     window.clearTimeout(saveTimerRef.current);
 
@@ -520,6 +527,7 @@ export default function WriterStoryPage() {
         `/api/v1/stories/${storyId}`,
         {
           method: "PATCH",
+
           body: JSON.stringify({
             title: title.trim(),
             description: description.trim(),
@@ -545,7 +553,7 @@ export default function WriterStoryPage() {
       );
 
       setStory(response.data.story);
-      setMessage("مشخصات داستان ذخیره شد.");
+      setMessage(t("writer.messages.metadataSaved"));
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -572,6 +580,7 @@ export default function WriterStoryPage() {
 
     try {
       const form = new FormData();
+
       form.append("file", cover);
 
       const response = await request<MediaResponse>(
@@ -597,7 +606,7 @@ export default function WriterStoryPage() {
         coverInputRef.current.value = "";
       }
 
-      setMessage("تصویر جلد ذخیره شد.");
+      setMessage(t("writer.messages.coverSaved"));
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -625,6 +634,7 @@ export default function WriterStoryPage() {
         `/api/v1/stories/${storyId}/chapters`,
         {
           method: "POST",
+
           body: JSON.stringify({
             title: normalizedTitle,
             content: "",
@@ -638,6 +648,7 @@ export default function WriterStoryPage() {
         currentStory
           ? {
               ...currentStory,
+
               chapters: [...(currentStory.chapters ?? []), newChapter],
             }
           : currentStory,
@@ -681,7 +692,11 @@ export default function WriterStoryPage() {
 
       await loadStory();
 
-      setMessage(isPublic ? "داستان از انتشار خارج شد." : "داستان منتشر شد.");
+      setMessage(
+        isPublic
+          ? t("writer.messages.storyUnpublished")
+          : t("writer.messages.storyPublished"),
+      );
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -732,6 +747,7 @@ export default function WriterStoryPage() {
 
         return {
           ...currentStory,
+
           chapters: currentStory.chapters.map((item) =>
             item.id === value.id
               ? {
@@ -744,10 +760,11 @@ export default function WriterStoryPage() {
       });
 
       setSaveState("saved");
+
       setSaveMessage(
         value.status === "PUBLISHED"
-          ? "فصل منتشر شد."
-          : "فصل به پیش‌نویس برگشت.",
+          ? t("writer.messages.chapterPublished")
+          : t("writer.messages.chapterUnpublished"),
       );
     } catch (cause) {
       setError(getErrorMessage(cause));
@@ -795,9 +812,11 @@ export default function WriterStoryPage() {
     setEditorContent(localDraft.content);
 
     dirtyRef.current = true;
+
     setLocalDraft(null);
     setSaveState("local");
-    setSaveMessage("نسخهٔ محلی بازیابی شد و آمادهٔ ذخیره است.");
+
+    setSaveMessage(t("writer.editor.localRecovered"));
 
     persistRecoveryDraft(localDraft.title, localDraft.content);
   }
@@ -808,6 +827,7 @@ export default function WriterStoryPage() {
     }
 
     localStorage.removeItem(draftKey(storyId, chapterId));
+
     setLocalDraft(null);
   }
 
@@ -817,6 +837,7 @@ export default function WriterStoryPage() {
         {error ? (
           <div className="writer-status writer-status--error" role="alert">
             <CircleAlert aria-hidden="true" size={28} />
+
             <p>{error}</p>
           </div>
         ) : (
@@ -826,7 +847,8 @@ export default function WriterStoryPage() {
               aria-hidden="true"
               size={34}
             />
-            <p>در حال دریافت داستان…</p>
+
+            <p>{t("writer.loading.story")}</p>
           </div>
         )}
       </main>
@@ -834,7 +856,12 @@ export default function WriterStoryPage() {
   }
 
   const displayedCoverUrl = coverPreviewUrl ?? story.coverUrl;
+
   const wordCount = countWords(editorContent);
+
+  const storyStatusLabel = t(`writer.status.${story.status}`, {
+    defaultValue: story.status,
+  });
 
   return (
     <main className="writer-page">
@@ -843,7 +870,8 @@ export default function WriterStoryPage() {
           <div className="writer-header__identity">
             <Link className="writer-back-link" to="/write">
               <ArrowRight aria-hidden="true" size={18} />
-              داستان‌های من
+
+              {t("writer.actions.backToStories")}
             </Link>
 
             <div className="writer-header__title-row">
@@ -852,19 +880,27 @@ export default function WriterStoryPage() {
               </div>
 
               <div>
-                <p className="writer-eyebrow">فضای نویسنده</p>
+                <p className="writer-eyebrow">{t("writer.header.eyebrow")}</p>
 
                 <h1 {...storyTextAttributes}>{story.title}</h1>
 
                 <div className="writer-header__meta">
-                  <span>{STORY_STATUS_LABELS[story.status]}</span>
+                  <span>{storyStatusLabel}</span>
                   <span aria-hidden="true">•</span>
+
                   <span>
-                    {story.visibility === "PUBLIC" ? "منتشرشده" : "خصوصی"}
+                    {story.visibility === "PUBLIC"
+                      ? t("writer.visibility.public")
+                      : t("writer.visibility.private")}
                   </span>
+
                   <span aria-hidden="true">•</span>
+
                   <span>
-                    {chapters.length.toLocaleString(interfaceLocale)} فصل
+                    {t("writer.chapters.count", {
+                      count: chapters.length,
+                      value: chapters.length.toLocaleString(interfaceLocale),
+                    })}
                   </span>
                 </div>
               </div>
@@ -880,7 +916,8 @@ export default function WriterStoryPage() {
                 rel="noreferrer"
               >
                 <Eye aria-hidden="true" size={17} />
-                پیش‌نمایش
+
+                {t("writer.actions.preview")}
               </Link>
             ) : null}
 
@@ -893,8 +930,8 @@ export default function WriterStoryPage() {
               <Send aria-hidden="true" size={17} />
 
               {story.visibility === "PUBLIC"
-                ? "خارج‌کردن از انتشار"
-                : "انتشار داستان"}
+                ? t("writer.actions.unpublishStory")
+                : t("writer.actions.publishStory")}
             </button>
           </div>
         </header>
@@ -902,6 +939,7 @@ export default function WriterStoryPage() {
         {error ? (
           <div className="writer-status writer-status--error" role="alert">
             <CircleAlert aria-hidden="true" size={20} />
+
             <p>{error}</p>
           </div>
         ) : null}
@@ -909,6 +947,7 @@ export default function WriterStoryPage() {
         {message ? (
           <div className="writer-status writer-status--success">
             <Check aria-hidden="true" size={20} />
+
             <p>{message}</p>
           </div>
         ) : null}
@@ -924,8 +963,9 @@ export default function WriterStoryPage() {
               </span>
 
               <div>
-                <h2 id="story-details-title">جزئیات داستان</h2>
-                <p>مشخصات اصلی و نحوهٔ نمایش داستان را تنظیم کنید.</p>
+                <h2 id="story-details-title">{t("writer.details.title")}</h2>
+
+                <p>{t("writer.details.description")}</p>
               </div>
             </div>
           </header>
@@ -937,7 +977,7 @@ export default function WriterStoryPage() {
             >
               <div className="writer-form-grid writer-form-grid--two">
                 <label className="writer-field">
-                  <span>عنوان داستان</span>
+                  <span>{t("writer.fields.storyTitle")}</span>
 
                   <input
                     value={title}
@@ -950,21 +990,22 @@ export default function WriterStoryPage() {
                 </label>
 
                 <label className="writer-field">
-                  <span>زبان داستان</span>
+                  <span>{t("writer.fields.language")}</span>
 
                   <select
                     value={language}
-                    dir="ltr"
+                    dir={i18n.dir()}
                     onChange={(event) => setLanguage(event.target.value)}
                   >
-                    <option value="fa">فارسی</option>
-                    <option value="en">English</option>
+                    <option value="fa">{t("writer.languages.fa")}</option>
+
+                    <option value="en">{t("writer.languages.en")}</option>
                   </select>
                 </label>
               </div>
 
               <label className="writer-field">
-                <span>معرفی داستان</span>
+                <span>{t("writer.fields.description")}</span>
 
                 <textarea
                   value={description}
@@ -977,31 +1018,34 @@ export default function WriterStoryPage() {
                 />
 
                 <small>
-                  {description.length.toLocaleString(interfaceLocale)} از ۵٬۰۰۰
-                  نویسه
+                  {t("writer.fields.descriptionCount", {
+                    value: description.length.toLocaleString(interfaceLocale),
+                  })}
                 </small>
               </label>
 
               <div className="writer-form-grid writer-form-grid--three">
                 <label className="writer-field">
-                  <span>ژانر</span>
+                  <span>{t("writer.fields.genre")}</span>
 
                   <select
                     value={genreSlug}
                     onChange={(event) => setGenreSlug(event.target.value)}
                   >
-                    <option value="">بدون ژانر</option>
+                    <option value="">{t("writer.genres.none")}</option>
 
                     {genres.map((genre) => (
                       <option key={genre.slug} value={genre.slug}>
-                        {genre.name}
+                        {t(`genres.items.${genre.slug}`, {
+                          defaultValue: genre.name,
+                        })}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <label className="writer-field">
-                  <span>وضعیت داستان</span>
+                  <span>{t("writer.fields.status")}</span>
 
                   <select
                     value={storyStatus}
@@ -1010,23 +1054,29 @@ export default function WriterStoryPage() {
                     }
                   >
                     <option value="DRAFT" disabled>
-                      پیش‌نویس
+                      {t("writer.status.DRAFT")}
                     </option>
 
                     {storyStatus === "SCHEDULED" ? (
                       <option value="SCHEDULED" disabled>
-                        زمان‌بندی‌شده
+                        {t("writer.status.SCHEDULED")}
                       </option>
                     ) : null}
 
-                    <option value="ONGOING">در حال انتشار</option>
-                    <option value="COMPLETED">کامل‌شده</option>
-                    <option value="HIATUS">وقفه</option>
+                    <option value="ONGOING">
+                      {t("writer.status.ONGOING")}
+                    </option>
+
+                    <option value="COMPLETED">
+                      {t("writer.status.COMPLETED")}
+                    </option>
+
+                    <option value="HIATUS">{t("writer.status.HIATUS")}</option>
                   </select>
                 </label>
 
                 <label className="writer-field">
-                  <span>حقوق اثر</span>
+                  <span>{t("writer.fields.rights")}</span>
 
                   <select
                     value={rights}
@@ -1034,9 +1084,9 @@ export default function WriterStoryPage() {
                       setRights(event.target.value as StoryRights)
                     }
                   >
-                    {Object.entries(RIGHTS_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
+                    {STORY_RIGHTS.map((storyRight) => (
+                      <option key={storyRight} value={storyRight}>
+                        {t(`writer.rights.${storyRight}`)}
                       </option>
                     ))}
                   </select>
@@ -1044,17 +1094,17 @@ export default function WriterStoryPage() {
               </div>
 
               <label className="writer-field">
-                <span>برچسب‌ها</span>
+                <span>{t("writer.fields.tags")}</span>
 
                 <input
                   value={tags}
                   maxLength={500}
-                  placeholder="فانتزی، ماجراجویی، عاشقانه"
+                  placeholder={t("writer.fields.tagsPlaceholder")}
                   {...storyTextAttributes}
                   onChange={(event) => setTags(event.target.value)}
                 />
 
-                <small>برچسب‌ها را با ویرگول جدا کنید.</small>
+                <small>{t("writer.fields.tagsHelp")}</small>
               </label>
 
               <label className="writer-checkbox">
@@ -1065,10 +1115,9 @@ export default function WriterStoryPage() {
                 />
 
                 <span>
-                  <strong>محتوای بزرگسال</strong>
-                  <small>
-                    این داستان برای کاربران زیر سن مجاز نمایش داده نشود.
-                  </small>
+                  <strong>{t("writer.mature.title")}</strong>
+
+                  <small>{t("writer.mature.description")}</small>
                 </span>
               </label>
 
@@ -1087,29 +1136,36 @@ export default function WriterStoryPage() {
                   <Save aria-hidden="true" size={17} />
                 )}
 
-                {metadataBusy ? "در حال ذخیره…" : "ذخیره مشخصات"}
+                {metadataBusy
+                  ? t("writer.actions.saving")
+                  : t("writer.actions.saveMetadata")}
               </button>
             </form>
 
             <aside className="writer-cover-panel">
-              <h3>جلد داستان</h3>
+              <h3>{t("writer.cover.title")}</h3>
 
               <div className="writer-cover-preview">
                 {displayedCoverUrl ? (
                   <img
                     src={displayedCoverUrl}
-                    alt={`جلد ${story.title}`}
+                    alt={t("writer.cover.alt", {
+                      title: story.title,
+                    })}
                     referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="writer-cover-placeholder">
                     <ImagePlus aria-hidden="true" size={38} />
-                    <span>بدون تصویر جلد</span>
+
+                    <span>{t("writer.cover.empty")}</span>
                   </div>
                 )}
 
                 {coverPreviewUrl ? (
-                  <span className="writer-cover-preview__badge">پیش‌نمایش</span>
+                  <span className="writer-cover-preview__badge">
+                    {t("writer.cover.preview")}
+                  </span>
                 ) : null}
               </div>
 
@@ -1128,12 +1184,17 @@ export default function WriterStoryPage() {
                 onClick={() => coverInputRef.current?.click()}
               >
                 <ImagePlus aria-hidden="true" size={17} />
-                انتخاب تصویر
+
+                {t("writer.cover.select")}
               </button>
 
               {cover ? (
                 <>
-                  <p className="writer-cover-panel__filename">{cover.name}</p>
+                  <p className="writer-cover-panel__filename">
+                    {t("writer.cover.selectedFile", {
+                      name: cover.name,
+                    })}
+                  </p>
 
                   <button
                     className="writer-button writer-button--primary"
@@ -1151,12 +1212,14 @@ export default function WriterStoryPage() {
                       <Upload aria-hidden="true" size={17} />
                     )}
 
-                    {coverBusy ? "در حال بارگذاری…" : "بارگذاری جلد"}
+                    {coverBusy
+                      ? t("writer.cover.uploading")
+                      : t("writer.cover.upload")}
                   </button>
                 </>
               ) : (
                 <p className="writer-cover-panel__help">
-                  تصویر JPEG یا PNG انتخاب کنید.
+                  {t("writer.cover.help")}
                 </p>
               )}
             </aside>
@@ -1174,8 +1237,9 @@ export default function WriterStoryPage() {
               </span>
 
               <div>
-                <h2 id="chapters-title">فصل‌های داستان</h2>
-                <p>فصل جدید بسازید یا یکی از فصل‌های موجود را ویرایش کنید.</p>
+                <h2 id="chapters-title">{t("writer.chapters.title")}</h2>
+
+                <p>{t("writer.chapters.description")}</p>
               </div>
             </div>
 
@@ -1189,14 +1253,14 @@ export default function WriterStoryPage() {
             onSubmit={(event) => void createChapter(event)}
           >
             <label className="sr-only" htmlFor="new-chapter-title">
-              عنوان فصل جدید
+              {t("writer.chapters.newTitleLabel")}
             </label>
 
             <input
               id="new-chapter-title"
               value={newChapterTitle}
               maxLength={200}
-              placeholder="عنوان فصل جدید"
+              placeholder={t("writer.chapters.newTitlePlaceholder")}
               {...storyTextAttributes}
               onChange={(event) => setNewChapterTitle(event.target.value)}
             />
@@ -1215,7 +1279,8 @@ export default function WriterStoryPage() {
               ) : (
                 <Plus aria-hidden="true" size={17} />
               )}
-              ساخت فصل
+
+              {t("writer.chapters.create")}
             </button>
           </form>
 
@@ -1246,21 +1311,24 @@ export default function WriterStoryPage() {
                         </strong>
 
                         <small>
-                          {chapter.status === "PUBLISHED"
-                            ? "منتشرشده"
-                            : "پیش‌نویس"}
+                          {t(`writer.chapterStatus.${chapter.status}`)}
                           {" · "}
-                          {chapter.wordCount.toLocaleString(
-                            interfaceLocale,
-                          )}{" "}
-                          واژه
+                          {t("writer.chapters.wordCount", {
+                            value:
+                              chapter.wordCount.toLocaleString(interfaceLocale),
+                          })}
                           {" · "}
-                          نسخه {chapter.version.toLocaleString(interfaceLocale)}
+                          {t("writer.chapters.version", {
+                            value:
+                              chapter.version.toLocaleString(interfaceLocale),
+                          })}
                         </small>
                       </span>
 
                       <span className="writer-chapter-item__action">
-                        {isSelected ? "در حال ویرایش" : "ویرایش"}
+                        {isSelected
+                          ? t("writer.chapters.editing")
+                          : t("writer.chapters.edit")}
                       </span>
                     </button>
                   </li>
@@ -1270,8 +1338,10 @@ export default function WriterStoryPage() {
           ) : (
             <div className="writer-empty-chapters">
               <FileText aria-hidden="true" size={38} />
-              <h3>هنوز فصلی وجود ندارد</h3>
-              <p>عنوان اولین فصل را وارد کنید تا نوشتن داستان را شروع کنید.</p>
+
+              <h3>{t("writer.chapters.emptyTitle")}</h3>
+
+              <p>{t("writer.chapters.emptyDescription")}</p>
             </div>
           )}
         </section>
@@ -1288,15 +1358,20 @@ export default function WriterStoryPage() {
                 aria-hidden="true"
                 size={34}
               />
-              <p>در حال دریافت فصل…</p>
+
+              <p>{t("writer.loading.chapter")}</p>
             </div>
           ) : selectedChapter && chapterId ? (
             <>
               <header className="writer-editor__toolbar">
                 <div>
                   <p className="writer-eyebrow">
-                    فصل{" "}
-                    {selectedChapter.position.toLocaleString(interfaceLocale)}
+                    {t("writer.editor.chapterNumber", {
+                      value:
+                        selectedChapter.position.toLocaleString(
+                          interfaceLocale,
+                        ),
+                    })}
                   </p>
 
                   <h2 id="chapter-editor-title" {...storyTextAttributes}>
@@ -1321,7 +1396,7 @@ export default function WriterStoryPage() {
                       <CircleAlert aria-hidden="true" size={15} />
                     ) : null}
 
-                    {saveMessage || "آمادهٔ ویرایش"}
+                    {saveMessage || t("writer.editor.ready")}
                   </span>
 
                   <button
@@ -1331,7 +1406,8 @@ export default function WriterStoryPage() {
                     onClick={() => void saveToServer()}
                   >
                     <Save aria-hidden="true" size={17} />
-                    ذخیره
+
+                    {t("writer.actions.save")}
                   </button>
 
                   <button
@@ -1343,8 +1419,8 @@ export default function WriterStoryPage() {
                     <Send aria-hidden="true" size={17} />
 
                     {selectedChapter.status === "PUBLISHED"
-                      ? "خارج‌کردن فصل از انتشار"
-                      : "انتشار فصل"}
+                      ? t("writer.actions.unpublishChapter")
+                      : t("writer.actions.publishChapter")}
                   </button>
                 </div>
               </header>
@@ -1354,14 +1430,14 @@ export default function WriterStoryPage() {
                   <CircleAlert aria-hidden="true" size={21} />
 
                   <div>
-                    <strong>یک نسخهٔ محلی پیدا شد</strong>
+                    <strong>{t("writer.recovery.title")}</strong>
 
                     <p>
-                      این نسخه در{" "}
-                      {new Date(localDraft.savedAt).toLocaleString(
-                        interfaceLocale,
-                      )}{" "}
-                      ذخیره شده و با نسخهٔ سرور متفاوت است.
+                      {t("writer.recovery.description", {
+                        date: new Date(localDraft.savedAt).toLocaleString(
+                          interfaceLocale,
+                        ),
+                      })}
                     </p>
                   </div>
 
@@ -1371,7 +1447,7 @@ export default function WriterStoryPage() {
                       type="button"
                       onClick={recoverLocalDraft}
                     >
-                      بازیابی نسخه
+                      {t("writer.recovery.restore")}
                     </button>
 
                     <button
@@ -1379,7 +1455,7 @@ export default function WriterStoryPage() {
                       type="button"
                       onClick={discardLocalDraft}
                     >
-                      کنار گذاشتن
+                      {t("writer.recovery.discard")}
                     </button>
                   </div>
                 </div>
@@ -1390,20 +1466,18 @@ export default function WriterStoryPage() {
                   <CircleAlert aria-hidden="true" size={23} />
 
                   <div>
-                    <strong>تعارض ویرایش</strong>
+                    <strong>{t("writer.conflict.title")}</strong>
 
-                    <p>
-                      این فصل در جای دیگری تغییر کرده است. برای جلوگیری از
-                      ازدست‌رفتن نوشته‌ها، ذخیرهٔ خودکار متوقف شده و نسخهٔ محلی
-                      در مرورگر باقی مانده است.
-                    </p>
+                    <p>{t("writer.conflict.description")}</p>
 
                     {conflict.currentVersion ? (
                       <small>
-                        آخرین نسخهٔ سرور:{" "}
-                        {conflict.currentVersion.toLocaleString(
-                          interfaceLocale,
-                        )}
+                        {t("writer.conflict.serverVersion", {
+                          version:
+                            conflict.currentVersion.toLocaleString(
+                              interfaceLocale,
+                            ),
+                        })}
                       </small>
                     ) : null}
                   </div>
@@ -1413,14 +1487,14 @@ export default function WriterStoryPage() {
                     type="button"
                     onClick={() => void loadChapter(chapterId)}
                   >
-                    دریافت نسخهٔ سرور
+                    {t("writer.conflict.loadServer")}
                   </button>
                 </div>
               ) : null}
 
               <div className="writer-editor__fields">
                 <label className="writer-field" htmlFor="chapter-title">
-                  <span>عنوان فصل</span>
+                  <span>{t("writer.editor.titleLabel")}</span>
 
                   <input
                     id="chapter-title"
@@ -1432,13 +1506,14 @@ export default function WriterStoryPage() {
                       const nextTitle = event.target.value;
 
                       setEditorTitle(nextTitle);
+
                       scheduleSave(nextTitle, editorContent);
                     }}
                   />
                 </label>
 
                 <label className="writer-field" htmlFor="chapter-content">
-                  <span>متن فصل</span>
+                  <span>{t("writer.editor.contentLabel")}</span>
 
                   <textarea
                     id="chapter-content"
@@ -1446,29 +1521,37 @@ export default function WriterStoryPage() {
                     value={editorContent}
                     maxLength={100000}
                     spellCheck
-                    placeholder="نوشتن این فصل را شروع کنید…"
+                    placeholder={t("writer.editor.contentPlaceholder")}
                     {...storyTextAttributes}
                     onChange={(event) => {
                       const nextContent = event.target.value;
 
                       setEditorContent(nextContent);
+
                       scheduleSave(editorTitle, nextContent);
                     }}
                   />
                 </label>
 
                 <footer className="writer-editor__footer">
-                  <span>{wordCount.toLocaleString(interfaceLocale)} واژه</span>
-
                   <span>
-                    {editorContent.length.toLocaleString(interfaceLocale)}
-                    {" / "}
-                    ۱۰۰٬۰۰۰ نویسه
+                    {t("writer.editor.wordCount", {
+                      value: wordCount.toLocaleString(interfaceLocale),
+                    })}
                   </span>
 
                   <span>
-                    نسخه{" "}
-                    {selectedChapter.version.toLocaleString(interfaceLocale)}
+                    {t("writer.editor.characterCount", {
+                      value:
+                        editorContent.length.toLocaleString(interfaceLocale),
+                    })}
+                  </span>
+
+                  <span>
+                    {t("writer.editor.version", {
+                      value:
+                        selectedChapter.version.toLocaleString(interfaceLocale),
+                    })}
                   </span>
                 </footer>
               </div>
@@ -1477,11 +1560,9 @@ export default function WriterStoryPage() {
             <div className="writer-editor__empty">
               <BookOpen aria-hidden="true" size={42} />
 
-              <h2 id="chapter-editor-title">
-                یک فصل را برای ویرایش انتخاب کنید
-              </h2>
+              <h2 id="chapter-editor-title">{t("writer.editor.emptyTitle")}</h2>
 
-              <p>از فهرست بالا یک فصل را انتخاب کنید یا فصل جدیدی بسازید.</p>
+              <p>{t("writer.editor.emptyDescription")}</p>
             </div>
           )}
         </section>
