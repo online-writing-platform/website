@@ -13,9 +13,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* =========================
-     Base
-     ========================= */
+  /* Base */
 
   --background: #f8f8fb;
   --surface: #ffffff;
@@ -28,47 +26,35 @@
 
   --border: #e3e3ea;
 
-  /* =========================
-     Primary - Purple
-     ========================= */
+  /* Primary - Purple */
 
   --primary: #6750d8;
   --primary-hover: #5943c5;
   --primary-soft: #efecff;
   --primary-normal: #6750d8;
 
-  /* =========================
-     Accent - Orange
-     ========================= */
+  /* Accent - Orange */
 
   --accent: #f97345;
   --accent-soft: #fff0ea;
   --accent-foreground: #ffffff;
 
-  /* =========================
-     Status
-     ========================= */
+  /* Status */
 
   --success: #16a36a;
   --warning: #d99000;
   --danger: #dc3e4f;
 
-  /* =========================
-     Effects
-     ========================= */
+  /* Effects */
 
   --shadow: 0 4px 12px rgb(24 24 27 / 10%);
 
-  /* =========================
-     Layout
-     ========================= */
+  /* Layout */
 
   --content-max: 1180px;
   --reader-max: 760px;
 
-  /* =========================
-     shadcn / UI
-     ========================= */
+  /* shadcn / UI */
 
   --foreground: #18181b;
 
@@ -92,9 +78,7 @@
 
   --ring: #6750d8;
 
-  /* =========================
-     Charts
-     ========================= */
+  /* Charts */
 
   --chart-1: #6750d8;
   --chart-2: #f97345;
@@ -102,15 +86,11 @@
   --chart-4: #d99000;
   --chart-5: #dc3e4f;
 
-  /* =========================
-     Misc
-     ========================= */
+  /* Misc */
 
   --radius: 0.625rem;
 
-  /* =========================
-     Sidebar
-     ========================= */
+  /* Sidebar */
 
   --sidebar: #ffffff;
   --sidebar-foreground: #18181b;
@@ -126,9 +106,7 @@
 }
 
 .dark {
-  /* =========================
-     Base
-     ========================= */
+  /* Base */
 
   --background: #101014;
   --surface: #18181d;
@@ -141,40 +119,30 @@
 
   --border: #303038;
 
-  /* =========================
-     Primary - Purple
-     ========================= */
+  /* Primary - Purple */
 
   --primary: #8c7af0;
   --primary-hover: #9d8df5;
   --primary-soft: #292348;
   --primary-normal: #8c7af0;
 
-  /* =========================
-     Accent - Orange
-     ========================= */
+  /* Accent - Orange */
 
   --accent: #ff895f;
   --accent-soft: #3a2118;
   --accent-foreground: #ffffff;
 
-  /* =========================
-     Status
-     ========================= */
+  /* Status */
 
   --success: #40c991;
   --warning: #f0b84d;
   --danger: #f06472;
 
-  /* =========================
-     Effects
-     ========================= */
+  /* Effects */
 
   --shadow: 0 4px 16px rgb(0 0 0 / 45%);
 
-  /* =========================
-     shadcn / UI
-     ========================= */
+  /* shadcn / UI */
 
   --foreground: #f2f2f5;
 
@@ -198,9 +166,7 @@
 
   --ring: #8c7af0;
 
-  /* =========================
-     Charts
-     ========================= */
+  /* Charts */
 
   --chart-1: #8c7af0;
   --chart-2: #ff895f;
@@ -208,9 +174,7 @@
   --chart-4: #f0b84d;
   --chart-5: #f06472;
 
-  /* =========================
-     Sidebar
-     ========================= */
+  /* Sidebar */
 
   --sidebar: #18181d;
   --sidebar-foreground: #f2f2f5;

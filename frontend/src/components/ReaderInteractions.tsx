@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
-import { getStoryTextAttributes } from "../lib/story-language";
 
 interface CommentAuthor {
   username: string;
@@ -44,12 +43,16 @@ interface VoteResponse {
 
 interface ReaderInteractionsProps {
   chapterId: string;
+
+  /*
+   * برای سازگاری با ReaderPage باقی مانده است.
+   * جهت کامنت‌ها عمداً از زبان رابط سایت گرفته می‌شود.
+   */
   contentLanguage?: string;
 }
 
 export default function ReaderInteractions({
   chapterId,
-  contentLanguage,
 }: ReaderInteractionsProps) {
   const { t, i18n } = useTranslation();
   const { status, request } = useAuth();
@@ -65,7 +68,7 @@ export default function ReaderInteractions({
     ? "en-US"
     : "fa-IR";
 
-  const commentTextAttributes = getStoryTextAttributes(contentLanguage);
+  const interfaceDirection = i18n.dir();
 
   const load = useCallback(async (): Promise<void> => {
     const loadPublic = <T,>(path: string) =>
@@ -96,7 +99,9 @@ export default function ReaderInteractions({
 
   useEffect(() => {
     const loadTimer = window.setTimeout(() => {
-      void load().catch((cause) => setError(getErrorMessage(cause)));
+      void load().catch((cause) => {
+        setError(getErrorMessage(cause));
+      });
     }, 0);
 
     return () => {
@@ -161,7 +166,12 @@ export default function ReaderInteractions({
   }
 
   return (
-    <section className="reader-interactions" aria-labelledby="discussion-title">
+    <section
+      className="reader-interactions"
+      aria-labelledby="discussion-title"
+      dir={interfaceDirection}
+      lang={i18n.resolvedLanguage?.startsWith("en") ? "en" : "fa"}
+    >
       <div className="reader-interactions__summary">
         {status === "authenticated" ? (
           <button
@@ -209,7 +219,7 @@ export default function ReaderInteractions({
             value={comment}
             maxLength={2000}
             rows={4}
-            {...commentTextAttributes}
+            dir={interfaceDirection}
             onChange={(event) => setComment(event.target.value)}
           />
 
@@ -224,7 +234,7 @@ export default function ReaderInteractions({
           </button>
         </form>
       ) : (
-        <p>
+        <p className="reader-interactions__login-message">
           {t("reader.interactions.loginPrefix")}{" "}
           <Link to="/login">{t("reader.interactions.loginLink")}</Link>
           {t("reader.interactions.loginSuffix")}
@@ -236,7 +246,7 @@ export default function ReaderInteractions({
           <p className="empty-state">{t("reader.interactions.empty")}</p>
         ) : (
           comments.map((item) => (
-            <article className="comment" key={item.id}>
+            <article className="comment" key={item.id} dir={interfaceDirection}>
               <header>
                 {item.author ? (
                   <Link
@@ -244,7 +254,7 @@ export default function ReaderInteractions({
                   >
                     <strong>{item.author.displayName}</strong>
 
-                    <span>@{item.author.username}</span>
+                    <span dir="ltr">@{item.author.username}</span>
                   </Link>
                 ) : (
                   <strong>{t("reader.interactions.deletedUser")}</strong>
@@ -255,7 +265,7 @@ export default function ReaderInteractions({
                 </time>
               </header>
 
-              <p {...commentTextAttributes}>
+              <p dir={interfaceDirection}>
                 {item.status === "ACTIVE"
                   ? item.content
                   : t("reader.interactions.unavailableComment")}
@@ -265,6 +275,7 @@ export default function ReaderInteractions({
                 <small>
                   {t("reader.interactions.replyCount", {
                     count: item.replyCount,
+
                     value: item.replyCount.toLocaleString(interfaceLocale),
                   })}
                 </small>
