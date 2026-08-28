@@ -11,8 +11,13 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to seed the database.");
 }
 
-if (process.env.NODE_ENV === "production" && process.env.ALLOW_PRODUCTION_SEED !== "true") {
-  throw new Error("Production seed is disabled. Set ALLOW_PRODUCTION_SEED=true only for an intentional demo environment.");
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.ALLOW_PRODUCTION_SEED !== "true"
+) {
+  throw new Error(
+    "Production seed is disabled. Set ALLOW_PRODUCTION_SEED=true only for an intentional demo environment.",
+  );
 }
 
 const adapter = new PrismaPg({
@@ -44,9 +49,7 @@ const genres = [
   ["short-story", "Short Story"],
 ] as const;
 
-/* --------------------------------------------------
- * Fake authors
- * -------------------------------------------------- */
+// Fake authors
 
 const authors = [
   {
@@ -91,13 +94,76 @@ const authors = [
     email: "luna.writer@example.com",
     bio: "A fictional writer created for development and testing.",
   },
+
+  // Persian fake authors
+
+  {
+    username: "darya_writer",
+    displayName: "دریا",
+    email: "darya.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "roya_writer",
+    displayName: "رویا",
+    email: "roya.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "parisa_writer",
+    displayName: "پریسا",
+    email: "parisa.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "negar_writer",
+    displayName: "نگار",
+    email: "negar.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "shabnam_writer",
+    displayName: "شبنم",
+    email: "shabnam.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "mahtab_writer",
+    displayName: "مهتاب",
+    email: "mahtab.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "bahar_writer",
+    displayName: "بهار",
+    email: "bahar.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "ava_writer",
+    displayName: "آوا",
+    email: "ava.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "setareh_writer",
+    displayName: "ستاره",
+    email: "setareh.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
+  {
+    username: "yasaman_writer",
+    displayName: "یاسمن",
+    email: "yasaman.writer@example.com",
+    bio: "نویسنده‌ای خیالی برای توسعه و آزمایش نسخه فارسی پلتفرم.",
+  },
 ] as const;
 
 /* --------------------------------------------------
  * Fake stories
  * -------------------------------------------------- */
 
-const stories = [
+const englishStories = [
   {
     title: "The Last Train Home",
     slug: "the-last-train-home",
@@ -681,6 +747,800 @@ Then the ocean became completely still.
 ] as const;
 
 /* --------------------------------------------------
+ * Persian fake stories
+ * -------------------------------------------------- */
+
+const persianStories = [
+  {
+    title: "صدای باران پشت پنجره",
+    slug: "sedaye-baran-poshte-panjere",
+    description:
+      "دختری پس از سال‌ها به خانه قدیمی خانواده بازمی‌گردد. صدای باران و یادداشتی پشت پنجره، خاطره‌ای فراموش‌شده را دوباره زنده می‌کند.",
+    genreSlug: "romance",
+    coverUrl: "/stories/story-1.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["baran", "باران"],
+      ["entezar", "انتظار"],
+      ["eshgh", "عشق"],
+    ],
+    chapters: [
+      {
+        title: "خانه قدیمی",
+        content: `
+باران از صبح شروع شده بود و بی‌وقفه روی شیشه‌های خانه می‌زد.
+
+دریا چمدانش را کنار در گذاشت و به اتاقی نگاه کرد که سال‌ها کسی واردش نشده بود.
+
+همه‌چیز همان‌طور باقی مانده بود؛ میز چوبی، پرده‌های سفید و صندلی کنار پنجره.
+
+فقط یک چیز تغییر کرده بود.
+
+روی شیشه، از سمت داخل، جمله‌ای با انگشت نوشته شده بود.
+
+«بالاخره برگشتی.»
+
+دریا دستش را روی نوشته کشید.
+
+گردوغبار کنار رفت، اما جمله هنوز آنجا بود.
+`,
+      },
+      {
+        title: "یادداشت پشت پرده",
+        content: `
+پشت پرده پاکتی زردرنگ افتاده بود.
+
+نام دریا با خطی آشنا روی آن نوشته شده بود.
+
+همان خطی که سال‌ها تلاش کرده بود فراموشش کند.
+
+پاکت را باز کرد.
+
+داخل آن فقط یک تکه کاغذ بود.
+
+«اگر روزی برگشتی، ساعت پنج کنار ایستگاه منتظرت می‌مانم.»
+
+دریا به ساعت دیواری نگاه کرد.
+
+چهار و چهل دقیقه بود.
+
+باران شدیدتر شد.
+`,
+      },
+      {
+        title: "ساعت پنج",
+        content: `
+ایستگاه تقریباً خالی بود.
+
+دریا زیر سایه‌بان ایستاد و به ریل‌هایی نگاه کرد که در مه گم می‌شدند.
+
+ساعت ایستگاه پنج بار زنگ زد.
+
+برای چند لحظه هیچ اتفاقی نیفتاد.
+
+بعد مردی از انتهای سکو ظاهر شد.
+
+چهره‌اش تغییر کرده بود، اما نگاهش همان بود.
+
+دریا پاکت را در دست فشرد.
+
+بعضی انتظارها تمام نمی‌شوند.
+
+فقط سال‌ها طول می‌کشد تا دوباره آن‌ها را به یاد بیاوریم.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "آخرین فانوس",
+    slug: "akharin-fanoos",
+    description:
+      "در روستایی ساحلی، هر شب فانوسی روی صخره روشن می‌شود؛ با اینکه نگهبان فانوس سال‌ها پیش ناپدید شده است.",
+    genreSlug: "mystery",
+    coverUrl: "/stories/story-2.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["fanoos", "فانوس"],
+      ["raaz", "راز"],
+      ["darya", "دریا"],
+    ],
+    chapters: [
+      {
+        title: "نور روی صخره",
+        content: `
+مردم روستا عادت کرده بودند پس از غروب به صخره نگاه نکنند.
+
+هر شب، درست در ساعت یازده، فانوس متروکه روشن می‌شد.
+
+نگهبان آن پانزده سال پیش در دریا ناپدید شده بود.
+
+هیچ‌کس حاضر نبود برای خاموش‌کردن نور به آنجا برود.
+
+رویا تازه به روستا آمده بود و داستان‌های مردم را باور نمی‌کرد.
+
+دوربینش را برداشت و مسیر صخره را بالا رفت.
+
+وقتی به فانوس رسید، در آن از داخل باز شد.
+`,
+      },
+      {
+        title: "دفتر نگهبان",
+        content: `
+اتاق فانوس بوی نمک و چوب خیس می‌داد.
+
+روی میز، دفتری باز مانده بود.
+
+آخرین جمله با جوهری کم‌رنگ نوشته شده بود.
+
+«کشتی امشب بازمی‌گردد، اما نباید اجازه دهم به ساحل برسد.»
+
+رویا صفحه بعد را ورق زد.
+
+سفید بود.
+
+بعد صدای زنگی از میان مه آمد.
+
+نوری دوردست روی آب ظاهر شد.
+
+کشتی‌ای سیاه به‌آرامی به ساحل نزدیک می‌شد.
+`,
+      },
+      {
+        title: "کشتی بی‌نام",
+        content: `
+رویا از پله‌های فانوس بالا رفت.
+
+چراغ بدون نفت می‌سوخت.
+
+وقتی نور را به‌سمت دریا چرخاند، کشتی ایستاد.
+
+آدم‌هایی روی عرشه ایستاده بودند.
+
+هیچ‌کدام تکان نمی‌خوردند.
+
+مردی با لباس نگهبان میان آن‌ها بود.
+
+سرش را بالا آورد و مستقیم به رویا نگاه کرد.
+
+سپس با دست به پشت سر او اشاره کرد.
+
+رویا برگشت.
+
+دفتر روی میز دیگر باز نبود.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "شهر زیر کوه",
+    slug: "shahr-zire-kooh",
+    description:
+      "پسری نوجوان در دل کوه دری سنگی پیدا می‌کند که به شهری فراموش‌شده و مردمی که زمان برایشان متوقف شده، راه دارد.",
+    genreSlug: "fantasy",
+    coverUrl: "/stories/story-3.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["shahr", "شهر"],
+      ["jadoo", "جادو"],
+      ["kooh", "کوه"],
+    ],
+    chapters: [
+      {
+        title: "در سنگی",
+        content: `
+پارسا برای پیداکردن بز گمشده تا بالای کوه رفته بود.
+
+هوا رو به تاریکی می‌رفت که شکافی میان سنگ‌ها دید.
+
+پشت بوته‌های خشک، دری بزرگ از سنگ سیاه قرار داشت.
+
+روی در نشانه‌ای شبیه خورشید حک شده بود.
+
+پارسا دستش را روی نشانه گذاشت.
+
+سنگ زیر انگشتانش گرم شد.
+
+در بدون هیچ صدایی باز شد.
+
+پشت آن، هزاران چراغ در عمق کوه می‌درخشید.
+`,
+      },
+      {
+        title: "مردم خاموش",
+        content: `
+شهری کامل زیر کوه ساخته شده بود.
+
+خانه‌ها، بازارها و خیابان‌ها همه از سنگ سفید بودند.
+
+اما هیچ صدایی شنیده نمی‌شد.
+
+مردم شهر مانند مجسمه در جای خود ایستاده بودند.
+
+زنی میان بازار تنها کسی بود که حرکت می‌کرد.
+
+به پارسا نزدیک شد و گفت:
+
+«تو از بیرون آمده‌ای. پس هنوز زمان در جهان شما جریان دارد.»
+
+سپس ساعتی شکسته در دست او گذاشت.
+`,
+      },
+      {
+        title: "بیداری",
+        content: `
+زن گفت برای بیدارکردن شهر باید ساعت به بالاترین برج برده شود.
+
+پارسا از پله‌های برج بالا رفت.
+
+با هر قدم، صدای زمزمه مردم بیشتر می‌شد.
+
+وقتی ساعت را در جای خالی بالای برج گذاشت، عقربه‌ها حرکت کردند.
+
+شهر ناگهان پر از صدا شد.
+
+مردم راه افتادند، کودکان خندیدند و زنگ‌ها به صدا درآمدند.
+
+اما در سنگی پشت سر پارسا بسته شده بود.
+
+اکنون او باید راه دیگری برای بازگشت پیدا می‌کرد.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "نامه‌ای که نرسید",
+    slug: "namei-ke-naresid",
+    description:
+      "نامه‌ای پس از بیست سال به مقصد می‌رسد و زنی را وادار می‌کند درباره تصمیمی که زندگی‌اش را تغییر داد، دوباره فکر کند.",
+    genreSlug: "short-story",
+    coverUrl: "/stories/story-4.jpg",
+    status: "COMPLETED" as const,
+    tags: [
+      ["nameh", "نامه"],
+      ["gozashteh", "گذشته"],
+      ["khaterat", "خاطرات"],
+    ],
+    chapters: [
+      {
+        title: "پاکت آبی",
+        content: `
+نامه میان قبض‌ها و روزنامه‌های صبح بود.
+
+پاکتی آبی با تمبری قدیمی.
+
+نام نگار روی آن نوشته شده بود، اما نشانی متعلق به خانه‌ای بود که بیست سال پیش فروخته بودند.
+
+گوشه پاکت تاریخ خورده بود.
+
+بیست سال پیش.
+
+نگار نامه را روی میز گذاشت.
+
+خط فرستنده را شناخته بود.
+
+برای بازکردنش به چند دقیقه سکوت نیاز داشت.
+`,
+      },
+      {
+        title: "بیست سال تأخیر",
+        content: `
+نامه کوتاه بود.
+
+«من فردا در ایستگاه منتظرت می‌مانم. اگر نیایی، می‌فهمم که باید بروم.»
+
+نگار آن روز را به یاد داشت.
+
+به ایستگاه نرفته بود، چون فکر می‌کرد هیچ نامه‌ای برایش نوشته نشده است.
+
+سال‌ها باور کرده بود که او بدون خداحافظی رفته.
+
+حالا می‌دانست حقیقت چیز دیگری بوده است.
+
+پایین نامه نشانی کوچکی نوشته شده بود.
+
+نشانی یک کتاب‌فروشی.
+`,
+      },
+      {
+        title: "کتاب‌فروشی",
+        content: `
+زنگ کوچک بالای در کتاب‌فروشی صدا داد.
+
+مردی پشت پیشخوان مشغول مرتب‌کردن کتاب‌ها بود.
+
+سرش را بلند کرد.
+
+هر دو برای مدتی طولانی به یکدیگر نگاه کردند.
+
+نگار پاکت آبی را روی پیشخوان گذاشت.
+
+مرد لبخند تلخی زد.
+
+گفت: «بالاخره رسید.»
+
+نگار پاسخ داد: «دیر رسید، اما شاید هنوز برای شنیدن جواب دیر نشده باشد.»
+`,
+      },
+    ],
+  },
+
+  {
+    title: "قطار ساعت پنج",
+    slug: "ghatare-saate-panj",
+    description:
+      "کارمندی هر روز سوار قطار ساعت پنج می‌شود، تا اینکه متوجه می‌شود یکی از مسافران فقط در روزهای وقوع حادثه ظاهر می‌شود.",
+    genreSlug: "thriller",
+    coverUrl: "/stories/story-5.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["ghatar", "قطار"],
+      ["hadeseh", "حادثه"],
+      ["razalood", "رازآلود"],
+    ],
+    chapters: [
+      {
+        title: "مسافر صندلی دوازده",
+        content: `
+سامان هر روز روی صندلی یازده می‌نشست.
+
+مرد ناشناس همیشه روی صندلی دوازده بود.
+
+کت خاکستری می‌پوشید و روزنامه‌ای بدون تاریخ می‌خواند.
+
+سامان ابتدا توجهی نکرد.
+
+اما پس از حادثه هفته قبل فهمید مرد فقط همان روز در قطار بوده است.
+
+امروز دوباره آنجا نشسته بود.
+
+سامان به روزنامه نگاه کرد.
+
+تیتر صفحه اول درباره خروج قطار از ریل بود.
+`,
+      },
+      {
+        title: "روزنامه فردا",
+        content: `
+سامان از مرد پرسید روزنامه برای چه روزی است.
+
+مرد بدون اینکه سرش را بلند کند گفت: «فردا.»
+
+روی صفحه، تصویری از همین قطار دیده می‌شد.
+
+سامان شماره قطار را خواند.
+
+همان شماره بود.
+
+زمان حادثه پنج و چهل دقیقه نوشته شده بود.
+
+ساعت مچی او پنج و سی‌ودو دقیقه را نشان می‌داد.
+
+سامان از جایش بلند شد و به‌سمت ترمز اضطراری دوید.
+`,
+      },
+      {
+        title: "هشت دقیقه",
+        content: `
+مسافران با تعجب به سامان نگاه می‌کردند.
+
+مأمور قطار تلاش کرد جلویش را بگیرد.
+
+مرد کت‌خاکستری هنوز آرام نشسته بود.
+
+سامان دستگیره ترمز را کشید.
+
+قطار با صدایی بلند متوقف شد.
+
+چند متر جلوتر، بخشی از ریل فرو ریخته بود.
+
+وقتی سامان به صندلی دوازده برگشت، مرد ناپدید شده بود.
+
+روزنامه روی صندلی مانده بود.
+
+تیتر صفحه اول حالا تغییر کرده بود.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "باغ خاموش",
+    slug: "baghe-khamoosh",
+    description:
+      "در سال‌های پایانی قاجار، دختری جوان در باغ خانوادگی خود دفترچه‌ای پیدا می‌کند که از سرنوشت زنی فراموش‌شده سخن می‌گوید.",
+    genreSlug: "historical-fiction",
+    coverUrl: "/stories/story-6.jpg",
+    status: "COMPLETED" as const,
+    tags: [
+      ["tarikhi", "تاریخی"],
+      ["bagh", "باغ"],
+      ["khanevadeh", "خانواده"],
+    ],
+    chapters: [
+      {
+        title: "اتاق بسته",
+        content: `
+سال‌ها بود که در اتاق انتهای باغ باز نشده بود.
+
+مادربزرگ می‌گفت کلید آن گم شده است.
+
+یک عصر پاییزی، مهتاب کلید کوچکی را زیر درخت انار پیدا کرد.
+
+کلید دقیقاً در قفل اتاق جا گرفت.
+
+داخل اتاق، همه‌چیز با پارچه‌های سفید پوشانده شده بود.
+
+روی میز، دفترچه‌ای چرمی قرار داشت.
+
+صفحه اول با این جمله آغاز می‌شد:
+
+«نام من را از این خانه پاک کردند.»
+`,
+      },
+      {
+        title: "نام فراموش‌شده",
+        content: `
+دفترچه متعلق به زنی به نام خورشید بود.
+
+او سال‌ها پیش در همین باغ زندگی می‌کرد.
+
+در نوشته‌ها آمده بود که خورشید مدرسه‌ای پنهانی برای دختران روستا ساخته بود.
+
+پس از مدتی مدرسه بسته و نام او از اسناد خانواده حذف شده بود.
+
+مهتاب از مادربزرگ درباره خورشید پرسید.
+
+رنگ از چهره پیرزن رفت.
+
+گفت: «او خواهر من بود.»
+`,
+      },
+      {
+        title: "درخت انار",
+        content: `
+مادربزرگ مهتاب را تا قدیمی‌ترین درخت باغ برد.
+
+پای درخت، جعبه‌ای فلزی دفن شده بود.
+
+داخل آن نامه‌ها، کتاب‌ها و فهرست نام شاگردان خورشید قرار داشت.
+
+مادربزرگ گفت تمام این سال‌ها منتظر کسی بوده که حقیقت را پیدا کند.
+
+مهتاب دفترچه را بست.
+
+چند ماه بعد، مدرسه‌ای کوچک کنار باغ افتتاح شد.
+
+بالای در آن نوشته بودند:
+
+«مدرسه خورشید.»
+`,
+      },
+    ],
+  },
+
+  {
+    title: "جزیره‌ای میان مه",
+    slug: "jazirei-miyane-meh",
+    description:
+      "گروهی دریانورد به جزیره‌ای می‌رسند که روی هیچ نقشه‌ای نیست و ساکنانش معتقدند جهان بیرون قرن‌ها پیش نابود شده است.",
+    genreSlug: "adventure",
+    coverUrl: "/stories/story-7.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["jazireh", "جزیره"],
+      ["safar", "سفر"],
+      ["majarajooei", "ماجراجویی"],
+    ],
+    chapters: [
+      {
+        title: "چهارمین روز",
+        content: `
+چهار روز بود که کشتی در مه حرکت می‌کرد.
+
+قطب‌نما از کار افتاده بود و ستاره‌ای دیده نمی‌شد.
+
+صبح روز چهارم، صدای پرندگان از دور شنیده شد.
+
+کمی بعد ساحلی سبز از میان مه بیرون آمد.
+
+ناخدا نقشه را چند بار بررسی کرد.
+
+در آن نقطه نباید هیچ جزیره‌ای وجود می‌داشت.
+
+بااین‌حال، روی ساحل مردمی ایستاده بودند و برای آن‌ها مشعل تکان می‌دادند.
+`,
+      },
+      {
+        title: "روستای سنگی",
+        content: `
+خانه‌های جزیره از سنگ‌های سیاه ساخته شده بودند.
+
+بزرگ روستا از دریانوردان پرسید از کدام پناهگاه آمده‌اند.
+
+ناخدا گفت آن‌ها از شهر بندری حرکت کرده‌اند.
+
+پیرمرد با ناباوری نگاهش کرد.
+
+گفت: «شهرهای بیرون دویست سال پیش نابود شدند.»
+
+سپس کتابی قدیمی آورد.
+
+در کتاب نقشه‌ای بود که همه قاره‌ها را زیر آب نشان می‌داد.
+`,
+      },
+      {
+        title: "پشت مه",
+        content: `
+دریانوردان تصمیم گرفتند پیش از غروب جزیره را ترک کنند.
+
+پیرمرد هشدار داد هیچ کشتی‌ای نمی‌تواند از مه عبور کند.
+
+کشتی به‌سمت دریا حرکت کرد.
+
+پس از چند ساعت دوباره همان ساحل مقابلشان ظاهر شد.
+
+آن‌ها مسیر دیگری را امتحان کردند.
+
+باز هم به جزیره بازگشتند.
+
+ناخدا فهمید مه فقط جزیره را پنهان نمی‌کند.
+
+مه اجازه نمی‌دهد کسی که وارد شده، دوباره خارج شود.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "خانه شماره هفت",
+    slug: "khane-shomare-haft",
+    description:
+      "در کوچه‌ای قدیمی، خانه شماره هفت هر شب یک پنجره بیشتر از شب قبل دارد و کسی نمی‌داند پشت پنجره تازه چه چیزی منتظر است.",
+    genreSlug: "horror",
+    coverUrl: "/stories/story-1.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["khaneh", "خانه"],
+      ["tars", "ترس"],
+      ["shab", "شب"],
+    ],
+    chapters: [
+      {
+        title: "پنجره چهارم",
+        content: `
+خانه شماره هفت همیشه سه پنجره داشت.
+
+آوا از کودکی هر روز از مقابل آن عبور می‌کرد.
+
+یک شب متوجه پنجره چهارمی در طبقه بالا شد.
+
+چراغی کم‌نور پشت آن روشن بود.
+
+زنی پشت شیشه ایستاده بود و به کوچه نگاه می‌کرد.
+
+آوا چند لحظه بعد دوباره به پنجره نگاه کرد.
+
+زن حالا مستقیم به او خیره شده بود.
+
+صبح روز بعد، پنجره چهارم ناپدید شده بود.
+`,
+      },
+      {
+        title: "پنجره پنجم",
+        content: `
+شب بعد پنجره چهارم برگشت.
+
+این بار پنجره پنجمی نیز کنار آن بود.
+
+پشت پنجره پنجم، اتاق خود آوا دیده می‌شد.
+
+تخت، میز و حتی لباس‌هایی که روی صندلی انداخته بود، همان‌جا بودند.
+
+بعد خودش وارد اتاق شد.
+
+نسخه دیگری از آوا پشت پنجره ایستاد و دستش را روی شیشه گذاشت.
+
+لب‌هایش تکان خورد.
+
+گفت: «در را باز نکن.»
+`,
+      },
+      {
+        title: "در باز",
+        content: `
+صدای زنگ خانه نیمه‌شب بلند شد.
+
+آوا از پنجره اتاقش به کوچه نگاه کرد.
+
+خانه شماره هفت دیگر آن‌سوی کوچه نبود.
+
+به‌جای آن، فقط زمینی خالی دیده می‌شد.
+
+زنگ دوباره صدا داد.
+
+آوا به‌آرامی به در نزدیک شد.
+
+از پشت در صدای خودش را شنید.
+
+«من از خانه شماره هفت فرار کردم.»
+
+دستگیره در شروع به چرخیدن کرد.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "تابستانی که تمام نشد",
+    slug: "tabestani-ke-tamam-nashod",
+    description:
+      "چهار دوست تصمیم می‌گیرند آخرین تابستان پیش از دانشگاه را ثبت کنند، اما رازی قدیمی دوستی آن‌ها را تغییر می‌دهد.",
+    genreSlug: "young-adult",
+    coverUrl: "/stories/story-2.jpg",
+    status: "COMPLETED" as const,
+    tags: [
+      ["tabestan", "تابستان"],
+      ["doosti", "دوستی"],
+      ["nojavaan", "نوجوان"],
+    ],
+    chapters: [
+      {
+        title: "فهرست تابستان",
+        content: `
+قرار بود آخرین تابستانشان متفاوت باشد.
+
+ستاره، نیلوفر، امیر و نوید فهرستی از کارهایی نوشتند که باید پیش از دانشگاه انجام می‌دادند.
+
+تماشای طلوع از بالای تپه.
+
+شنا در دریاچه.
+
+سفر بدون برنامه.
+
+و پیداکردن جعبه‌ای که ده سال پیش کنار مدرسه دفن کرده بودند.
+
+هیچ‌کدام به یاد نداشت داخل جعبه چه گذاشته‌اند.
+
+جز نوید که از همان ابتدا نمی‌خواست آن را پیدا کنند.
+`,
+      },
+      {
+        title: "جعبه فلزی",
+        content: `
+جعبه هنوز زیر درخت قدیمی بود.
+
+داخل آن چهار نامه قرار داشت؛ هرکدام خطاب به نسخه آینده خودشان.
+
+اما نامه پنجمی هم آنجا بود.
+
+نامه به نام پسری نوشته شده بود که سال‌ها پیش از محله رفته بود.
+
+در نامه اعترافی درباره حادثه‌ای در دریاچه وجود داشت.
+
+ستاره نوشته را خواند و به دوستانش نگاه کرد.
+
+حالا می‌فهمید چرا نوید تمام این سال‌ها از دریاچه دوری کرده بود.
+`,
+      },
+      {
+        title: "آخرین روز",
+        content: `
+چهار دوست تا غروب کنار دریاچه نشستند.
+
+برای نخستین بار درباره آن روز حرف زدند.
+
+درباره ترس، سکوت و دروغی که سال‌ها همراهشان مانده بود.
+
+نوید نامه را در آب نینداخت.
+
+آن را نگه داشت تا به صاحبش برساند.
+
+تابستان تمام شد و هرکدام به شهری رفتند.
+
+اما چیزی میان آن‌ها تغییر کرده بود.
+
+دوستی‌شان دیگر بر یک راز بنا نشده بود.
+`,
+      },
+    ],
+  },
+
+  {
+    title: "مردی که خواب‌ها را می‌فروخت",
+    slug: "mardi-ke-khabha-ra-miforookht",
+    description:
+      "در بازار شبانه، پیرمردی خواب‌های شیشه‌ای می‌فروشد. خرید یکی از آن‌ها زندگی دختری بی‌خواب را برای همیشه تغییر می‌دهد.",
+    genreSlug: "fantasy",
+    coverUrl: "/stories/story-3.jpg",
+    status: "ONGOING" as const,
+    tags: [
+      ["khab", "خواب"],
+      ["bazaar", "بازار"],
+      ["khial", "خیال"],
+    ],
+    chapters: [
+      {
+        title: "بازار شبانه",
+        content: `
+بازار فقط پس از نیمه‌شب ظاهر می‌شد.
+
+یاسمن سه شب پیاپی به همان کوچه رفت تا بالاخره آن را پیدا کرد.
+
+دکان‌ها زیر نور فانوس‌های نارنجی می‌درخشیدند.
+
+در انتهای بازار، پیرمردی شیشه‌های کوچکی روی میز چیده بود.
+
+داخل هر شیشه نوری رنگی حرکت می‌کرد.
+
+پیرمرد گفت: «خواب شیرین، خواب شجاعانه یا خوابی که حقیقت را نشان می‌دهد؟»
+
+یاسمن شیشه آبی را انتخاب کرد.
+`,
+      },
+      {
+        title: "خواب آبی",
+        content: `
+آن شب یاسمن برای نخستین بار پس از ماه‌ها خوابید.
+
+در خواب، خودش را در خانه‌ای کنار دریا دید.
+
+زنی روی ایوان منتظرش بود.
+
+وقتی نزدیک شد، فهمید زن نسخه پیرتر خودش است.
+
+زن گفت: «این آینده تو نیست. این آینده‌ای است که از آن فرار می‌کنی.»
+
+سپس کلیدی به یاسمن داد.
+
+صبح که بیدار شد، کلید واقعاً در دستش بود.
+`,
+      },
+      {
+        title: "دکان بسته",
+        content: `
+یاسمن شب بعد به بازار برگشت.
+
+دکان پیرمرد بسته بود.
+
+روی میز فقط یادداشتی قرار داشت.
+
+«هر خواب دری دارد و هر در بهایی.»
+
+کلید، در خانه‌ای متروکه در انتهای شهر را باز کرد.
+
+داخل خانه صدها شیشه آبی روی قفسه‌ها بود.
+
+در هر شیشه، نسخه‌ای از خواب همان شب تکرار می‌شد.
+
+یاسمن صدای پیرمرد را از طبقه بالا شنید.
+
+«حالا باید انتخاب کنی کدام آینده را بیدار کنی.»
+`,
+      },
+    ],
+  },
+] as const;
+
+/*
+ * زبان هر مجموعه هنگام ترکیب به‌صورت صریح اضافه می‌شود.
+ */
+
+const stories = [
+  ...englishStories.map((story) => ({
+    ...story,
+    language: "en" as const,
+  })),
+
+  ...persianStories.map((story) => ({
+    ...story,
+    language: "fa" as const,
+  })),
+] as const;
+
+/* --------------------------------------------------
  * Helpers
  * -------------------------------------------------- */
 
@@ -689,7 +1549,11 @@ function countWords(text: string): number {
 }
 
 function contentHash(title: string, content: string): string {
-  return createHash("sha256").update(title).update("\0").update(content).digest("hex");
+  return createHash("sha256")
+    .update(title)
+    .update("\0")
+    .update(content)
+    .digest("hex");
 }
 
 /* --------------------------------------------------
@@ -824,7 +1688,7 @@ async function main(): Promise<void> {
         title: storyData.title,
         description: storyData.description,
         coverUrl: storyData.coverUrl,
-        language: "en",
+        language: storyData.language,
         status: storyData.status,
         visibility: "PUBLIC",
         rights: "ALL_RIGHTS_RESERVED",
@@ -839,7 +1703,7 @@ async function main(): Promise<void> {
         slug: storyData.slug,
         description: storyData.description,
         coverUrl: storyData.coverUrl,
-        language: "en",
+        language: storyData.language,
         status: storyData.status,
         visibility: "PUBLIC",
         rights: "ALL_RIGHTS_RESERVED",
@@ -954,7 +1818,10 @@ async function main(): Promise<void> {
       chapterIds.push(chapter.id);
       await prisma.chapterRevision.upsert({
         where: {
-          chapterId_revisionNumber: { chapterId: chapter.id, revisionNumber: 1 },
+          chapterId_revisionNumber: {
+            chapterId: chapter.id,
+            revisionNumber: 1,
+          },
         },
         create: {
           chapterId: chapter.id,
@@ -972,18 +1839,26 @@ async function main(): Promise<void> {
       });
     }
 
-    console.log(`  ✓ Story ${storyIndex + 1}/7: ${storyData.title}`);
+    console.log(
+      `  ✓ Story ${storyIndex + 1}/${stories.length}: ${storyData.title}`,
+    );
   }
 
-  console.log("✓ 7 stories seeded.");
-  console.log("✓ 21 chapters seeded.");
+  console.log(`✓ ${stories.length} stories seeded.`);
+  console.log(`✓ ${chapterIds.length} chapters seeded.`);
   console.log("✓ Story tags connected.");
   const firstAuthorId = authorIds.at(0);
   const secondAuthorId = authorIds.at(1);
   const firstStoryId = storyIds.at(0);
   const secondStoryId = storyIds.at(1);
   const firstChapterId = chapterIds.at(0);
-  if (!firstAuthorId || !secondAuthorId || !firstStoryId || !secondStoryId || !firstChapterId) {
+  if (
+    !firstAuthorId ||
+    !secondAuthorId ||
+    !firstStoryId ||
+    !secondStoryId ||
+    !firstChapterId
+  ) {
     throw new Error("Expected deterministic seed fixtures were not created.");
   }
 
@@ -1002,22 +1877,30 @@ async function main(): Promise<void> {
     skipDuplicates: true,
   });
   const list = await prisma.readingList.upsert({
-    where: { userId_name: { userId: firstAuthorId, name: "Development favorites" } },
+    where: {
+      userId_name: { userId: firstAuthorId, name: "Development favorites" },
+    },
     create: {
       userId: firstAuthorId,
       name: "Development favorites",
       description: "Deterministic fake reading list for local development.",
       isPublic: true,
     },
-    update: { description: "Deterministic fake reading list for local development." },
+    update: {
+      description: "Deterministic fake reading list for local development.",
+    },
   });
   await prisma.readingListItem.upsert({
-    where: { readingListId_storyId: { readingListId: list.id, storyId: secondStoryId } },
+    where: {
+      readingListId_storyId: { readingListId: list.id, storyId: secondStoryId },
+    },
     create: { readingListId: list.id, storyId: secondStoryId, position: 1 },
     update: { position: 1 },
   });
   await prisma.readingProgress.upsert({
-    where: { userId_storyId: { userId: firstAuthorId, storyId: secondStoryId } },
+    where: {
+      userId_storyId: { userId: firstAuthorId, storyId: secondStoryId },
+    },
     create: {
       userId: firstAuthorId,
       storyId: secondStoryId,
@@ -1027,10 +1910,16 @@ async function main(): Promise<void> {
     },
     update: { progress: 0.35, anchor: "paragraph:3" },
   });
-  const visitorKey = createHash("sha256").update(`user:${firstAuthorId}`).digest("hex");
+  const visitorKey = createHash("sha256")
+    .update(`user:${firstAuthorId}`)
+    .digest("hex");
   const signalBucket = new Date("2026-08-13T00:00:00.000Z");
   await prisma.readingHistory.deleteMany({
-    where: { userId: firstAuthorId, storyId: firstStoryId, occurredAt: signalBucket },
+    where: {
+      userId: firstAuthorId,
+      storyId: firstStoryId,
+      occurredAt: signalBucket,
+    },
   });
   await prisma.readingHistory.create({
     data: {
@@ -1044,7 +1933,11 @@ async function main(): Promise<void> {
   });
   await prisma.readSignal.upsert({
     where: {
-      visitorKey_chapterId_bucketStart: { visitorKey, chapterId: firstChapterId, bucketStart: signalBucket },
+      visitorKey_chapterId_bucketStart: {
+        visitorKey,
+        chapterId: firstChapterId,
+        bucketStart: signalBucket,
+      },
     },
     create: {
       storyId: firstStoryId,
@@ -1057,7 +1950,9 @@ async function main(): Promise<void> {
     },
     update: {},
   });
-  const anonymousVisitorKey = createHash("sha256").update("seed:anonymous-reader").digest("hex");
+  const anonymousVisitorKey = createHash("sha256")
+    .update("seed:anonymous-reader")
+    .digest("hex");
   await prisma.readSignal.upsert({
     where: {
       visitorKey_chapterId_bucketStart: {
@@ -1077,17 +1972,27 @@ async function main(): Promise<void> {
     update: {},
   });
   await prisma.chapterVote.upsert({
-    where: { userId_chapterId: { userId: secondAuthorId, chapterId: firstChapterId } },
+    where: {
+      userId_chapterId: { userId: secondAuthorId, chapterId: firstChapterId },
+    },
     create: { userId: secondAuthorId, chapterId: firstChapterId },
     update: {},
   });
   const existingComment = await prisma.comment.findFirst({
-    where: { userId: secondAuthorId, chapterId: firstChapterId, content: "A deterministic development comment." },
+    where: {
+      userId: secondAuthorId,
+      chapterId: firstChapterId,
+      content: "A deterministic development comment.",
+    },
     select: { id: true },
   });
   if (!existingComment) {
     await prisma.comment.create({
-      data: { userId: secondAuthorId, chapterId: firstChapterId, content: "A deterministic development comment." },
+      data: {
+        userId: secondAuthorId,
+        chapterId: firstChapterId,
+        content: "A deterministic development comment.",
+      },
     });
   }
   await prisma.notification.upsert({
