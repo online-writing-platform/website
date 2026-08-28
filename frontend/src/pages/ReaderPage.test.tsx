@@ -9,233 +9,241 @@ import type { ChapterResponse, StoryResponse } from "../types/story";
 import ReaderPage from "./ReaderPage";
 
 const { authenticatedRequestMock, anonymousRequestMock } = vi.hoisted(() => ({
-    authenticatedRequestMock: vi.fn(),
-    anonymousRequestMock: vi.fn(),
+  authenticatedRequestMock: vi.fn(),
+  anonymousRequestMock: vi.fn(),
 }));
 
 vi.mock("../hooks/useAuth", () => ({
-    default: () => ({
-        status: "authenticated",
-        request: authenticatedRequestMock,
+  default: () => ({
+    status: "authenticated",
+    request: authenticatedRequestMock,
 
-        user: {
-            id: "adult-user-1",
-            username: "adult-reader",
-            displayName: "کاربر بزرگسال",
-        },
-    }),
+    user: {
+      id: "adult-user-1",
+      username: "adult-reader",
+      displayName: "کاربر بزرگسال",
+    },
+  }),
 }));
 
 vi.mock("../lib/api", async (importOriginal) => {
-    const actual = await importOriginal<typeof import("../lib/api")>();
+  const actual = await importOriginal<typeof import("../lib/api")>();
 
-    return {
-        ...actual,
-        apiRequest: anonymousRequestMock,
-    };
+  return {
+    ...actual,
+    apiRequest: anonymousRequestMock,
+  };
 });
 
 vi.mock("../hooks/useDocumentMeta", () => ({
-    useDocumentMeta: vi.fn(),
+  useDocumentMeta: vi.fn(),
 }));
 
 vi.mock("../components/ReaderInteractions", () => ({
-    default: () => null,
+  default: () => null,
 }));
 
 afterEach(() => {
-    cleanup();
+  cleanup();
 });
 
 const matureStoryResponse: StoryResponse = {
-    data: {
-        story: {
-            id: "story-1",
+  data: {
+    story: {
+      id: "story-1",
 
-            slug: "mature-story",
+      slug: "mature-story",
 
-            title: "داستان بزرگسال",
+      title: "داستان بزرگسال",
 
-            description: "یک داستان Mature برای تست Reader.",
+      description: "یک داستان Mature برای تست Reader.",
 
-            coverUrl: null,
+      coverUrl: null,
 
-            language: "fa",
+      language: "fa",
 
-            rights: "ALL_RIGHTS_RESERVED",
+      rights: "ALL_RIGHTS_RESERVED",
 
-            status: "ONGOING",
+      status: "ONGOING",
 
-            visibility: "PUBLIC",
+      visibility: "PUBLIC",
 
-            moderationState: "VISIBLE",
+      moderationState: "VISIBLE",
 
-            isMature: true,
+      isMature: true,
 
-            publishedAt: "2026-08-17T05:00:00.000Z",
+      publishedAt: "2026-08-17T05:00:00.000Z",
 
-            createdAt: "2026-08-17T04:00:00.000Z",
+      createdAt: "2026-08-17T04:00:00.000Z",
 
-            updatedAt: "2026-08-17T05:00:00.000Z",
+      updatedAt: "2026-08-17T05:00:00.000Z",
 
-            author: {
-                username: "writer",
-                displayName: "نویسنده",
-                avatarUrl: null,
-            },
+      author: {
+        username: "writer",
+        displayName: "نویسنده",
+        avatarUrl: null,
+      },
 
-            genre: null,
+      genre: null,
 
-            tags: [],
+      tags: [],
 
-            chapters: [
-                {
-                    id: "chapter-1",
+      chapters: [
+        {
+          id: "chapter-1",
 
-                    title: "فصل اول",
+          title: "فصل اول",
 
-                    position: 1,
+          position: 1,
 
-                    version: 1,
+          version: 1,
 
-                    status: "PUBLISHED",
+          status: "PUBLISHED",
 
-                    moderationState: "VISIBLE",
+          moderationState: "VISIBLE",
 
-                    wordCount: 5,
+          wordCount: 5,
 
-                    publishedAt: "2026-08-17T05:00:00.000Z",
+          publishedAt: "2026-08-17T05:00:00.000Z",
 
-                    createdAt: "2026-08-17T04:00:00.000Z",
+          createdAt: "2026-08-17T04:00:00.000Z",
 
-                    updatedAt: "2026-08-17T05:00:00.000Z",
-                },
-            ],
+          updatedAt: "2026-08-17T05:00:00.000Z",
         },
+      ],
     },
+  },
 };
 
 const chapterResponse: ChapterResponse = {
-    data: {
-        chapter: {
-            id: "chapter-1",
+  data: {
+    chapter: {
+      id: "chapter-1",
 
-            title: "فصل اول",
+      title: "فصل اول",
 
-            position: 1,
+      position: 1,
 
-            content: "این متن فصل Mature است.",
+      content: "این متن فصل Mature است.",
 
-            version: 1,
+      version: 1,
 
-            status: "PUBLISHED",
+      status: "PUBLISHED",
 
-            moderationState: "VISIBLE",
+      moderationState: "VISIBLE",
 
-            wordCount: 5,
+      wordCount: 5,
 
-            publishedAt: "2026-08-17T05:00:00.000Z",
+      publishedAt: "2026-08-17T05:00:00.000Z",
 
-            createdAt: "2026-08-17T04:00:00.000Z",
+      createdAt: "2026-08-17T04:00:00.000Z",
 
-            updatedAt: "2026-08-17T05:00:00.000Z",
-        },
+      updatedAt: "2026-08-17T05:00:00.000Z",
     },
+  },
 };
 
 describe("ReaderPage mature content authentication", () => {
-    beforeEach(() => {
-        authenticatedRequestMock.mockReset();
-        anonymousRequestMock.mockReset();
+  beforeEach(() => {
+    authenticatedRequestMock.mockReset();
+    anonymousRequestMock.mockReset();
 
-        anonymousRequestMock.mockRejectedValue(
-            new Error("Mature story is not available to an anonymous viewer."),
-        );
+    anonymousRequestMock.mockRejectedValue(
+      new Error("Mature story is not available to an anonymous viewer."),
+    );
 
-        authenticatedRequestMock.mockImplementation(
-            (path: string, options: RequestInit = {}) => {
-                if (
-                    path === "/api/v1/stories/mature-story" &&
-                    (options.method === undefined || options.method === "GET")
-                ) {
-                    return Promise.resolve(matureStoryResponse);
-                }
+    authenticatedRequestMock.mockImplementation(
+      (path: string, options: RequestInit = {}) => {
+        if (
+          path === "/api/v1/stories/mature-story" &&
+          (options.method === undefined || options.method === "GET")
+        ) {
+          return Promise.resolve(matureStoryResponse);
+        }
 
-                if (
-                    path ===
-                        "/api/v1/stories/mature-story/chapters/chapter-1" &&
-                    (options.method === undefined || options.method === "GET")
-                ) {
-                    return Promise.resolve(chapterResponse);
-                }
+        if (
+          path === "/api/v1/stories/mature-story/chapters/chapter-1" &&
+          (options.method === undefined || options.method === "GET")
+        ) {
+          return Promise.resolve(chapterResponse);
+        }
 
-                if (path === "/api/v1/preferences") {
-                    return Promise.resolve({
-                        data: {
-                            preferences: {
-                                readerTheme: "SYSTEM",
+        if (path === "/api/v1/preferences") {
+          return Promise.resolve({
+            data: {
+              preferences: {
+                readerTheme: "SYSTEM",
 
-                                fontScale: 1,
+                fontScale: 1,
 
-                                lineHeight: 1.75,
-                            },
-                        },
-                    });
-                }
-
-                if (
-                    path === "/api/v1/analytics/reads" &&
-                    options.method === "POST"
-                ) {
-                    return Promise.resolve(undefined);
-                }
-
-                if (
-                    path === "/api/v1/reading-progress" &&
-                    options.method === "PUT"
-                ) {
-                    return Promise.resolve(undefined);
-                }
-
-                throw new Error(
-                    `Unexpected authenticated request: ${
-                        options.method ?? "GET"
-                    } ${path}`,
-                );
+                lineHeight: 1.75,
+              },
             },
+          });
+        }
+
+        if (
+          path === "/api/v1/library/story-1" &&
+          (options.method === undefined || options.method === "GET")
+        ) {
+          return Promise.resolve({
+            data: {
+              inLibrary: false,
+            },
+          });
+        }
+
+        if (path === "/api/v1/analytics/reads" && options.method === "POST") {
+          return Promise.resolve(undefined);
+        }
+
+        if (path === "/api/v1/reading-progress" && options.method === "PUT") {
+          return Promise.resolve(undefined);
+        }
+
+        throw new Error(
+          `Unexpected authenticated request: ${
+            options.method ?? "GET"
+          } ${path}`,
         );
-    });
+      },
+    );
+  });
 
-    it("loads both story metadata and chapter through the authenticated request path for a logged-in mature-content viewer", async () => {
-        render(
-            <MemoryRouter
-                initialEntries={["/stories/mature-story/chapters/chapter-1"]}
-            >
-                <Routes>
-                    <Route
-                        path="/stories/:slug/chapters/:chapterId"
-                        element={<ReaderPage />}
-                    />
-                </Routes>
-            </MemoryRouter>,
-        );
+  it("loads both story metadata and chapter through the authenticated request path for a logged-in mature-content viewer", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={["/stories/mature-story/chapters/chapter-1"]}
+      >
+        <Routes>
+          <Route
+            path="/stories/:slug/chapters/:chapterId"
+            element={<ReaderPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
 
-        expect(
-            await screen.findByRole("heading", {
-                name: "فصل اول",
-            }),
-        ).toBeTruthy();
+    expect(
+      await screen.findByRole("heading", {
+        name: "فصل اول",
+      }),
+    ).toBeTruthy();
 
-        expect(authenticatedRequestMock).toHaveBeenCalledWith(
-            "/api/v1/stories/mature-story",
-        );
+    expect(
+      authenticatedRequestMock.mock.calls.some(
+        ([path]) => path === "/api/v1/stories/mature-story",
+      ),
+    ).toBe(true);
 
-        expect(authenticatedRequestMock).toHaveBeenCalledWith(
-            "/api/v1/stories/mature-story/chapters/chapter-1",
-        );
+    expect(
+      authenticatedRequestMock.mock.calls.some(
+        ([path]) => path === "/api/v1/stories/mature-story/chapters/chapter-1",
+      ),
+    ).toBe(true);
 
-        expect(anonymousRequestMock).not.toHaveBeenCalled();
+    expect(anonymousRequestMock).not.toHaveBeenCalled();
 
-        expect(screen.getByText("این متن فصل Mature است.")).toBeTruthy();
-    });
+    expect(screen.getByText("این متن فصل Mature است.")).toBeTruthy();
+  });
 });

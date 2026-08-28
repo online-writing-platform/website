@@ -1,9 +1,9 @@
 import {
-    cleanup,
-    fireEvent,
-    render,
-    screen,
-    waitFor,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
 } from "@testing-library/react";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,104 +12,106 @@ import { MemoryRouter } from "react-router-dom";
 
 import NotificationsPage from "./NotificationsPage";
 
+import i18n from "../i18n";
+
 const { requestMock } = vi.hoisted(() => ({
-    requestMock: vi.fn(),
+  requestMock: vi.fn(),
 }));
 
 vi.mock("../hooks/useAuth", () => ({
-    default: () => ({
-        request: requestMock,
-    }),
+  default: () => ({
+    request: requestMock,
+  }),
 }));
 
 function notification(id: string, displayName: string) {
-    return {
-        id,
+  return {
+    id,
 
-        type: "FOLLOW",
+    type: "FOLLOW",
 
-        data: {},
+    data: {},
 
-        readAt: null,
+    readAt: null,
 
-        createdAt: "2026-08-19T04:00:00.000Z",
+    createdAt: "2026-08-19T04:00:00.000Z",
 
-        actor: {
-            username: `user-${id}`,
+    actor: {
+      username: `user-${id}`,
 
-            displayName,
+      displayName,
 
-            avatarUrl: null,
-        },
-    };
+      avatarUrl: null,
+    },
+  };
 }
 
-beforeEach(() => {
-    requestMock.mockReset();
+beforeEach(async () => {
+  await i18n.changeLanguage("fa");
 
-    requestMock.mockImplementation((path: string) => {
-        if (path === "/api/v1/notifications?limit=50") {
-            return Promise.resolve({
-                data: {
-                    items: [notification("notification-1", "کاربر صفحه اول")],
+  requestMock.mockReset();
 
-                    hasMore: true,
+  requestMock.mockImplementation((path: string) => {
+    if (path === "/api/v1/notifications?limit=50") {
+      return Promise.resolve({
+        data: {
+          items: [notification("notification-1", "کاربر صفحه اول")],
 
-                    nextCursor: "notification-50",
-                },
-            });
-        }
+          hasMore: true,
 
-        if (path === "/api/v1/notifications?limit=50&cursor=notification-50") {
-            return Promise.resolve({
-                data: {
-                    items: [notification("notification-51", "کاربر صفحه دوم")],
+          nextCursor: "notification-50",
+        },
+      });
+    }
 
-                    hasMore: false,
+    if (path === "/api/v1/notifications?limit=50&cursor=notification-50") {
+      return Promise.resolve({
+        data: {
+          items: [notification("notification-51", "کاربر صفحه دوم")],
 
-                    nextCursor: null,
-                },
-            });
-        }
+          hasMore: false,
 
-        throw new Error(`Unexpected request: ${path}`);
-    });
+          nextCursor: null,
+        },
+      });
+    }
+
+    throw new Error(`Unexpected request: ${path}`);
+  });
 });
 
 afterEach(() => {
-    cleanup();
+  cleanup();
 });
 
 describe("NotificationsPage cursor pagination", () => {
-    it("allows loading notifications after the first 50 when nextCursor is returned", async () => {
-        render(
-            <MemoryRouter>
-                <NotificationsPage />
-            </MemoryRouter>,
-        );
+  it("allows loading notifications after the first 50 when nextCursor is returned", async () => {
+    render(
+      <MemoryRouter>
+        <NotificationsPage />
+      </MemoryRouter>,
+    );
 
-        expect(
-            await screen.findByText("کاربر صفحه اول شما را دنبال کرد."),
-        ).toBeTruthy();
+    expect(
+      await screen.findByText("کاربر صفحه اول شما را دنبال کرد."),
+    ).toBeTruthy();
 
-        const loadMore = await screen.findByRole("button", {
-            name: "نمایش اعلان‌های بیشتر",
-        });
-
-        fireEvent.click(loadMore);
-
-        await waitFor(() => {
-            expect(requestMock).toHaveBeenCalledWith(
-                "/api/v1/notifications?limit=50&cursor=notification-50",
-            );
-        });
-
-        expect(
-            await screen.findByText("کاربر صفحه دوم شما را دنبال کرد."),
-        ).toBeTruthy();
-
-        expect(
-            screen.getByText("کاربر صفحه اول شما را دنبال کرد."),
-        ).toBeTruthy();
+    const loadMore = await screen.findByRole("button", {
+      name: "نمایش اعلان‌های بیشتر",
     });
+
+    fireEvent.click(loadMore);
+
+    await waitFor(() => {
+      expect(requestMock).toHaveBeenCalledWith(
+        "/api/v1/notifications?limit=50&cursor=notification-50",
+      );
+    });
+
+    expect(
+      await screen.findByText("کاربر صفحه دوم شما را دنبال کرد."),
+    ).toBeTruthy();
+
+    expect(screen.getByText("کاربر صفحه اول شما را دنبال کرد.")).toBeTruthy();
+  });
 });

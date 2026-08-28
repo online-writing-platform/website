@@ -137,7 +137,7 @@ function StoryCard({ story, reason, actions, to }: StoryCardProps) {
     story.author.username.trim().slice(0, 1);
 
   return (
-    <article className="story-card">
+    <article className="story-card" {...storyTextAttributes}>
       <Link
         className="story-card-link"
         to={destination}
