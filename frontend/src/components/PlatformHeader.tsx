@@ -30,7 +30,7 @@ import {
 } from "./ui/navigation-menu";
 
 import "./PlatformHeader.css";
-import NotificationMenu from "./NotificationMenu.tsx";
+import NotificationMenu from "./NotificationMenu";
 
 function PlatformHeader() {
   const { t } = useTranslation();
