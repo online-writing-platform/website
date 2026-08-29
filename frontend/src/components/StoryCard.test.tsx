@@ -40,7 +40,7 @@ describe("StoryCard", () => {
         .getAttribute("href"),
     ).toBe("/stories/a-story");
 
-    expect(screen.getByText("نویسنده")).toBeTruthy();
+    expect(screen.getByText(/نویسنده/u)).toBeTruthy();
   });
 
   it("labels mature stories", () => {

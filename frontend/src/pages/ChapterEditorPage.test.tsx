@@ -18,341 +18,352 @@ import type { Chapter, ChapterResponse } from "../types/story";
 import ChapterEditorPage from "./ChapterEditorPage";
 
 const { requestMock } = vi.hoisted(() => ({
-    requestMock: vi.fn(),
+  requestMock: vi.fn(),
 }));
 
 vi.mock("../hooks/useAuth", () => ({
-    default: () => ({
-        request: requestMock,
-    }),
+  default: () => ({
+    request: requestMock,
+  }),
 }));
 
 afterEach(() => {
-    cleanup();
+  cleanup();
 });
 
 function deferred<T>() {
-    let resolve!: (value: T | PromiseLike<T>) => void;
+  let resolve!: (value: T | PromiseLike<T>) => void;
 
-    let reject!: (reason?: unknown) => void;
+  let reject!: (reason?: unknown) => void;
 
-    const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-        resolve = resolvePromise;
-        reject = rejectPromise;
-    });
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
 
-    return {
-        promise,
-        resolve,
-        reject,
-    };
+  return {
+    promise,
+    resolve,
+    reject,
+  };
 }
 
 const initialChapter: Chapter = {
-    id: "chapter-1",
+  id: "chapter-1",
 
-    title: "فصل تست",
+  title: "فصل تست",
 
-    position: 1,
+  position: 1,
 
-    content: "",
+  content: "",
 
-    version: 1,
+  version: 1,
 
-    status: "DRAFT",
+  status: "DRAFT",
 
-    moderationState: "VISIBLE",
+  moderationState: "VISIBLE",
 
-    wordCount: 0,
+  wordCount: 0,
 
-    publishedAt: null,
+  publishedAt: null,
 
-    createdAt: "2026-08-17T00:00:00.000Z",
+  createdAt: "2026-08-17T00:00:00.000Z",
 
-    updatedAt: "2026-08-17T00:00:00.000Z",
+  updatedAt: "2026-08-17T00:00:00.000Z",
 };
 
 describe("ChapterEditorPage autosave and publish concurrency", () => {
-    beforeEach(() => {
-        requestMock.mockReset();
+  beforeEach(() => {
+    requestMock.mockReset();
 
-        localStorage.clear();
-    });
+    localStorage.clear();
+  });
 
-    it("does not lose edits made while an older save is in flight", async () => {
-        const firstPatch = deferred<ChapterResponse>();
+  it("does not lose edits made while an older save is in flight", async () => {
+    const firstPatch = deferred<ChapterResponse>();
 
-        const secondPatch = deferred<ChapterResponse>();
+    const secondPatch = deferred<ChapterResponse>();
 
-        const patchBodies: Array<{
+    const patchBodies: Array<{
+      title: string;
+      content: string;
+      expectedVersion: number;
+    }> = [];
+
+    requestMock.mockImplementation(
+      (path: string, options: RequestInit = {}) => {
+        if (path === "/api/v1/stories/mine/story-1/chapters/chapter-1") {
+          return Promise.resolve({
+            data: {
+              chapter: initialChapter,
+            },
+          });
+        }
+
+        if (path === "/api/v1/stories/mine/story-1") {
+          return Promise.resolve({
+            data: {
+              story: {
+                language: "fa",
+              },
+            },
+          });
+        }
+
+        if (
+          path === "/api/v1/stories/story-1/chapters/chapter-1" &&
+          options.method === "PATCH"
+        ) {
+          const body = JSON.parse(String(options.body)) as {
             title: string;
             content: string;
             expectedVersion: number;
-        }> = [];
+          };
 
-        requestMock.mockImplementation(
-            (path: string, options: RequestInit = {}) => {
-                if (
-                    path === "/api/v1/stories/mine/story-1/chapters/chapter-1"
-                ) {
-                    return Promise.resolve({
-                        data: {
-                            chapter: initialChapter,
-                        },
-                    });
-                }
+          patchBodies.push(body);
 
-                if (
-                    path === "/api/v1/stories/story-1/chapters/chapter-1" &&
-                    options.method === "PATCH"
-                ) {
-                    const body = JSON.parse(String(options.body)) as {
-                        title: string;
-                        content: string;
-                        expectedVersion: number;
-                    };
+          if (patchBodies.length === 1) {
+            return firstPatch.promise;
+          }
 
-                    patchBodies.push(body);
+          if (patchBodies.length === 2) {
+            return secondPatch.promise;
+          }
+        }
 
-                    if (patchBodies.length === 1) {
-                        return firstPatch.promise;
-                    }
-
-                    if (patchBodies.length === 2) {
-                        return secondPatch.promise;
-                    }
-                }
-
-                throw new Error(
-                    `Unexpected request: ${options.method ?? "GET"} ${path}`,
-                );
-            },
+        throw new Error(
+          `Unexpected request: ${options.method ?? "GET"} ${path}`,
         );
+      },
+    );
 
-        render(
-            <MemoryRouter
-                initialEntries={["/write/story-1/chapters/chapter-1"]}
-            >
-                <Routes>
-                    <Route
-                        path="/write/:storyId/chapters/:chapterId"
-                        element={<ChapterEditorPage />}
-                    />
-                </Routes>
-            </MemoryRouter>,
-        );
+    render(
+      <MemoryRouter initialEntries={["/write/story-1/chapters/chapter-1"]}>
+        <Routes>
+          <Route
+            path="/write/:storyId/chapters/:chapterId"
+            element={<ChapterEditorPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
 
-        const editor = await screen.findByLabelText("متن فصل");
+    const editor = await screen.findByLabelText("متن فصل");
 
-        fireEvent.change(editor, {
-            target: {
-                value: "AAAA",
-            },
-        });
+    fireEvent.change(editor, {
+      target: {
+        value: "AAAA",
+      },
+    });
 
-        await waitFor(
-            () => {
-                expect(patchBodies).toHaveLength(1);
-            },
-            {
-                timeout: 2500,
-            },
-        );
+    await waitFor(
+      () => {
+        expect(patchBodies).toHaveLength(1);
+      },
+      {
+        timeout: 2500,
+      },
+    );
 
-        expect(patchBodies[0]).toMatchObject({
+    expect(patchBodies[0]).toMatchObject({
+      content: "AAAA",
+      expectedVersion: 1,
+    });
+
+    fireEvent.change(editor, {
+      target: {
+        value: "AAAABBBB",
+      },
+    });
+
+    await act(async () => {
+      firstPatch.resolve({
+        data: {
+          chapter: {
+            ...initialChapter,
+
             content: "AAAA",
-            expectedVersion: 1,
-        });
 
-        fireEvent.change(editor, {
-            target: {
-                value: "AAAABBBB",
-            },
-        });
+            version: 2,
 
-        await act(async () => {
-            firstPatch.resolve({
-                data: {
-                    chapter: {
-                        ...initialChapter,
+            wordCount: 1,
 
-                        content: "AAAA",
+            updatedAt: "2026-08-17T00:00:05.000Z",
+          },
+        },
+      });
 
-                        version: 2,
+      await Promise.resolve();
+    });
 
-                        wordCount: 1,
+    await waitFor(
+      () => {
+        expect(patchBodies).toHaveLength(2);
+      },
+      {
+        timeout: 2500,
+      },
+    );
 
-                        updatedAt: "2026-08-17T00:00:05.000Z",
-                    },
-                },
-            });
+    expect(patchBodies[1]).toMatchObject({
+      content: "AAAABBBB",
 
-            await Promise.resolve();
-        });
+      expectedVersion: 2,
+    });
 
-        await waitFor(
-            () => {
-                expect(patchBodies).toHaveLength(2);
-            },
-            {
-                timeout: 2500,
-            },
-        );
+    const recoveryBeforeSecondSave = localStorage.getItem(
+      "writing-platform:draft:story-1:chapter-1",
+    );
 
-        expect(patchBodies[1]).toMatchObject({
+    expect(recoveryBeforeSecondSave).not.toBeNull();
+
+    expect(recoveryBeforeSecondSave).toContain("AAAABBBB");
+
+    await act(async () => {
+      secondPatch.resolve({
+        data: {
+          chapter: {
+            ...initialChapter,
+
             content: "AAAABBBB",
 
-            expectedVersion: 2,
-        });
+            version: 3,
 
-        const recoveryBeforeSecondSave = localStorage.getItem(
-            "writing-platform:draft:story-1:chapter-1",
-        );
+            wordCount: 1,
 
-        expect(recoveryBeforeSecondSave).not.toBeNull();
+            updatedAt: "2026-08-17T00:00:06.000Z",
+          },
+        },
+      });
 
-        expect(recoveryBeforeSecondSave).toContain("AAAABBBB");
+      await Promise.resolve();
+    });
 
-        await act(async () => {
-            secondPatch.resolve({
-                data: {
-                    chapter: {
-                        ...initialChapter,
+    await waitFor(() => {
+      expect(screen.getByText("ذخیره شد · نسخه 3")).toBeTruthy();
+    });
 
-                        content: "AAAABBBB",
+    expect(
+      localStorage.getItem("writing-platform:draft:story-1:chapter-1"),
+    ).toBeNull();
+  }, 7000);
 
-                        version: 3,
+  it("does not publish when saving the latest draft hits a version conflict", async () => {
+    let publishWasCalled = false;
 
-                        wordCount: 1,
-
-                        updatedAt: "2026-08-17T00:00:06.000Z",
-                    },
-                },
-            });
-
-            await Promise.resolve();
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText("ذخیره شد · نسخه 3")).toBeTruthy();
-        });
-
-        expect(
-            localStorage.getItem("writing-platform:draft:story-1:chapter-1"),
-        ).toBeNull();
-    }, 7000);
-
-    it("does not publish when saving the latest draft hits a version conflict", async () => {
-        let publishWasCalled = false;
-
-        requestMock.mockImplementation(
-            (path: string, options: RequestInit = {}) => {
-                if (
-                    path === "/api/v1/stories/mine/story-1/chapters/chapter-1"
-                ) {
-                    return Promise.resolve({
-                        data: {
-                            chapter: initialChapter,
-                        },
-                    });
-                }
-
-                if (
-                    path === "/api/v1/stories/story-1/chapters/chapter-1" &&
-                    options.method === "PATCH"
-                ) {
-                    return Promise.reject(
-                        new ApiError(
-                            409,
-
-                            "CHAPTER_EDIT_CONFLICT",
-
-                            "The chapter has been modified by another request.",
-
-                            {
-                                currentVersion: 2,
-
-                                updatedAt: "2026-08-17T08:00:00.000Z",
-                            },
-                        ),
-                    );
-                }
-
-                if (
-                    path ===
-                        "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
-                    options.method === "POST"
-                ) {
-                    publishWasCalled = true;
-
-                    return Promise.resolve({
-                        data: {
-                            chapter: {
-                                ...initialChapter,
-
-                                status: "PUBLISHED",
-
-                                version: 2,
-
-                                publishedAt: "2026-08-17T08:01:00.000Z",
-                            },
-                        },
-                    });
-                }
-
-                throw new Error(
-                    `Unexpected request: ${options.method ?? "GET"} ${path}`,
-                );
+    requestMock.mockImplementation(
+      (path: string, options: RequestInit = {}) => {
+        if (path === "/api/v1/stories/mine/story-1/chapters/chapter-1") {
+          return Promise.resolve({
+            data: {
+              chapter: initialChapter,
             },
-        );
+          });
+        }
 
-        render(
-            <MemoryRouter
-                initialEntries={["/write/story-1/chapters/chapter-1"]}
-            >
-                <Routes>
-                    <Route
-                        path="/write/:storyId/chapters/:chapterId"
-                        element={<ChapterEditorPage />}
-                    />
-                </Routes>
-            </MemoryRouter>,
-        );
-
-        const editor = await screen.findByLabelText("متن فصل");
-
-        fireEvent.change(editor, {
-            target: {
-                value: "متن جدیدی که فقط در Tab B نوشته شده",
+        if (path === "/api/v1/stories/mine/story-1") {
+          return Promise.resolve({
+            data: {
+              story: {
+                language: "fa",
+              },
             },
-        });
+          });
+        }
 
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: "انتشار فصل",
-            }),
+        if (
+          path === "/api/v1/stories/story-1/chapters/chapter-1" &&
+          options.method === "PATCH"
+        ) {
+          return Promise.reject(
+            new ApiError(
+              409,
+
+              "CHAPTER_EDIT_CONFLICT",
+
+              "The chapter has been modified by another request.",
+
+              {
+                currentVersion: 2,
+
+                updatedAt: "2026-08-17T08:00:00.000Z",
+              },
+            ),
+          );
+        }
+
+        if (
+          path === "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
+          options.method === "POST"
+        ) {
+          publishWasCalled = true;
+
+          return Promise.resolve({
+            data: {
+              chapter: {
+                ...initialChapter,
+
+                status: "PUBLISHED",
+
+                version: 2,
+
+                publishedAt: "2026-08-17T08:01:00.000Z",
+              },
+            },
+          });
+        }
+
+        throw new Error(
+          `Unexpected request: ${options.method ?? "GET"} ${path}`,
         );
+      },
+    );
 
-        await waitFor(() => {
-            expect(screen.getByText("تعارض ویرایش")).toBeTruthy();
-        });
+    render(
+      <MemoryRouter initialEntries={["/write/story-1/chapters/chapter-1"]}>
+        <Routes>
+          <Route
+            path="/write/:storyId/chapters/:chapterId"
+            element={<ChapterEditorPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
 
-        expect(publishWasCalled).toBe(false);
+    const editor = await screen.findByLabelText("متن فصل");
 
-        const publishCalls = requestMock.mock.calls.filter(
-            ([path, options]) =>
-                path === "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
-                options?.method === "POST",
-        );
+    fireEvent.change(editor, {
+      target: {
+        value: "متن جدیدی که فقط در Tab B نوشته شده",
+      },
+    });
 
-        expect(publishCalls).toHaveLength(0);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "انتشار فصل",
+      }),
+    );
 
-        const recovery = localStorage.getItem(
-            "writing-platform:draft:story-1:chapter-1",
-        );
+    await waitFor(() => {
+      expect(screen.getByText("تعارض ویرایش")).toBeTruthy();
+    });
 
-        expect(recovery).not.toBeNull();
+    expect(publishWasCalled).toBe(false);
 
-        expect(recovery).toContain("متن جدیدی که فقط در Tab B نوشته شده");
-    }, 7000);
+    const publishCalls = requestMock.mock.calls.filter(
+      ([path, options]) =>
+        path === "/api/v1/stories/story-1/chapters/chapter-1/publish" &&
+        options?.method === "POST",
+    );
+
+    expect(publishCalls).toHaveLength(0);
+
+    const recovery = localStorage.getItem(
+      "writing-platform:draft:story-1:chapter-1",
+    );
+
+    expect(recovery).not.toBeNull();
+
+    expect(recovery).toContain("متن جدیدی که فقط در Tab B نوشته شده");
+  }, 7000);
 });

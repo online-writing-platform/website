@@ -18,6 +18,7 @@ import {
 
 import useAuth from "../hooks/useAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
+
 import ThemeButton from "./ThemeButton";
 import {
   NavigationMenu,
@@ -29,6 +30,7 @@ import {
 } from "./ui/navigation-menu";
 
 import "./PlatformHeader.css";
+import NotificationMenu from "./NotificationMenu";
 
 function PlatformHeader() {
   const { t } = useTranslation();
@@ -72,6 +74,7 @@ function PlatformHeader() {
           onClick={closeMobileMenu}
         >
           <BookOpen className="platform-brand-icon" />
+
           <span>{t("PlatformHeader.brand")}</span>
         </Link>
 
@@ -81,6 +84,7 @@ function PlatformHeader() {
         >
           <NavLink to="/browse" className="platform-nav-link">
             <Compass className="platform-nav-icon" />
+
             <span>{t("PlatformHeader.discover")}</span>
           </NavLink>
 
@@ -89,6 +93,7 @@ function PlatformHeader() {
             (user.role === "MODERATOR" || user.role === "ADMIN") && (
               <NavLink to="/moderation" className="platform-nav-link">
                 <Settings className="platform-nav-icon" />
+
                 <span>{t("PlatformHeader.moderation")}</span>
               </NavLink>
             )}
@@ -108,108 +113,122 @@ function PlatformHeader() {
 
         <div className="platform-account">
           <ThemeButton />
+
           <LanguageSwitcher />
 
           {status === "authenticated" && user ? (
-            <NavigationMenu
-              className="platform-profile"
-              align="end"
-              aria-label={t("PlatformHeader.accountMenu")}
-            >
-              <NavigationMenuList>
-                <NavigationMenuItem value="account">
-                  <NavigationMenuTrigger className="platform-profile-trigger">
-                    <span>{user.displayName}</span>
-                  </NavigationMenuTrigger>
+            <>
+              <NotificationMenu />
 
-                  <NavigationMenuContent className="platform-profile-menu">
-                    <ul className="platform-profile-menu-list">
-                      <li>
-                        <NavigationMenuLink
-                          render={
-                            <NavLink
-                              to={`/users/${encodeURIComponent(user.username)}`}
-                            />
-                          }
-                          closeOnClick
-                        >
-                          <User />
-                          <span>{t("PlatformHeader.profile")}</span>
-                        </NavigationMenuLink>
-                      </li>
+              <NavigationMenu
+                className="platform-profile"
+                align="end"
+                aria-label={t("PlatformHeader.accountMenu")}
+              >
+                <NavigationMenuList>
+                  <NavigationMenuItem value="account">
+                    <NavigationMenuTrigger className="platform-profile-trigger">
+                      <span>{user.displayName}</span>
+                    </NavigationMenuTrigger>
 
-                      <li>
-                        <NavigationMenuLink
-                          render={<NavLink to="/library" />}
-                          closeOnClick
-                        >
-                          <Library />
-                          <span>{t("PlatformHeader.library")}</span>
-                        </NavigationMenuLink>
-                      </li>
+                    <NavigationMenuContent className="platform-profile-menu">
+                      <ul className="platform-profile-menu-list">
+                        <li>
+                          <NavigationMenuLink
+                            render={
+                              <NavLink
+                                to={`/users/${encodeURIComponent(
+                                  user.username,
+                                )}`}
+                              />
+                            }
+                            closeOnClick
+                          >
+                            <User />
 
-                      <li>
-                        <NavigationMenuLink
-                          render={<NavLink to="/write" />}
-                          closeOnClick
-                        >
-                          <PenTool />
-                          <span>{t("PlatformHeader.write")}</span>
-                        </NavigationMenuLink>
-                      </li>
+                            <span>{t("PlatformHeader.profile")}</span>
+                          </NavigationMenuLink>
+                        </li>
 
-                      <li>
-                        <NavigationMenuLink
-                          render={<NavLink to="/notifications" />}
-                          closeOnClick
-                        >
-                          <Bell />
-                          <span>{t("PlatformHeader.notifications")}</span>
-                        </NavigationMenuLink>
-                      </li>
+                        <li>
+                          <NavigationMenuLink
+                            render={<NavLink to="/library" />}
+                            closeOnClick
+                          >
+                            <Library />
 
-                      <li>
-                        <NavigationMenuLink
-                          render={<NavLink to="/analytics" />}
-                          closeOnClick
-                        >
-                          <BarChart3 />
-                          <span>{t("PlatformHeader.analytics")}</span>
-                        </NavigationMenuLink>
-                      </li>
+                            <span>{t("PlatformHeader.library")}</span>
+                          </NavigationMenuLink>
+                        </li>
 
-                      <li
-                        className="platform-profile-menu-divider"
-                        role="separator"
-                      />
+                        <li>
+                          <NavigationMenuLink
+                            render={<NavLink to="/write" />}
+                            closeOnClick
+                          >
+                            <PenTool />
 
-                      <li>
-                        <NavigationMenuLink
-                          render={<NavLink to="/settings" />}
-                          closeOnClick
-                        >
-                          <Settings />
-                          <span>{t("PlatformHeader.settings")}</span>
-                        </NavigationMenuLink>
-                      </li>
+                            <span>{t("PlatformHeader.write")}</span>
+                          </NavigationMenuLink>
+                        </li>
 
-                      <li>
-                        <NavigationMenuLink
-                          render={
-                            <button type="button" onClick={handleLogout} />
-                          }
-                          className="platform-profile-logout"
-                          closeOnClick
-                        >
-                          <LogOut />
-                          <span>{t("PlatformHeader.logout")}</span>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+                        <li>
+                          <NavigationMenuLink
+                            render={<NavLink to="/notifications" />}
+                            closeOnClick
+                          >
+                            <Bell />
+
+                            <span>{t("PlatformHeader.notifications")}</span>
+                          </NavigationMenuLink>
+                        </li>
+
+                        <li>
+                          <NavigationMenuLink
+                            render={<NavLink to="/analytics" />}
+                            closeOnClick
+                          >
+                            <BarChart3 />
+
+                            <span>{t("PlatformHeader.analytics")}</span>
+                          </NavigationMenuLink>
+                        </li>
+
+                        <li
+                          className="platform-profile-menu-divider"
+                          role="separator"
+                        />
+
+                        <li>
+                          <NavigationMenuLink
+                            render={<NavLink to="/settings" />}
+                            closeOnClick
+                          >
+                            <Settings />
+
+                            <span>{t("PlatformHeader.settings")}</span>
+                          </NavigationMenuLink>
+                        </li>
+
+                        <li>
+                          <NavigationMenuLink
+                            render={
+                              <button type="button" onClick={handleLogout} />
+                            }
+                            className="platform-profile-logout"
+                            closeOnClick
+                          >
+                            <LogOut />
+
+                            <span>{t("PlatformHeader.logout")}</span>
+                          </NavigationMenuLink>
+                        </li>
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+            </>
           ) : status === "anonymous" ? (
             <>
               <Link to="/login" className="platform-login">
@@ -264,6 +283,7 @@ function PlatformHeader() {
           >
             <NavLink to="/browse" onClick={closeMobileMenu}>
               <Compass />
+
               <span>{t("PlatformHeader.discover")}</span>
             </NavLink>
 
@@ -271,21 +291,25 @@ function PlatformHeader() {
               <>
                 <NavLink to="/library" onClick={closeMobileMenu}>
                   <Library />
+
                   <span>{t("PlatformHeader.library")}</span>
                 </NavLink>
 
                 <NavLink to="/write" onClick={closeMobileMenu}>
                   <PenTool />
+
                   <span>{t("PlatformHeader.write")}</span>
                 </NavLink>
 
                 <NavLink to="/notifications" onClick={closeMobileMenu}>
                   <Bell />
+
                   <span>{t("PlatformHeader.notifications")}</span>
                 </NavLink>
 
                 <NavLink to="/analytics" onClick={closeMobileMenu}>
                   <BarChart3 />
+
                   <span>{t("PlatformHeader.analytics")}</span>
                 </NavLink>
 
@@ -293,6 +317,7 @@ function PlatformHeader() {
                   (user.role === "MODERATOR" || user.role === "ADMIN") && (
                     <NavLink to="/moderation" onClick={closeMobileMenu}>
                       <Settings />
+
                       <span>{t("PlatformHeader.moderation")}</span>
                     </NavLink>
                   )}
@@ -308,16 +333,19 @@ function PlatformHeader() {
                   onClick={closeMobileMenu}
                 >
                   <User />
+
                   <span>{t("PlatformHeader.profile")}</span>
                 </Link>
 
                 <Link to="/settings" onClick={closeMobileMenu}>
                   <Settings />
+
                   <span>{t("PlatformHeader.settings")}</span>
                 </Link>
 
                 <button type="button" onClick={handleLogout}>
                   <LogOut />
+
                   <span>{t("PlatformHeader.logout")}</span>
                 </button>
               </>

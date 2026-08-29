@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarDays,
   Library,
+  PenTool,
   UserCheck,
   UserMinus,
   UserPlus,
@@ -18,6 +19,7 @@ import ProfileSettings from "../components/ProfileSettings";
 import ReportForm from "../components/ReportForm";
 import StoryCard from "../components/StoryCard";
 import useAuth from "../hooks/useAuth";
+import useStartWriting from "../hooks/useStartWriting";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 import {
@@ -150,6 +152,7 @@ export default function PublicProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { i18n, t } = useTranslation();
   const { status, user: viewer, request } = useAuth();
+  const { openStartWriting } = useStartWriting();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
@@ -186,16 +189,21 @@ export default function PublicProfilePage() {
   const load = useCallback(
     async (signal?: AbortSignal): Promise<void> => {
       const encodedUsername = encodeURIComponent(username);
+      const isOwnProfile =
+        status === "authenticated" && viewer?.username === username;
 
-      const storiesPath = `/api/v1/stories?author=${encodedUsername}&limit=24`;
+      const storiesPath = isOwnProfile
+        ? "/api/v1/stories/mine?limit=50"
+        : `/api/v1/stories?author=${encodedUsername}&limit=24`;
       const listsPath = `/api/v1/users/${encodedUsername}/reading-lists`;
 
       const followersPath = `/api/v1/users/${encodedUsername}/followers?limit=50`;
 
       const followingPath = `/api/v1/users/${encodedUsername}/following?limit=50`;
 
-      const storiesPromise =
-        status === "authenticated"
+      const storiesPromise = isOwnProfile
+        ? request<StoriesResponse>(storiesPath, { signal })
+        : status === "authenticated"
           ? request<StoriesResponse>(storiesPath, { signal })
           : apiRequest<StoriesResponse>(storiesPath, { signal });
 
@@ -422,6 +430,19 @@ export default function PublicProfilePage() {
 
   const isSelf =
     status === "authenticated" && viewer?.username === profile.username;
+
+  const ownerStoryCopy =
+    language === "fa"
+      ? {
+          startWriting: "شروع نوشتن",
+          editStory: "ویرایش داستان",
+          unpublished: "منتشرنشده",
+        }
+      : {
+          startWriting: "Start writing",
+          editStory: "Edit story",
+          unpublished: "Unpublished",
+        };
 
   const settingsParameter = searchParams.get("settings");
   const activeSettingsSection = isProfileSettingsSection(settingsParameter)
@@ -774,6 +795,17 @@ export default function PublicProfilePage() {
           >
             <div className="profile-section-heading">
               <h2>{t("profile.stories.title")}</h2>
+
+              {isSelf ? (
+                <button
+                  className="profile-action profile-action--primary"
+                  type="button"
+                  onClick={openStartWriting}
+                >
+                  <PenTool aria-hidden="true" />
+                  {ownerStoryCopy.startWriting}
+                </button>
+              ) : null}
             </div>
 
             {stories.length === 0 ? (
@@ -786,9 +818,60 @@ export default function PublicProfilePage() {
               </div>
             ) : (
               <div className="story-grid profile-story-grid">
-                {stories.map((story) => (
-                  <StoryCard key={story.id} story={story} variant="home" />
-                ))}
+                {stories.map((story) => {
+                  const editPath = `/write/${story.id}`;
+                  const isUnpublished =
+                    isSelf &&
+                    (story.publishedAt === null ||
+                      story.visibility !== "PUBLIC");
+
+                  return (
+                    <div
+                      key={story.id}
+                      style={
+                        isUnpublished
+                          ? {
+                              filter: "grayscale(1)",
+                              opacity: 0.62,
+                            }
+                          : undefined
+                      }
+                    >
+                      <StoryCard
+                        story={story}
+                        variant="home"
+                        to={isSelf ? editPath : undefined}
+                        actions={
+                          isSelf ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "0.65rem",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <Link
+                                className="profile-action profile-action--secondary"
+                                to={editPath}
+                              >
+                                <PenTool aria-hidden="true" />
+                                {ownerStoryCopy.editStory}
+                              </Link>
+
+                              {isUnpublished ? (
+                                <span className="muted">
+                                  {ownerStoryCopy.unpublished}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : undefined
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

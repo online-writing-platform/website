@@ -158,7 +158,7 @@ export function HeroSection() {
             className="mt-4 flex flex-col gap-3 sm:flex-row"
           >
             {/* Primary CTA */}
-            <Link to="/stories">
+            <Link to="/browse">
               <Button
                 size="lg"
                 className="gap-2 text-white shadow-md transition-all hover:-translate-y-0.5"
