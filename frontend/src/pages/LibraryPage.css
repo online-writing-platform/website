@@ -12,7 +12,7 @@
   gap: clamp(1rem, 3vw, 2rem);
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
-  border-radius: calc(var(--radius) + 0.75rem);
+  border-radius: var(--radius);
   padding: clamp(1.25rem, 4vw, 2.5rem);
   background:
     radial-gradient(
@@ -25,7 +25,6 @@
       var(--surface),
       color-mix(in srgb, var(--primary-soft) 68%, var(--surface))
     );
-  box-shadow: var(--shadow);
 }
 
 .library-page__hero::after {
@@ -86,7 +85,7 @@
   width: 3.5rem;
   height: 3.5rem;
   border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
-  border-radius: 1rem;
+  border-radius: var(--radius);
 }
 
 .library-page__hero-icon svg {
@@ -220,7 +219,7 @@
   min-width: 0;
   gap: 1.25rem;
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 0.5rem);
+  border-radius: var(--radius);
   padding: clamp(1rem, 3vw, 1.5rem);
   background: var(--surface);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
@@ -353,7 +352,7 @@
   grid-template-columns: 7.25rem minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 0.25rem);
+  border-radius: var(--radius);
   background: var(--background);
   transition:
     transform 180ms ease,
@@ -362,9 +361,7 @@
 }
 
 .library-progress-card:hover {
-  transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
-  box-shadow: var(--shadow);
 }
 
 .library-progress-card__cover {
