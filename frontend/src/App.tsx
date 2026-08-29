@@ -1,5 +1,11 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 
 import "./App.css";
 
@@ -14,7 +20,6 @@ const Register = lazy(() => import("./pages/Register"));
 const ReaderPage = lazy(() => import("./pages/ReaderPage"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
 const SocialListPage = lazy(() => import("./pages/SocialListPage"));
-const SearchPage = lazy(() => import("./pages/SearchPage"));
 const BrowsePage = lazy(() => import("./pages/BrowsePage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const ReadingListPage = lazy(() => import("./pages/ReadingListPage"));
@@ -37,6 +42,12 @@ function Secure({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
 
+function LegacySearchRedirect() {
+  const location = useLocation();
+
+  return <Navigate replace to={"/browse" + location.search} />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -53,7 +64,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
 
-            <Route path="/search" element={<SearchPage />} />
+            <Route path="/search" element={<LegacySearchRedirect />} />
 
             <Route path="/browse" element={<BrowsePage />} />
 
