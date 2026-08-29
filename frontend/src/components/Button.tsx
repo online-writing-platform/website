@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import "./Button.css";
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -10,7 +9,7 @@ interface ButtonProps {
 
   type?: "button" | "submit" | "reset";
 
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "quiet";
 
   disabled?: boolean;
 }
@@ -23,7 +22,7 @@ function Button({
   variant = "primary",
   disabled = false,
 }: ButtonProps) {
-  const className = `button button-${variant}`;
+  const className = `button button--${variant}`;
 
   if (to) {
     return (
