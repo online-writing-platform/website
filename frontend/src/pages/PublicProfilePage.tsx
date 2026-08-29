@@ -18,6 +18,9 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProfileSettings from "../components/ProfileSettings";
 import ReportForm from "../components/ReportForm";
 import StoryCard from "../components/StoryCard";
+import MonoActivityHeatmap, {
+  type PublicationActivityPoint,
+} from "../components/MonoActivityHeatmap";
 import useAuth from "../hooks/useAuth";
 import useStartWriting from "../hooks/useStartWriting";
 import { apiRequest } from "../lib/api";
@@ -46,6 +49,7 @@ interface Profile {
     following: number;
     publishedStories: number;
   };
+  publicationActivity?: PublicationActivityPoint[];
   createdAt: string;
 }
 
@@ -925,6 +929,11 @@ export default function PublicProfilePage() {
           renderSocialPanel(activeTab)
         )}
       </section>
+      <MonoActivityHeatmap
+        activity={profile.publicationActivity ?? []}
+        accentColor="purple"
+        language={language}
+      />
     </main>
   );
 }

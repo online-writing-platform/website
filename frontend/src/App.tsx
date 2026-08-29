@@ -9,6 +9,7 @@ import {
 
 import "./App.css";
 
+import Footer from "./components/Footer";
 import PlatformHeader from "./components/PlatformHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -45,164 +46,178 @@ function Secure({ children }: { children: ReactNode }) {
 function LegacySearchRedirect() {
   const location = useLocation();
 
-  return <Navigate replace to={"/browse" + location.search} />;
+  return <Navigate replace to={`/browse${location.search}`} />;
 }
 
 function App() {
   return (
     <BrowserRouter>
       <StartWritingProvider>
-        <PlatformHeader />
+        <div className="app-shell">
+          <PlatformHeader />
 
-        <Suspense
-          fallback={
-            <main className="page-shell">
-              <p>در حال بارگذاری…</p>
-            </main>
-          }
-        >
-          <Routes>
-            <Route path="/" element={<Home />} />
-
-            <Route path="/search" element={<LegacySearchRedirect />} />
-
-            <Route path="/browse" element={<BrowsePage />} />
-
-            <Route
-              path="/browse/genres/:slug"
-              element={<BrowsePage kind="genre" />}
-            />
-
-            <Route
-              path="/browse/tags/:slug"
-              element={<BrowsePage kind="tag" />}
-            />
-
-            {/*
-             * صفحهٔ معرفی داستان و صفحهٔ خواندن دیگر مجزا نیستند.
-             * ورود به آدرس اصلی داستان، اولین فصل منتشرشده را در همان
-             * صفحهٔ یکپارچه نمایش می‌دهد.
-             */}
-            <Route path="/stories/:slug" element={<ReaderPage />} />
-
-            {/*
-             * آدرس مستقیم فصل‌ها برای لینک‌های قدیمی، اشتراک‌گذاری،
-             * تاریخچهٔ مرورگر و SEO حفظ شده است.
-             */}
-            <Route
-              path="/stories/:slug/chapters/:chapterId"
-              element={<ReaderPage />}
-            />
-
-            <Route path="/users/:username" element={<PublicProfilePage />} />
-
-            <Route
-              path="/users/:username/followers"
-              element={<SocialListPage kind="followers" />}
-            />
-
-            <Route
-              path="/users/:username/following"
-              element={<SocialListPage kind="following" />}
-            />
-
-            <Route
-              path="/reading-lists/:listId"
-              element={<ReadingListPage />}
-            />
-
-            <Route path="/login" element={<Login />} />
-
-            <Route path="/register" element={<Register />} />
-
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-
-            <Route
-              path="/confirm-email-change"
-              element={<ConfirmEmailChangePage />}
-            />
-
-            <Route path="/terms" element={<Terms />} />
-
-            <Route
-              path="/library"
-              element={
-                <Secure>
-                  <LibraryPage />
-                </Secure>
+          <div className="app-main">
+            <Suspense
+              fallback={
+                <main className="page-shell">
+                  <p>در حال بارگذاری…</p>
+                </main>
               }
-            />
+            >
+              <Routes>
+                <Route path="/" element={<Home />} />
 
-            <Route
-              path="/notifications"
-              element={
-                <Secure>
-                  <NotificationsPage />
-                </Secure>
-              }
-            />
+                <Route path="/search" element={<LegacySearchRedirect />} />
 
-            <Route
-              path="/settings"
-              element={
-                <Secure>
-                  <SettingsPage />
-                </Secure>
-              }
-            />
+                <Route path="/browse" element={<BrowsePage />} />
 
-            <Route
-              path="/write"
-              element={
-                <Secure>
-                  <main className="page-shell" aria-busy="true" />
-                </Secure>
-              }
-            />
+                <Route
+                  path="/browse/genres/:slug"
+                  element={<BrowsePage kind="genre" />}
+                />
 
-            <Route
-              path="/write/:storyId"
-              element={
-                <Secure>
-                  <WriterStoryPage />
-                </Secure>
-              }
-            />
+                <Route
+                  path="/browse/tags/:slug"
+                  element={<BrowsePage kind="tag" />}
+                />
 
-            <Route
-              path="/write/:storyId/chapters/:chapterId"
-              element={
-                <Secure>
-                  <ChapterEditorPage />
-                </Secure>
-              }
-            />
+                {/*
+                 * صفحهٔ معرفی داستان و صفحهٔ خواندن
+                 * دیگر مجزا نیستند. ورود به آدرس اصلی
+                 * داستان، اولین فصل منتشرشده را در همان
+                 * صفحهٔ یکپارچه نمایش می‌دهد.
+                 */}
+                <Route path="/stories/:slug" element={<ReaderPage />} />
 
-            <Route
-              path="/analytics"
-              element={
-                <Secure>
-                  <AnalyticsPage />
-                </Secure>
-              }
-            />
+                {/*
+                 * آدرس مستقیم فصل‌ها برای لینک‌های قدیمی،
+                 * اشتراک‌گذاری، تاریخچهٔ مرورگر و SEO
+                 * حفظ شده است.
+                 */}
+                <Route
+                  path="/stories/:slug/chapters/:chapterId"
+                  element={<ReaderPage />}
+                />
 
-            <Route
-              path="/moderation"
-              element={
-                <RoleRoute roles={["MODERATOR", "ADMIN"]}>
-                  <ModerationPage />
-                </RoleRoute>
-              }
-            />
+                <Route
+                  path="/users/:username"
+                  element={<PublicProfilePage />}
+                />
 
-            <Route path="*" element={<ErrorPage />} />
-          </Routes>
-        </Suspense>
+                <Route
+                  path="/users/:username/followers"
+                  element={<SocialListPage kind="followers" />}
+                />
+
+                <Route
+                  path="/users/:username/following"
+                  element={<SocialListPage kind="following" />}
+                />
+
+                <Route
+                  path="/reading-lists/:listId"
+                  element={<ReadingListPage />}
+                />
+
+                <Route path="/login" element={<Login />} />
+
+                <Route path="/register" element={<Register />} />
+
+                <Route
+                  path="/forgot-password"
+                  element={<ForgotPasswordPage />}
+                />
+
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+                <Route
+                  path="/confirm-email-change"
+                  element={<ConfirmEmailChangePage />}
+                />
+
+                <Route path="/terms" element={<Terms />} />
+
+                <Route
+                  path="/library"
+                  element={
+                    <Secure>
+                      <LibraryPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/notifications"
+                  element={
+                    <Secure>
+                      <NotificationsPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/settings"
+                  element={
+                    <Secure>
+                      <SettingsPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/write"
+                  element={
+                    <Secure>
+                      <main className="page-shell" aria-busy="true" />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/write/:storyId"
+                  element={
+                    <Secure>
+                      <WriterStoryPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/write/:storyId/chapters/:chapterId"
+                  element={
+                    <Secure>
+                      <ChapterEditorPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/analytics"
+                  element={
+                    <Secure>
+                      <AnalyticsPage />
+                    </Secure>
+                  }
+                />
+
+                <Route
+                  path="/moderation"
+                  element={
+                    <RoleRoute roles={["MODERATOR", "ADMIN"]}>
+                      <ModerationPage />
+                    </RoleRoute>
+                  }
+                />
+
+                <Route path="*" element={<ErrorPage />} />
+              </Routes>
+            </Suspense>
+          </div>
+
+          <Footer />
+        </div>
       </StartWritingProvider>
     </BrowserRouter>
   );
