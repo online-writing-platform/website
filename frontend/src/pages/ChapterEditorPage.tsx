@@ -677,20 +677,6 @@ export default function ChapterEditorPage() {
 
               <span>{copy.back}</span>
             </Link>
-
-            <div className="chapter-write-toolbar__chapter">
-              <span className="chapter-write-toolbar__icon" aria-hidden="true">
-                <BookOpenText size={21} />
-              </span>
-
-              <div>
-                <span className="chapter-write-toolbar__eyebrow">
-                  {copy.workspace}
-                </span>
-
-                <strong {...storyTextAttributes}>{chapter.title}</strong>
-              </div>
-            </div>
           </div>
 
           <div
@@ -864,8 +850,6 @@ export default function ChapterEditorPage() {
 
             <div className="chapter-writing-field">
               <div className="chapter-writing-field__heading">
-                <label htmlFor="chapter-content">{copy.contentLabel}</label>
-
                 <span
                   className="chapter-writing-field__direction"
                   aria-label={`${storyLanguageLabel} · ${storyDirectionLabel}`}
