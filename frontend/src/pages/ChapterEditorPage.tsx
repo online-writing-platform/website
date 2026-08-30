@@ -8,6 +8,7 @@ import {
   Cloud,
   CloudUpload,
   FileClock,
+  Languages,
   LoaderCircle,
   RotateCcw,
   Save,
@@ -17,6 +18,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
+import RichTextEditor from "../components/RichTextEditor";
 import useAuth from "../hooks/useAuth";
 import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
@@ -73,6 +75,9 @@ const COPY = {
     titleLabel: "عنوان فصل",
     contentLabel: "متن فصل",
     contentPlaceholder: "نوشتن این فصل را شروع کنید…",
+    persian: "فارسی",
+    english: "انگلیسی",
+    automatic: "تشخیص خودکار",
     loadedVersion: (version: number) => `نسخه ${version} از سرور بارگذاری شد.`,
     localPending: "تغییرات محلی ذخیره شد؛ در انتظار ذخیره روی سرور…",
     savingServer: "در حال ذخیره روی سرور…",
@@ -113,6 +118,9 @@ const COPY = {
     titleLabel: "Chapter title",
     contentLabel: "Chapter text",
     contentPlaceholder: "Start writing this chapter…",
+    persian: "Persian",
+    english: "English",
+    automatic: "Automatic detection",
     loadedVersion: (version: number) =>
       `Version ${version} was loaded from the server.`,
     localPending:
@@ -233,6 +241,8 @@ export default function ChapterEditorPage() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [wordCount, setWordCount] = useState(0);
+  const [characterCount, setCharacterCount] = useState(0);
 
   const [editorStatus, setEditorStatus] = useState<EditorStatus>({
     type: "loading",
@@ -289,6 +299,8 @@ export default function ChapterEditorPage() {
     setChapter(value);
     setTitle(value.title);
     setContent(serverContent);
+    setWordCount(value.wordCount);
+    setCharacterCount(0);
     setConflict(null);
 
     setEditorStatus({
@@ -624,7 +636,20 @@ export default function ChapterEditorPage() {
 
   const storyTextAttributes = getStoryTextAttributes(storyLanguage);
 
-  const wordCount = content.trim() ? content.trim().split(/\s+/u).length : 0;
+  const storyLanguageLabel =
+    storyTextAttributes.lang === "fa"
+      ? copy.persian
+      : storyTextAttributes.lang === "en"
+        ? copy.english
+        : copy.automatic;
+
+  const storyDirectionLabel = storyTextAttributes.dir.toUpperCase();
+
+  const displayTitle = title.trim();
+
+  const headingTextAttributes = displayTitle
+    ? storyTextAttributes
+    : { dir: direction, lang: interfaceLanguage };
 
   const formattedRecoveryDate = localDraft
     ? new Date(localDraft.savedAt).toLocaleString(copy.locale)
@@ -823,8 +848,8 @@ export default function ChapterEditorPage() {
                 {copy.workspace}
               </span>
 
-              <h1 id="chapter-writing-heading" {...storyTextAttributes}>
-                {title.trim() || copy.titleLabel}
+              <h1 id="chapter-writing-heading" {...headingTextAttributes}>
+                {displayTitle || copy.titleLabel}
               </h1>
             </div>
 
@@ -856,33 +881,45 @@ export default function ChapterEditorPage() {
               />
             </label>
 
-            <label className="chapter-writing-field" htmlFor="chapter-content">
-              <span>{copy.contentLabel}</span>
+            <div className="chapter-writing-field">
+              <div className="chapter-writing-field__heading">
+                <label htmlFor="chapter-content">{copy.contentLabel}</label>
 
-              <textarea
+                <span
+                  className="chapter-writing-field__direction"
+                  aria-label={`${storyLanguageLabel} · ${storyDirectionLabel}`}
+                >
+                  <Languages aria-hidden="true" size={14} />
+
+                  <span>{storyLanguageLabel}</span>
+
+                  <bdi dir="ltr">{storyDirectionLabel}</bdi>
+                </span>
+              </div>
+
+              <RichTextEditor
                 id="chapter-content"
-                className="chapter-writing-field__content"
+                label={copy.contentLabel}
                 value={content}
-                maxLength={100000}
-                spellCheck
+                direction={storyTextAttributes.dir}
+                language={storyTextAttributes.lang}
                 placeholder={copy.contentPlaceholder}
-                {...storyTextAttributes}
-                onChange={(event) => {
-                  const nextContent = event.target.value;
-
+                onCharacterCountChange={setCharacterCount}
+                onWordCountChange={setWordCount}
+                onChange={(nextContent) => {
                   setContent(nextContent);
 
                   scheduleSave(title, nextContent);
                 }}
               />
-            </label>
+            </div>
           </div>
 
           <footer className="chapter-writing-paper__footer">
             <div className="chapter-writing-paper__stats">
               <span>{copy.words(wordCount)}</span>
 
-              <span>{copy.characters(content.length)}</span>
+              <span>{copy.characters(characterCount)}</span>
 
               <span>{copy.version(chapter.version)}</span>
             </div>

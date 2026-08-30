@@ -1,5 +1,10 @@
 import AppError from "../../errors/app-error.js";
 
+import {
+    MAX_CHAPTER_TEXT_LENGTH,
+    prepareChapterContent,
+} from "./chapter-content.js";
+
 import { countWords } from "./stories.policy.js";
 import type {
     ChapterView,
@@ -16,14 +21,24 @@ export class ChapterService {
         storyId: string,
         input: CreateChapterInput,
     ): Promise<ChapterView> {
+        const preparedContent = prepareChapterContent(input.content);
+
+        if (preparedContent.plainText.length > MAX_CHAPTER_TEXT_LENGTH) {
+            throw AppError.tooLarge(
+                "Chapter text cannot exceed 100,000 characters.",
+                "CHAPTER_CONTENT_TOO_LONG",
+                { maxTextLength: MAX_CHAPTER_TEXT_LENGTH },
+            );
+        }
+
         const chapter = await this.store.createChapter(
             authorId,
             storyId,
             {
                 title: input.title.trim(),
-                content: input.content,
+                content: preparedContent.content,
             },
-            countWords(input.content),
+            countWords(preparedContent.plainText),
         );
 
         if (!chapter) {
@@ -42,19 +57,38 @@ export class ChapterService {
         chapterId: string,
         input: UpdateChapterInput,
     ): Promise<ChapterView> {
+        const preparedContent =
+            input.content === undefined
+                ? undefined
+                : prepareChapterContent(input.content);
+
+        if (
+            preparedContent &&
+            preparedContent.plainText.length > MAX_CHAPTER_TEXT_LENGTH
+        ) {
+            throw AppError.tooLarge(
+                "Chapter text cannot exceed 100,000 characters.",
+                "CHAPTER_CONTENT_TOO_LONG",
+                { maxTextLength: MAX_CHAPTER_TEXT_LENGTH },
+            );
+        }
+
         const result = await this.store.updateChapter(
             authorId,
             storyId,
             chapterId,
             {
                 ...input,
+                ...(preparedContent
+                    ? { content: preparedContent.content }
+                    : {}),
                 ...(input.title !== undefined
                     ? { title: input.title.trim() }
                     : {}),
             },
-            input.content === undefined
+            preparedContent === undefined
                 ? undefined
-                : countWords(input.content),
+                : countWords(preparedContent.plainText),
         );
 
         if (!result) {

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import AppError from "../../errors/app-error.js";
 import type { ChaptersRepository } from "./chapters.repo.js";
+import { RICH_TEXT_CONTENT_PREFIX } from "./chapter-content.js";
 import { ChapterService } from "./chapters.service.js";
 
 function chapter(version = 3) {
@@ -42,6 +43,40 @@ void test("chapter update returns the incremented server version", async () => {
     );
 
     assert.equal(result.version, 4);
+});
+
+void test("chapter update sanitizes rich text and counts only readable words", async () => {
+    let savedContent = "";
+    let savedWordCount: number | undefined;
+
+    const store = {
+        updateChapter: (
+            _authorId: string,
+            _storyId: string,
+            _chapterId: string,
+            input: { content?: string },
+            wordCount: number | undefined,
+        ) => {
+            savedContent = input.content ?? "";
+            savedWordCount = wordCount;
+
+            return Promise.resolve({
+                kind: "UPDATED" as const,
+                chapter: chapter(4),
+            });
+        },
+    } as unknown as ChaptersRepository;
+
+    const service = new ChapterService(store);
+
+    await service.update("author", "story", "chapter", {
+        content: `${RICH_TEXT_CONTENT_PREFIX}<p>سلام <strong>دنیا</strong><script>bad()</script></p>`,
+        expectedVersion: 3,
+    });
+
+    assert.equal(savedWordCount, 2);
+    assert.match(savedContent, /<strong>دنیا<\/strong>/u);
+    assert.doesNotMatch(savedContent, /script|bad\(\)/iu);
 });
 
 void test("chapter update exposes a 409 conflict instead of overwriting a newer edit", async () => {

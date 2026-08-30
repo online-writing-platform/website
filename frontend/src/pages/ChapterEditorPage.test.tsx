@@ -12,6 +12,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../lib/api";
+import i18n from "../i18n";
 
 import type { Chapter, ChapterResponse } from "../types/story";
 
@@ -27,8 +28,52 @@ vi.mock("../hooks/useAuth", () => ({
   }),
 }));
 
-afterEach(() => {
+vi.mock("../components/RichTextEditor", () => ({
+  default: ({
+    id,
+    label,
+    direction,
+    language,
+    onChange,
+    onCharacterCountChange,
+    onWordCountChange,
+    placeholder,
+    value,
+  }: {
+    direction: "rtl" | "ltr" | "auto";
+    id: string;
+    label: string;
+    language?: "fa" | "en";
+    onChange: (value: string) => void;
+    onCharacterCountChange?: (characterCount: number) => void;
+    onWordCountChange?: (wordCount: number) => void;
+    placeholder?: string;
+    value: string;
+  }) => (
+    <textarea
+      id={id}
+      aria-label={label}
+      dir={direction}
+      lang={language}
+      placeholder={placeholder}
+      value={value}
+      onChange={(event) => {
+        const nextValue = event.target.value;
+
+        onChange(nextValue);
+        onCharacterCountChange?.(nextValue.length);
+        onWordCountChange?.(
+          nextValue.trim() ? nextValue.trim().split(/\s+/u).length : 0,
+        );
+      }}
+    />
+  ),
+}));
+
+afterEach(async () => {
   cleanup();
+
+  await i18n.changeLanguage("fa");
 });
 
 function deferred<T>() {
@@ -73,7 +118,9 @@ const initialChapter: Chapter = {
 };
 
 describe("ChapterEditorPage autosave and publish concurrency", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("fa");
+
     requestMock.mockReset();
 
     localStorage.clear();
@@ -366,4 +413,89 @@ describe("ChapterEditorPage autosave and publish concurrency", () => {
 
     expect(recovery).toContain("متن جدیدی که فقط در Tab B نوشته شده");
   }, 7000);
+
+  it.each([
+    [
+      "en",
+      "fa",
+      "ltr",
+      "rtl",
+      "Chapter text",
+      "Start writing this chapter…",
+      "Publish chapter",
+      "Persian · RTL",
+    ],
+    [
+      "fa",
+      "en",
+      "rtl",
+      "ltr",
+      "متن فصل",
+      "نوشتن این فصل را شروع کنید…",
+      "انتشار فصل",
+      "انگلیسی · LTR",
+    ],
+  ] as const)(
+    "keeps the %s interface independent from %s story direction",
+    async (
+      interfaceLanguage,
+      storyLanguage,
+      interfaceDirection,
+      storyDirection,
+      contentLabel,
+      placeholder,
+      publishLabel,
+      languageBadge,
+    ) => {
+      await i18n.changeLanguage(interfaceLanguage);
+
+      requestMock.mockImplementation((path: string) => {
+        if (path === "/api/v1/stories/mine/story-1/chapters/chapter-1") {
+          return Promise.resolve({
+            data: {
+              chapter: initialChapter,
+            },
+          });
+        }
+
+        if (path === "/api/v1/stories/mine/story-1") {
+          return Promise.resolve({
+            data: {
+              story: {
+                language: storyLanguage,
+              },
+            },
+          });
+        }
+
+        throw new Error(`Unexpected request: GET ${path}`);
+      });
+
+      render(
+        <MemoryRouter initialEntries={["/write/story-1/chapters/chapter-1"]}>
+          <Routes>
+            <Route
+              path="/write/:storyId/chapters/:chapterId"
+              element={<ChapterEditorPage />}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      const editor = await screen.findByLabelText(contentLabel);
+      const page = editor.closest("main");
+
+      expect(page?.getAttribute("dir")).toBe(interfaceDirection);
+      expect(page?.getAttribute("lang")).toBe(interfaceLanguage);
+      expect(editor.getAttribute("dir")).toBe(storyDirection);
+      expect(editor.getAttribute("lang")).toBe(storyLanguage);
+      expect(editor.getAttribute("placeholder")).toBe(placeholder);
+      expect(screen.getByLabelText(languageBadge)).toBeTruthy();
+      expect(
+        screen.getByRole("button", {
+          name: publishLabel,
+        }),
+      ).toBeTruthy();
+    },
+  );
 });

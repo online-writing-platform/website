@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 
 import ReaderInteractions from "../components/ReaderInteractions";
 import ReportForm from "../components/ReportForm";
+import RichTextContent from "../components/RichTextContent";
 import useAuth from "../hooks/useAuth";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { apiRequest } from "../lib/api";
@@ -1050,15 +1051,10 @@ export default function ReaderPage() {
                 </div>
               </header>
 
-              <div className="reader__content">
-                {(chapter.content ?? "")
-                  .split(/\n{2,}/u)
-                  .map((paragraph, index) => (
-                    <p key={`${index}-${paragraph.slice(0, 24)}`}>
-                      {paragraph}
-                    </p>
-                  ))}
-              </div>
+              <RichTextContent
+                className="reader__content"
+                content={chapter.content ?? ""}
+              />
             </article>
 
             <nav

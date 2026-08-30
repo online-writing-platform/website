@@ -451,14 +451,48 @@
   gap: 0.45rem;
 }
 
-.chapter-writing-field > span {
+.chapter-writing-field > span,
+.chapter-writing-field__heading > label {
   color: var(--text-secondary);
   font-size: 0.68rem;
   font-weight: 800;
 }
 
-.chapter-writing-field__title,
-.chapter-writing-field__content {
+.chapter-writing-field__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.chapter-writing-field__direction {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--primary-soft);
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.chapter-writing-field__direction svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.chapter-writing-field__direction bdi {
+  color: var(--primary);
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.045em;
+}
+
+.chapter-writing-field__title {
   width: 100%;
   color: var(--text);
   font-family: inherit;
@@ -490,31 +524,35 @@
   box-shadow: 0 2px 0 var(--primary);
 }
 
-.chapter-writing-field__content {
-  min-height: 80vh;
-  padding: clamp(1.2rem, 4vw, 2.2rem);
-
-  background-size: 100% 2em;
-  font-size: clamp(0.98rem, 2vw, 1.08rem);
-  line-height: 2;
-  resize: vertical;
+.chapter-writing-field > .rich-text-editor {
+  width: 100%;
+  border-radius: var(--chapter-write-radius-small);
   box-shadow: var(--shadow);
 }
 
-.chapter-writing-field__content:hover {
+.chapter-writing-field > .rich-text-editor:hover {
   border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
 }
 
-.chapter-writing-field__content:focus {
+.chapter-writing-field > .rich-text-editor:focus-within {
   border-color: var(--ring);
-  outline: none;
   box-shadow:
     0 0 0 4px color-mix(in srgb, var(--ring) 13%, transparent),
     0 16px 34px rgb(24 24 27 / 7%);
 }
 
-.chapter-writing-field__content::placeholder {
-  color: var(--text-muted);
+.chapter-writing-field .rich-text-editor__toolbar {
+  padding: 0.65rem;
+  background: color-mix(in srgb, var(--background) 72%, var(--surface));
+}
+
+.chapter-writing-field .rich-text-editor__content {
+  min-height: 80vh;
+  padding: clamp(1.2rem, 4vw, 2.2rem);
+  background: var(--surface);
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  line-height: 2;
+  text-align: start;
 }
 
 /* =========================
@@ -677,7 +715,7 @@
     padding: 1rem;
   }
 
-  .chapter-writing-field__content {
+  .chapter-writing-field .rich-text-editor__content {
     min-height: 60vh;
     padding: 1.1rem;
   }
@@ -721,7 +759,7 @@
     font-size: 1.15rem;
   }
 
-  .chapter-writing-field__content {
+  .chapter-writing-field .rich-text-editor__content {
     min-height: 55vh;
     font-size: 0.95rem;
   }

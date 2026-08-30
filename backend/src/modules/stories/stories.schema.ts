@@ -5,6 +5,8 @@ import {
 import { usernameSchema } from "../../shared/validation/username.schema.js";
 import { z } from "zod";
 
+import { MAX_CHAPTER_CONTENT_LENGTH } from "./chapter-content.js";
+
 const slugSchema = z.string().trim().min(1).max(220);
 
 const languageSchema = z.string().trim().min(2).max(10);
@@ -89,7 +91,7 @@ export const updateStorySchema = z
 export const createChapterSchema = z
   .object({
     title: z.string().trim().min(1).max(200),
-    content: z.string().max(100_000),
+    content: z.string().max(MAX_CHAPTER_CONTENT_LENGTH),
   })
   .strict();
 
@@ -97,7 +99,7 @@ export const updateChapterSchema = z
   .object({
     expectedVersion: z.number().int().min(1),
     title: z.string().trim().min(1).max(200).optional(),
-    content: z.string().max(100_000).optional(),
+    content: z.string().max(MAX_CHAPTER_CONTENT_LENGTH).optional(),
   })
   .strict()
   .refine((value) => value.title !== undefined || value.content !== undefined, {
