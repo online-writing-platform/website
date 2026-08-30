@@ -842,25 +842,6 @@ export default function ChapterEditorPage() {
           className="chapter-writing-paper"
           aria-labelledby="chapter-writing-heading"
         >
-          <header className="chapter-writing-paper__header">
-            <div>
-              <span className="chapter-writing-paper__eyebrow">
-                {copy.workspace}
-              </span>
-
-              <h1 id="chapter-writing-heading" {...headingTextAttributes}>
-                {displayTitle || copy.titleLabel}
-              </h1>
-            </div>
-
-            <span
-              className="chapter-writing-paper__publication"
-              data-published={chapter.status === "PUBLISHED" || undefined}
-            >
-              {chapter.status === "PUBLISHED" ? copy.published : copy.draft}
-            </span>
-          </header>
-
           <div className="chapter-writing-paper__fields">
             <label className="chapter-writing-field" htmlFor="chapter-title">
               <span>{copy.titleLabel}</span>

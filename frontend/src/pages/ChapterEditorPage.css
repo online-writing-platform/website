@@ -29,18 +29,6 @@
   pointer-events: none;
 }
 
-.chapter-write-page__decoration {
-  position: absolute;
-  z-index: -1;
-  inset-block-start: 8rem;
-  inset-inline-end: -7rem;
-  width: 18rem;
-  height: 18rem;
-  border: 2.4rem solid color-mix(in srgb, var(--primary) 5%, transparent);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
 .chapter-write-page__container {
   width: min(100%, var(--content-max));
   margin-inline: auto;
@@ -380,43 +368,6 @@
   content: "";
 }
 
-.chapter-writing-paper__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: clamp(1rem, 3vw, 1.45rem) clamp(1rem, 4vw, 2rem);
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.chapter-writing-paper__header > div {
-  min-width: 0;
-}
-
-.chapter-writing-paper__eyebrow {
-  display: block;
-  margin-block-end: 0.22rem;
-  color: var(--primary);
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
-}
-
-[dir="rtl"] .chapter-writing-paper__eyebrow {
-  letter-spacing: 0;
-}
-
-.chapter-writing-paper__header h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: clamp(1.15rem, 3vw, 1.55rem);
-  font-weight: 900;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
 .chapter-writing-paper__publication {
   display: inline-flex;
   min-height: 28px;
@@ -749,10 +700,6 @@
 
   .chapter-write-alert__actions .chapter-write-button {
     width: 100%;
-  }
-
-  .chapter-writing-paper__header {
-    flex-direction: column;
   }
 
   .chapter-writing-field__title {
