@@ -1,0 +1,746 @@
+.chapter-write-page {
+  --chapter-write-radius: calc(var(--radius) + 14px);
+  --chapter-write-radius-small: calc(var(--radius) + 5px);
+
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 4rem);
+  overflow: hidden;
+  color: var(--text);
+}
+
+.chapter-write-page::before {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--border) 28%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border) 28%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 44px 44px;
+  content: "";
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 38%), transparent 36rem);
+  pointer-events: none;
+}
+
+.chapter-write-page__decoration {
+  position: absolute;
+  z-index: -1;
+  inset-block-start: 8rem;
+  inset-inline-end: -7rem;
+  width: 18rem;
+  height: 18rem;
+  border: 2.4rem solid color-mix(in srgb, var(--primary) 5%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.chapter-write-page__container {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
+}
+
+/* =========================
+   Toolbar
+   ========================= */
+
+.chapter-write-toolbar {
+  position: sticky;
+  z-index: 10;
+  top: 0.75rem;
+  display: grid;
+  grid-template-columns:
+    minmax(200px, 1fr)
+    minmax(220px, 0.85fr)
+    auto;
+  gap: 1rem;
+  align-items: center;
+  margin-block-end: 12px;
+  padding: 0.8rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:
+    0 14px 36px rgb(24 24 27 / 10%),
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.chapter-write-toolbar__identity {
+  min-width: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.chapter-write-toolbar__back {
+  width: max-content;
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.69rem;
+  font-weight: 750;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.chapter-write-toolbar__back:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.chapter-write-toolbar__back:focus-visible,
+.chapter-write-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ring) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.chapter-write-toolbar__chapter {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.chapter-write-toolbar__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  border-radius: calc(var(--radius));
+  background: linear-gradient(145deg, var(--primary), var(--primary-hover));
+  color: var(--primary-foreground);
+}
+
+.chapter-write-toolbar__chapter > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.chapter-write-toolbar__eyebrow {
+  color: var(--primary);
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+[dir="rtl"] .chapter-write-toolbar__eyebrow {
+  letter-spacing: 0;
+}
+
+.chapter-write-toolbar__chapter strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 850;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================
+   Save status
+   ========================= */
+
+.chapter-write-status {
+  min-width: 0;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  background: color-mix(in srgb, var(--background) 70%, var(--surface));
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.chapter-write-status span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-write-status svg {
+  flex: 0 0 auto;
+}
+
+.chapter-write-status[data-kind="success"] {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+  color: var(--success);
+}
+
+.chapter-write-status[data-kind="saving"] {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  color: var(--warning);
+}
+
+.chapter-write-status[data-kind="local"] {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.chapter-write-status[data-kind="error"] {
+  border-color: color-mix(in srgb, var(--danger) 32%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  color: var(--danger);
+}
+
+.chapter-write-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* =========================
+   Buttons
+   ========================= */
+
+.chapter-write-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 6px;
+  padding: 0.48rem 0.78rem;
+  font-family: inherit;
+  font-size: 0.71rem;
+  font-weight: 800;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.chapter-write-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chapter-write-button--secondary {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.chapter-write-button--secondary:not(:disabled):hover {
+  color: var(--primary);
+}
+
+.chapter-write-button--publish {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.chapter-write-button--publish:not(:disabled):hover {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.chapter-write-button--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.chapter-write-button--quiet:not(:disabled):hover {
+  background: var(--surface-hover);
+  color: var(--danger);
+}
+
+/* =========================
+   Alerts
+   ========================= */
+
+.chapter-write-alert {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+  gap: 0.8rem;
+  align-items: start;
+  overflow: hidden;
+  margin-block-end: 5px;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgb(24 24 27 / 6%);
+}
+
+.chapter-write-alert::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: currentColor;
+  content: "";
+}
+
+.chapter-write-alert > svg {
+  margin-block-start: 0.1rem;
+}
+
+.chapter-write-alert--error,
+.chapter-write-alert--conflict {
+  border-color: color-mix(in srgb, var(--danger) 38%, var(--border));
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+}
+
+.chapter-write-alert--recovery {
+  border-color: color-mix(in srgb, var(--warning) 38%, var(--border));
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface));
+  color: var(--warning);
+}
+
+.chapter-write-alert__content {
+  min-width: 0;
+}
+
+.chapter-write-alert__content strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.chapter-write-alert p,
+.chapter-write-alert__content p {
+  margin: 0.2rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.69rem;
+  line-height: 1.75;
+}
+
+.chapter-write-alert > p {
+  margin: 0;
+}
+
+.chapter-write-alert__content small {
+  display: block;
+  margin-block-start: 0.35rem;
+  color: currentColor;
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
+.chapter-write-alert__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* =========================
+   Writing paper
+   ========================= */
+
+.chapter-writing-paper {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 98%, var(--background));
+  box-shadow:
+    0 22px 55px rgb(24 24 27 / 9%),
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.chapter-writing-paper::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 5px;
+  background: linear-gradient(to bottom, var(--primary), var(--accent));
+  content: "";
+}
+
+.chapter-writing-paper__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.45rem) clamp(1rem, 4vw, 2rem);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.chapter-writing-paper__header > div {
+  min-width: 0;
+}
+
+.chapter-writing-paper__eyebrow {
+  display: block;
+  margin-block-end: 0.22rem;
+  color: var(--primary);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+[dir="rtl"] .chapter-writing-paper__eyebrow {
+  letter-spacing: 0;
+}
+
+.chapter-writing-paper__header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.chapter-writing-paper__publication {
+  display: inline-flex;
+  min-height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--warning) 28%, var(--border));
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  color: var(--warning);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.chapter-writing-paper__publication[data-published="true"] {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+  color: var(--success);
+}
+
+.chapter-writing-paper__fields {
+  width: min(100%, 1200px);
+  display: grid;
+  gap: 1.1rem;
+  margin-inline: auto;
+  padding: clamp(1.2rem, 4vw, 2.4rem);
+}
+
+.chapter-writing-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.chapter-writing-field > span {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.chapter-writing-field__title,
+.chapter-writing-field__content {
+  width: 100%;
+  color: var(--text);
+  font-family: inherit;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.chapter-writing-field__title {
+  min-height: 58px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.45rem 0.2rem;
+  background: transparent;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+.chapter-writing-field__title:hover {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+}
+
+.chapter-writing-field__title:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 2px 0 var(--primary);
+}
+
+.chapter-writing-field__content {
+  min-height: 80vh;
+  padding: clamp(1.2rem, 4vw, 2.2rem);
+
+  background-size: 100% 2em;
+  font-size: clamp(0.98rem, 2vw, 1.08rem);
+  line-height: 2;
+  resize: vertical;
+  box-shadow:
+    inset 0 1px 3px rgb(24 24 27 / 4%),
+    0 12px 28px rgb(24 24 27 / 5%);
+}
+
+.chapter-writing-field__content:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+}
+
+.chapter-writing-field__content:focus {
+  border-color: var(--ring);
+  outline: none;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--ring) 13%, transparent),
+    0 16px 34px rgb(24 24 27 / 7%);
+}
+
+.chapter-writing-field__content::placeholder {
+  color: var(--text-muted);
+}
+
+/* =========================
+   Editor footer
+   ========================= */
+
+.chapter-writing-paper__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 2rem);
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--background) 62%, var(--surface));
+  color: var(--text-secondary);
+  font-size: 0.66rem;
+}
+
+.chapter-writing-paper__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chapter-writing-paper__stats span {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--surface);
+}
+
+.chapter-writing-paper__autosave {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--success);
+  font-weight: 750;
+}
+
+/* =========================
+   Loading
+   ========================= */
+
+.chapter-write-loading {
+  min-height: calc(100vh - 4rem);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--primary) 10%, transparent),
+      transparent 24rem
+    ),
+    var(--background);
+}
+
+.chapter-write-loading__card {
+  width: min(100%, 320px);
+  display: grid;
+  place-items: center;
+  gap: 0.8rem;
+  padding: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 14px);
+  background: var(--surface);
+  color: var(--primary);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.chapter-write-loading__card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+.chapter-write-loading__card--error {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  color: var(--danger);
+}
+
+.chapter-write-spin {
+  animation: chapter-write-spin 850ms linear infinite;
+}
+
+@keyframes chapter-write-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   Responsive
+   ========================= */
+
+@media (max-width: 1040px) {
+  .chapter-write-toolbar {
+    grid-template-columns:
+      minmax(220px, 1fr)
+      auto;
+  }
+
+  .chapter-write-status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .chapter-write-page {
+    padding-inline: 0.65rem;
+  }
+
+  .chapter-write-toolbar {
+    position: relative;
+    top: 0;
+    grid-template-columns: 1fr;
+    border-radius: var(--radius);
+  }
+
+  .chapter-write-status {
+    grid-column: auto;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .chapter-write-toolbar__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  .chapter-write-toolbar__actions .chapter-write-button {
+    width: 100%;
+  }
+
+  .chapter-write-alert {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+  }
+
+  .chapter-write-alert__actions {
+    grid-column: 2;
+  }
+
+  .chapter-writing-paper {
+    border-radius: calc(var(--radius) + 9px);
+  }
+
+  .chapter-writing-paper__fields {
+    padding: 1rem;
+  }
+
+  .chapter-writing-field__content {
+    min-height: 60vh;
+    padding: 1.1rem;
+  }
+
+  .chapter-writing-paper__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .chapter-write-toolbar__chapter strong {
+    max-width: 14rem;
+  }
+
+  .chapter-write-toolbar__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .chapter-write-alert {
+    grid-template-columns: 1fr;
+  }
+
+  .chapter-write-alert > svg {
+    display: none;
+  }
+
+  .chapter-write-alert__actions {
+    grid-column: auto;
+  }
+
+  .chapter-write-alert__actions .chapter-write-button {
+    width: 100%;
+  }
+
+  .chapter-writing-paper__header {
+    flex-direction: column;
+  }
+
+  .chapter-writing-field__title {
+    font-size: 1.15rem;
+  }
+
+  .chapter-writing-field__content {
+    min-height: 55vh;
+    font-size: 0.95rem;
+  }
+
+  .chapter-writing-paper__stats {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-write-page *,
+  .chapter-write-page *::before,
+  .chapter-write-page *::after,
+  .chapter-write-loading * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

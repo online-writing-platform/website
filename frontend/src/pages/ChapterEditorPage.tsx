@@ -1,4 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpenText,
+  Check,
+  CircleAlert,
+  Cloud,
+  CloudUpload,
+  FileClock,
+  LoaderCircle,
+  RotateCcw,
+  Save,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
@@ -7,6 +22,8 @@ import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 import { getStoryTextAttributes } from "../lib/story-language";
 import type { Chapter, ChapterResponse, StoryResponse } from "../types/story";
+
+import "./ChapterEditorPage.css";
 
 interface LocalDraft {
   title: string;
@@ -25,33 +42,225 @@ interface ConflictInfo {
   updatedAt?: string;
 }
 
+type InterfaceLanguage = "fa" | "en";
+
+type EditorStatus =
+  | { type: "loading" }
+  | { type: "loaded"; version: number }
+  | { type: "local-pending" }
+  | { type: "saving" }
+  | { type: "saved"; version: number }
+  | { type: "saving-newer" }
+  | { type: "conflict" }
+  | { type: "save-failed" }
+  | { type: "recovered" }
+  | { type: "published" }
+  | { type: "unpublished" };
+
+const COPY = {
+  fa: {
+    locale: "fa-IR",
+    loading: "در حال دریافت فصل…",
+    back: "بازگشت به داستان",
+    workspace: "فضای نوشتن",
+    autosave: "ذخیرهٔ خودکار فعال است",
+    draft: "پیش‌نویس",
+    published: "منتشرشده",
+    save: "ذخیره",
+    saving: "در حال ذخیره…",
+    publish: "انتشار فصل",
+    unpublish: "خارج‌کردن از انتشار",
+    titleLabel: "عنوان فصل",
+    contentLabel: "متن فصل",
+    contentPlaceholder: "نوشتن این فصل را شروع کنید…",
+    loadedVersion: (version: number) => `نسخه ${version} از سرور بارگذاری شد.`,
+    localPending: "تغییرات محلی ذخیره شد؛ در انتظار ذخیره روی سرور…",
+    savingServer: "در حال ذخیره روی سرور…",
+    savedVersion: (version: number) => `ذخیره شد · نسخه ${version}`,
+    savingNewer: "نسخه قبلی ذخیره شد؛ تغییرات جدیدتر در حال ذخیره است…",
+    saveStoppedConflict: "ذخیره متوقف شد: نسخه جدیدتری روی سرور وجود دارد.",
+    saveFailed: "ذخیره روی سرور ناموفق بود؛ نسخه بازیابی محلی حفظ شده است.",
+    recovered: "نسخه بازیابی محلی آماده ذخیره است.",
+    chapterPublished: "فصل منتشر شد.",
+    chapterUnpublished: "فصل به پیش‌نویس برگشت.",
+    recoveryTitle: "یک نسخهٔ بازیابی محلی پیدا شد",
+    recoveryDescription: (date: string) =>
+      `این نسخه در ${date} ذخیره شده و با نسخهٔ سرور متفاوت است.`,
+    restore: "بازیابی نسخه",
+    discard: "کنار گذاشتن",
+    conflictTitle: "تعارض ویرایش",
+    conflictDescription:
+      "این فصل در جای دیگری تغییر کرده است. برای جلوگیری از ازدست‌رفتن نوشته‌ها، ذخیرهٔ خودکار متوقف شده و نسخهٔ محلی در مرورگر باقی مانده است.",
+    serverVersion: (version: number) => `آخرین نسخهٔ سرور: ${version}`,
+    loadServer: "دریافت نسخهٔ سرور",
+    words: (value: number) => `${value.toLocaleString("fa-IR")} واژه`,
+    characters: (value: number) =>
+      `${value.toLocaleString("fa-IR")} از ۱۰۰٬۰۰۰ نویسه`,
+    version: (value: number) => `نسخه ${value.toLocaleString("fa-IR")}`,
+  },
+  en: {
+    locale: "en-US",
+    loading: "Loading chapter…",
+    back: "Back to story",
+    workspace: "Writing desk",
+    autosave: "Autosave is active",
+    draft: "Draft",
+    published: "Published",
+    save: "Save",
+    saving: "Saving…",
+    publish: "Publish chapter",
+    unpublish: "Unpublish chapter",
+    titleLabel: "Chapter title",
+    contentLabel: "Chapter text",
+    contentPlaceholder: "Start writing this chapter…",
+    loadedVersion: (version: number) =>
+      `Version ${version} was loaded from the server.`,
+    localPending:
+      "Changes were saved locally and are waiting to be saved to the server…",
+    savingServer: "Saving to the server…",
+    savedVersion: (version: number) => `Saved · Version ${version}`,
+    savingNewer:
+      "The previous version was saved; newer changes are now being saved…",
+    saveStoppedConflict:
+      "Saving stopped because a newer server version exists.",
+    saveFailed:
+      "The server save failed; the local recovery copy was preserved.",
+    recovered: "The local recovery copy is ready to be saved.",
+    chapterPublished: "The chapter was published.",
+    chapterUnpublished: "The chapter was returned to draft.",
+    recoveryTitle: "A local recovery copy was found",
+    recoveryDescription: (date: string) =>
+      `This copy was saved at ${date} and differs from the server version.`,
+    restore: "Restore copy",
+    discard: "Discard",
+    conflictTitle: "Editing conflict",
+    conflictDescription:
+      "This chapter was changed elsewhere. Autosave has stopped to prevent data loss, and your local copy remains in the browser.",
+    serverVersion: (version: number) => `Latest server version: ${version}`,
+    loadServer: "Load server version",
+    words: (value: number) =>
+      `${value.toLocaleString("en-US")} ${value === 1 ? "word" : "words"}`,
+    characters: (value: number) =>
+      `${value.toLocaleString("en-US")} of 100,000 characters`,
+    version: (value: number) => `Version ${value.toLocaleString("en-US")}`,
+  },
+} as const;
+
 function draftKey(storyId: string, chapterId: string): string {
   return `writing-platform:draft:${storyId}:${chapterId}`;
 }
 
+function getStatusMessage(
+  status: EditorStatus,
+  copy: (typeof COPY)[InterfaceLanguage],
+): string {
+  switch (status.type) {
+    case "loading":
+      return copy.loading;
+
+    case "loaded":
+      return copy.loadedVersion(status.version);
+
+    case "local-pending":
+      return copy.localPending;
+
+    case "saving":
+      return copy.savingServer;
+
+    case "saved":
+      return copy.savedVersion(status.version);
+
+    case "saving-newer":
+      return copy.savingNewer;
+
+    case "conflict":
+      return copy.saveStoppedConflict;
+
+    case "save-failed":
+      return copy.saveFailed;
+
+    case "recovered":
+      return copy.recovered;
+
+    case "published":
+      return copy.chapterPublished;
+
+    case "unpublished":
+      return copy.chapterUnpublished;
+  }
+}
+
+function getStatusKind(status: EditorStatus): string {
+  switch (status.type) {
+    case "saved":
+    case "published":
+    case "unpublished":
+      return "success";
+
+    case "saving":
+    case "saving-newer":
+      return "saving";
+
+    case "local-pending":
+    case "recovered":
+      return "local";
+
+    case "conflict":
+    case "save-failed":
+      return "error";
+
+    default:
+      return "neutral";
+  }
+}
+
 export default function ChapterEditorPage() {
   const { storyId = "", chapterId = "" } = useParams();
+
   const { i18n } = useTranslation();
   const { request } = useAuth();
 
+  const interfaceLanguage: InterfaceLanguage =
+    i18n.resolvedLanguage?.startsWith("en") ? "en" : "fa";
+
+  const copy = COPY[interfaceLanguage];
+
+  const direction = interfaceLanguage === "fa" ? "rtl" : "ltr";
+
   const [chapter, setChapter] = useState<Chapter | null>(null);
+
   const [storyLanguage, setStoryLanguage] = useState("");
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [statusMessage, setStatusMessage] = useState("در حال بارگذاری…");
+
+  const [editorStatus, setEditorStatus] = useState<EditorStatus>({
+    type: "loading",
+  });
+
   const [error, setError] = useState<string | null>(null);
+
   const [conflict, setConflict] = useState<ConflictInfo | null>(null);
+
   const [localDraft, setLocalDraft] = useState<LocalDraft | null>(null);
 
   const saveTimer = useRef<number | undefined>(undefined);
+
   const dirtyRef = useRef(false);
+
   const chapterRef = useRef<Chapter | null>(null);
+
   const latestDraftRef = useRef<PendingDraft | null>(null);
+
   const editGenerationRef = useRef(0);
+
   const saveLoopRef = useRef<Promise<boolean> | null>(null);
+
   const conflictRef = useRef<ConflictInfo | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
+    setError(null);
+
     const [response, storyResponse] = await Promise.all([
       request<ChapterResponse>(
         `/api/v1/stories/mine/${storyId}/chapters/${chapterId}`,
@@ -60,6 +269,7 @@ export default function ChapterEditorPage() {
     ]);
 
     const value = response.data.chapter;
+
     const serverContent = value.content ?? "";
 
     setStoryLanguage(storyResponse.data.story.language);
@@ -80,7 +290,11 @@ export default function ChapterEditorPage() {
     setTitle(value.title);
     setContent(serverContent);
     setConflict(null);
-    setStatusMessage(`نسخه ${value.version} از سرور بارگذاری شد.`);
+
+    setEditorStatus({
+      type: "loaded",
+      version: value.version,
+    });
 
     const raw = localStorage.getItem(draftKey(storyId, chapterId));
 
@@ -99,10 +313,12 @@ export default function ChapterEditorPage() {
         setLocalDraft(parsed);
       } else {
         localStorage.removeItem(draftKey(storyId, chapterId));
+
         setLocalDraft(null);
       }
     } catch {
       localStorage.removeItem(draftKey(storyId, chapterId));
+
       setLocalDraft(null);
     }
   }, [chapterId, request, storyId]);
@@ -111,6 +327,10 @@ export default function ChapterEditorPage() {
     const loadTimer = window.setTimeout(() => {
       void load().catch((cause) => {
         setError(getErrorMessage(cause));
+
+        setEditorStatus({
+          type: "save-failed",
+        });
       });
     }, 0);
 
@@ -150,7 +370,9 @@ export default function ChapterEditorPage() {
 
     persistRecoveryDraft(nextTitle, nextContent);
 
-    setStatusMessage("تغییرات محلی ذخیره شد؛ در انتظار ذخیره روی سرور…");
+    setEditorStatus({
+      type: "local-pending",
+    });
 
     window.clearTimeout(saveTimer.current);
 
@@ -162,6 +384,7 @@ export default function ChapterEditorPage() {
   async function runSaveLoop(): Promise<boolean> {
     while (dirtyRef.current && !conflictRef.current) {
       const currentChapter = chapterRef.current;
+
       const draft = latestDraftRef.current;
 
       if (!currentChapter || !draft) {
@@ -169,11 +392,17 @@ export default function ChapterEditorPage() {
       }
 
       const sentGeneration = draft.generation;
+
       const sentTitle = draft.title;
+
       const sentContent = draft.content;
+
       const expectedVersion = currentChapter.version;
 
-      setStatusMessage("در حال ذخیره روی سرور…");
+      setEditorStatus({
+        type: "saving",
+      });
+
       setError(null);
 
       try {
@@ -202,14 +431,18 @@ export default function ChapterEditorPage() {
           localStorage.removeItem(draftKey(storyId, chapterId));
 
           setLocalDraft(null);
-          setStatusMessage(`ذخیره شد · نسخه ${value.version}`);
+
+          setEditorStatus({
+            type: "saved",
+            version: value.version,
+          });
 
           return true;
         }
 
-        setStatusMessage(
-          "نسخه قبلی ذخیره شد؛ تغییرات جدیدتر در حال ذخیره است…",
-        );
+        setEditorStatus({
+          type: "saving-newer",
+        });
       } catch (cause) {
         if (
           cause instanceof ApiError &&
@@ -217,22 +450,25 @@ export default function ChapterEditorPage() {
           cause.code === "CHAPTER_EDIT_CONFLICT"
         ) {
           const details = cause.details as ConflictInfo | undefined;
+
           const nextConflict = details ?? {};
 
           conflictRef.current = nextConflict;
 
           setConflict(nextConflict);
 
-          setStatusMessage("ذخیره متوقف شد: نسخه جدیدتری روی سرور وجود دارد.");
+          setEditorStatus({
+            type: "conflict",
+          });
 
           return false;
         }
 
         setError(getErrorMessage(cause));
 
-        setStatusMessage(
-          "ذخیره روی سرور ناموفق بود؛ نسخه بازیابی محلی حفظ شده است.",
-        );
+        setEditorStatus({
+          type: "save-failed",
+        });
 
         return false;
       }
@@ -295,186 +531,370 @@ export default function ChapterEditorPage() {
       chapterRef.current = value;
       setChapter(value);
 
-      setStatusMessage(
-        value.status === "PUBLISHED"
-          ? "فصل منتشر شد."
-          : "فصل به پیش‌نویس برگشت.",
-      );
+      setEditorStatus({
+        type: value.status === "PUBLISHED" ? "published" : "unpublished",
+      });
     } catch (cause) {
       setError(getErrorMessage(cause));
+
+      setEditorStatus({
+        type: "save-failed",
+      });
     }
   }
 
+  function recoverLocalDraft(): void {
+    if (!localDraft) {
+      return;
+    }
+
+    const nextGeneration = editGenerationRef.current + 1;
+
+    editGenerationRef.current = nextGeneration;
+
+    latestDraftRef.current = {
+      title: localDraft.title,
+      content: localDraft.content,
+      generation: nextGeneration,
+    };
+
+    setTitle(localDraft.title);
+    setContent(localDraft.content);
+
+    dirtyRef.current = true;
+
+    setLocalDraft(null);
+
+    setEditorStatus({
+      type: "recovered",
+    });
+
+    persistRecoveryDraft(localDraft.title, localDraft.content);
+  }
+
+  function discardLocalDraft(): void {
+    localStorage.removeItem(draftKey(storyId, chapterId));
+
+    setLocalDraft(null);
+  }
+
+  const statusMessage = getStatusMessage(editorStatus, copy);
+
+  const statusKind = getStatusKind(editorStatus);
+
+  const isSaving =
+    editorStatus.type === "saving" || editorStatus.type === "saving-newer";
+
   if (!chapter) {
     return (
-      <main className="page-shell">
-        {error ? (
-          <p className="status-message status-message--error">{error}</p>
-        ) : (
-          <p>{statusMessage}</p>
-        )}
+      <main
+        className="chapter-write-loading"
+        dir={direction}
+        lang={interfaceLanguage}
+        aria-busy={!error}
+      >
+        <div
+          className={
+            error
+              ? "chapter-write-loading__card chapter-write-loading__card--error"
+              : "chapter-write-loading__card"
+          }
+        >
+          {error ? (
+            <>
+              <CircleAlert aria-hidden="true" size={30} />
+
+              <p role="alert">{error}</p>
+            </>
+          ) : (
+            <>
+              <LoaderCircle
+                className="chapter-write-spin"
+                aria-hidden="true"
+                size={34}
+              />
+
+              <p aria-live="polite">{statusMessage}</p>
+            </>
+          )}
+        </div>
       </main>
     );
   }
 
   const storyTextAttributes = getStoryTextAttributes(storyLanguage);
 
-  const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
-    ? "en-US"
-    : "fa-IR";
-
   const wordCount = content.trim() ? content.trim().split(/\s+/u).length : 0;
 
+  const formattedRecoveryDate = localDraft
+    ? new Date(localDraft.savedAt).toLocaleString(copy.locale)
+    : "";
+
+  const BackIcon = direction === "rtl" ? ArrowRight : ArrowLeft;
+
   return (
-    <main className="editor-shell">
-      <header className="editor-toolbar">
-        <Link to={`/write/${storyId}`}>
-          <span aria-hidden="true">{i18n.dir() === "rtl" ? "→" : "←"}</span>{" "}
-          بازگشت به داستان
-        </Link>
+    <main
+      className="chapter-write-page"
+      dir={direction}
+      lang={interfaceLanguage}
+      aria-busy={isSaving}
+    >
+      <div className="chapter-write-page__decoration" aria-hidden="true" />
 
-        <span aria-live="polite">{statusMessage}</span>
+      <div className="chapter-write-page__container">
+        <header className="chapter-write-toolbar">
+          <div className="chapter-write-toolbar__identity">
+            <Link
+              className="chapter-write-toolbar__back"
+              to={`/write/${storyId}`}
+            >
+              <BackIcon aria-hidden="true" size={18} />
 
-        <div className="button-row">
-          <button
-            className="button button--secondary"
-            type="button"
-            onClick={() => {
-              void saveToServer();
-            }}
+              <span>{copy.back}</span>
+            </Link>
+
+            <div className="chapter-write-toolbar__chapter">
+              <span className="chapter-write-toolbar__icon" aria-hidden="true">
+                <BookOpenText size={21} />
+              </span>
+
+              <div>
+                <span className="chapter-write-toolbar__eyebrow">
+                  {copy.workspace}
+                </span>
+
+                <strong {...storyTextAttributes}>{chapter.title}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="chapter-write-status"
+            data-kind={statusKind}
+            aria-live="polite"
           >
-            ذخیره
-          </button>
+            {isSaving ? (
+              <LoaderCircle
+                className="chapter-write-spin"
+                aria-hidden="true"
+                size={16}
+              />
+            ) : statusKind === "success" ? (
+              <Check aria-hidden="true" size={16} />
+            ) : statusKind === "error" ? (
+              <CircleAlert aria-hidden="true" size={16} />
+            ) : statusKind === "local" ? (
+              <CloudUpload aria-hidden="true" size={16} />
+            ) : (
+              <Cloud aria-hidden="true" size={16} />
+            )}
 
-          <button
-            className="button"
-            type="button"
-            disabled={Boolean(conflict)}
-            onClick={() => {
-              void togglePublish();
-            }}
-          >
-            {chapter.status === "PUBLISHED"
-              ? "خارج کردن از انتشار"
-              : "انتشار فصل"}
-          </button>
-        </div>
-      </header>
+            <span>{statusMessage}</span>
+          </div>
 
-      {error ? (
-        <p className="status-message status-message--error" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      {localDraft && !conflict ? (
-        <div className="status-message status-message--warning">
-          <p>یک نسخه بازیابی محلی متفاوت از نسخه سرور پیدا شد.</p>
-
-          <div className="button-row">
+          <div className="chapter-write-toolbar__actions">
             <button
+              className="chapter-write-button chapter-write-button--secondary"
               type="button"
-              className="button button--secondary"
+              disabled={isSaving || Boolean(conflict)}
               onClick={() => {
-                const nextGeneration = editGenerationRef.current + 1;
-
-                editGenerationRef.current = nextGeneration;
-
-                latestDraftRef.current = {
-                  title: localDraft.title,
-                  content: localDraft.content,
-                  generation: nextGeneration,
-                };
-
-                setTitle(localDraft.title);
-                setContent(localDraft.content);
-
-                dirtyRef.current = true;
-
-                setLocalDraft(null);
-
-                setStatusMessage("نسخه بازیابی محلی آماده ذخیره است.");
+                void saveToServer();
               }}
             >
-              بازیابی نسخه محلی
+              {isSaving ? (
+                <LoaderCircle
+                  className="chapter-write-spin"
+                  aria-hidden="true"
+                  size={17}
+                />
+              ) : (
+                <Save aria-hidden="true" size={17} />
+              )}
+
+              <span>{isSaving ? copy.saving : copy.save}</span>
             </button>
 
             <button
+              className="chapter-write-button chapter-write-button--publish"
               type="button"
-              className="button button--quiet"
+              disabled={isSaving || Boolean(conflict)}
               onClick={() => {
-                localStorage.removeItem(draftKey(storyId, chapterId));
-                setLocalDraft(null);
+                void togglePublish();
               }}
             >
-              کنار گذاشتن
+              <Send aria-hidden="true" size={17} />
+
+              <span>
+                {chapter.status === "PUBLISHED" ? copy.unpublish : copy.publish}
+              </span>
             </button>
           </div>
-        </div>
-      ) : null}
+        </header>
 
-      {conflict ? (
-        <div className="status-message status-message--error" role="alert">
-          <strong>تعارض ویرایش</strong>
-
-          <p>
-            فصل بعد از نسخه {chapter.version} در جای دیگری تغییر کرده است. برای
-            جلوگیری از ازبین‌رفتن تغییرات جدید، autosave متوقف شده است. پیش‌نویس
-            محلی شما در مرورگر حفظ می‌شود.
-          </p>
-
-          <button
-            className="button button--secondary"
-            type="button"
-            onClick={() => {
-              void load();
-            }}
+        {error ? (
+          <div
+            className="chapter-write-alert chapter-write-alert--error"
+            role="alert"
           >
-            بارگذاری نسخه سرور
-          </button>
-        </div>
-      ) : null}
+            <CircleAlert aria-hidden="true" size={22} />
 
-      <section className="chapter-editor">
-        <label htmlFor="chapter-title">عنوان فصل</label>
+            <p>{error}</p>
+          </div>
+        ) : null}
 
-        <input
-          id="chapter-title"
-          className="chapter-editor__title"
-          value={title}
-          maxLength={200}
-          {...storyTextAttributes}
-          onChange={(event) => {
-            const nextTitle = event.target.value;
+        {localDraft && !conflict ? (
+          <aside className="chapter-write-alert chapter-write-alert--recovery">
+            <FileClock aria-hidden="true" size={23} />
 
-            setTitle(nextTitle);
-            scheduleSave(nextTitle, content);
-          }}
-        />
+            <div className="chapter-write-alert__content">
+              <strong>{copy.recoveryTitle}</strong>
 
-        <label htmlFor="chapter-content">متن فصل</label>
+              <p>{copy.recoveryDescription(formattedRecoveryDate)}</p>
+            </div>
 
-        <textarea
-          id="chapter-content"
-          className="chapter-editor__content"
-          value={content}
-          maxLength={100000}
-          spellCheck
-          {...storyTextAttributes}
-          onChange={(event) => {
-            const nextContent = event.target.value;
+            <div className="chapter-write-alert__actions">
+              <button
+                className="chapter-write-button chapter-write-button--secondary"
+                type="button"
+                onClick={recoverLocalDraft}
+              >
+                <RotateCcw aria-hidden="true" size={16} />
 
-            setContent(nextContent);
-            scheduleSave(title, nextContent);
-          }}
-        />
+                <span>{copy.restore}</span>
+              </button>
 
-        <footer>
-          <span>{wordCount.toLocaleString(interfaceLocale)} واژه</span>
+              <button
+                className="chapter-write-button chapter-write-button--quiet"
+                type="button"
+                onClick={discardLocalDraft}
+              >
+                <Trash2 aria-hidden="true" size={16} />
 
-          <span>نسخه {chapter.version}</span>
-        </footer>
-      </section>
+                <span>{copy.discard}</span>
+              </button>
+            </div>
+          </aside>
+        ) : null}
+
+        {conflict ? (
+          <aside
+            className="chapter-write-alert chapter-write-alert--conflict"
+            role="alert"
+          >
+            <CircleAlert aria-hidden="true" size={24} />
+
+            <div className="chapter-write-alert__content">
+              <strong>{copy.conflictTitle}</strong>
+
+              <p>{copy.conflictDescription}</p>
+
+              {conflict.currentVersion ? (
+                <small>{copy.serverVersion(conflict.currentVersion)}</small>
+              ) : null}
+            </div>
+
+            <div className="chapter-write-alert__actions">
+              <button
+                className="chapter-write-button chapter-write-button--secondary"
+                type="button"
+                onClick={() => {
+                  setEditorStatus({
+                    type: "loading",
+                  });
+
+                  void load();
+                }}
+              >
+                <RotateCcw aria-hidden="true" size={16} />
+
+                <span>{copy.loadServer}</span>
+              </button>
+            </div>
+          </aside>
+        ) : null}
+
+        <section
+          className="chapter-writing-paper"
+          aria-labelledby="chapter-writing-heading"
+        >
+          <header className="chapter-writing-paper__header">
+            <div>
+              <span className="chapter-writing-paper__eyebrow">
+                {copy.workspace}
+              </span>
+
+              <h1 id="chapter-writing-heading" {...storyTextAttributes}>
+                {title.trim() || copy.titleLabel}
+              </h1>
+            </div>
+
+            <span
+              className="chapter-writing-paper__publication"
+              data-published={chapter.status === "PUBLISHED" || undefined}
+            >
+              {chapter.status === "PUBLISHED" ? copy.published : copy.draft}
+            </span>
+          </header>
+
+          <div className="chapter-writing-paper__fields">
+            <label className="chapter-writing-field" htmlFor="chapter-title">
+              <span>{copy.titleLabel}</span>
+
+              <input
+                id="chapter-title"
+                className="chapter-writing-field__title"
+                value={title}
+                maxLength={200}
+                {...storyTextAttributes}
+                onChange={(event) => {
+                  const nextTitle = event.target.value;
+
+                  setTitle(nextTitle);
+
+                  scheduleSave(nextTitle, content);
+                }}
+              />
+            </label>
+
+            <label className="chapter-writing-field" htmlFor="chapter-content">
+              <span>{copy.contentLabel}</span>
+
+              <textarea
+                id="chapter-content"
+                className="chapter-writing-field__content"
+                value={content}
+                maxLength={100000}
+                spellCheck
+                placeholder={copy.contentPlaceholder}
+                {...storyTextAttributes}
+                onChange={(event) => {
+                  const nextContent = event.target.value;
+
+                  setContent(nextContent);
+
+                  scheduleSave(title, nextContent);
+                }}
+              />
+            </label>
+          </div>
+
+          <footer className="chapter-writing-paper__footer">
+            <div className="chapter-writing-paper__stats">
+              <span>{copy.words(wordCount)}</span>
+
+              <span>{copy.characters(content.length)}</span>
+
+              <span>{copy.version(chapter.version)}</span>
+            </div>
+
+            <span className="chapter-writing-paper__autosave">
+              <Cloud aria-hidden="true" size={14} />
+
+              {copy.autosave}
+            </span>
+          </footer>
+        </section>
+      </div>
     </main>
   );
 }
