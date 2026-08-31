@@ -6,6 +6,7 @@ import {
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
 } from "./auth.security.js";
+import { normalizeIranianMobile } from "../../shared/validation/phone-number.js";
 
 const emailSchema = z
     .string()
@@ -24,6 +25,31 @@ const passwordSchema = z
         MAX_PASSWORD_LENGTH,
         `Password cannot contain more than ${MAX_PASSWORD_LENGTH} characters.`,
     );
+
+const iranianMobileSchema = z
+    .string()
+    .trim()
+    .max(32)
+    .transform((value, context) => {
+        const normalized = normalizeIranianMobile(value);
+
+        if (!normalized) {
+            context.addIssue({
+                code: "custom",
+                message: "Mobile number is invalid."
+            });
+
+            return z.NEVER;
+        }
+
+        return normalized;
+    });
+
+export const requestPhoneOtpSchema = z
+    .object({
+        phoneNumber: iranianMobileSchema,
+    })
+    .strict();
 
 const birthDateSchema = z
     .string()
@@ -124,6 +150,9 @@ export const deleteAccountSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type RequestPhoneOtpInput = z.infer<
+    typeof requestPhoneOtpSchema
+>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type ResendVerificationEmailInput = z.infer<
     typeof resendVerificationEmailSchema
