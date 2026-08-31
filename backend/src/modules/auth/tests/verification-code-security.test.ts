@@ -19,3 +19,21 @@ void test("email verification codes are six digits and hashes are scoped to the 
         security.hashVerificationCode("second@example.com", code),
     );
 });
+
+void test("phone OTP hashes are scoped to the phone number", () => {
+    const security = new DefaultAuthSecurity();
+
+    const code = "123456";
+
+    const firstHash = security.hashPhoneOtpCode(
+        "09123456789",
+        code,
+    );
+
+    const secondHash = security.hashPhoneOtpCode(
+        "09901234567",
+        code,
+    );
+
+    assert.notEqual(firstHash, secondHash);
+});

@@ -55,6 +55,15 @@ export class DefaultAuthSecurity implements AuthSecurity {
             .digest("hex");
     }
 
+    public hashPhoneOtpCode(phoneNumber: string, code: string): string {
+        return createHmac("sha256", env.phoneOtpSecret)
+            .update("phone-otp-code\0", "utf8")
+            .update(phoneNumber, "utf8")
+            .update("\0", "utf8")
+            .update(code, "utf8")
+            .digest("hex");
+    }
+
     public generatePasswordResetToken(): string {
         return generateOpaqueToken(PASSWORD_RESET_TOKEN_BYTES);
     }

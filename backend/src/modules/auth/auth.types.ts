@@ -182,6 +182,7 @@ export interface AuthSecurity {
     calculateSessionExpiration(): Date;
     generateVerificationCode(): string;
     hashVerificationCode(email: string, code: string): string;
+    hashPhoneOtpCode(phoneNumber: string, code: string): string;
     generatePasswordResetToken(): string;
     hashPasswordResetToken(token: string): string;
     generateEmailChangeToken(): string;

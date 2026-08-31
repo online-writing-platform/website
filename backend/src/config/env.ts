@@ -37,6 +37,7 @@ const environmentSchema = z
                 "ACCESS_TOKEN_SECRET must contain at least 32 characters",
             ),
         EMAIL_VERIFICATION_SECRET: optionalEnvironmentString,
+        PHONE_OTP_SECRET: optionalEnvironmentString,
         ACCESS_TOKEN_TTL_SECONDS: z.coerce
             .number()
             .int()
@@ -194,6 +195,15 @@ const environmentSchema = z
                     "EMAIL_VERIFICATION_SECRET must contain at least 32 characters in production.",
             });
         }
+        if (values.NODE_ENV === "production" &&
+            (!values.PHONE_OTP_SECRET || values.PHONE_OTP_SECRET.length < 32)
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["PHONE_OTP_SECRET"],
+                message: "PHONE_OTP_SECRET must contain at least 32 characters in production.",
+            });
+        }
         if (
             values.NODE_ENV === "production" &&
             values.MAIL_TRANSPORT !== "smtp"
@@ -282,6 +292,8 @@ const env = Object.freeze({
     accessTokenSecret: values.ACCESS_TOKEN_SECRET,
     emailVerificationSecret:
         values.EMAIL_VERIFICATION_SECRET ?? values.ACCESS_TOKEN_SECRET,
+    phoneOtpSecret:
+        values.PHONE_OTP_SECRET ?? values.ACCESS_TOKEN_SECRET,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     sessionTtlDays: values.SESSION_TTL_DAYS,
     refreshCookieName: values.REFRESH_COOKIE_NAME,
