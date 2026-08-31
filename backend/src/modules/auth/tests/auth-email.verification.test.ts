@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import * as authEmail from "./auth.email.js";
+import * as authEmail from "../auth.email.js";
 
 void test("verification email presents the six-digit code without a token link", () => {
     const builder = (

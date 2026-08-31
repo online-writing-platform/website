@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requestPhoneOtpSchema } from "./auth.schema.js";
+import { requestPhoneOtpSchema } from "../auth.schema.js";
 
 void test("accepts a normal Iranian mobile number", () => {
     const result = requestPhoneOtpSchema.parse({

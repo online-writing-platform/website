@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import * as authSchemas from "./auth.schema.js";
+import * as authSchemas from "../auth.schema.js";
 
 void test("email verification accepts only a normalized email and six-digit code", () => {
     assert.equal(

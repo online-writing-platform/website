@@ -4,7 +4,7 @@ import test from "node:test";
 import {
     getPasswordPolicyViolations,
     validateBirthDate,
-} from "./auth.security.js";
+} from "../auth.security.js";
 
 void test("accepts a password that satisfies the policy", () => {
     assert.deepEqual(

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { EmailVerificationService } from "./email-verification.service.js";
-import * as authModule from "./auth.service.js";
-import { LoginUserUseCase, RegisterUserUseCase } from "./auth.service.js";
+import { EmailVerificationService } from "../email-verification.service.js";
+import * as authModule from "../auth.service.js";
+import { LoginUserUseCase, RegisterUserUseCase } from "../auth.service.js";
 
 const now = new Date("2026-08-25T00:00:00.000Z");
 

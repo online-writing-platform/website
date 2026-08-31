@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { RefreshSessionUseCase } from "./session.service.js";
+import { RefreshSessionUseCase } from "../session.service.js";
 
 void test("replayed refresh token revokes only its compromised session", async () => {
     const revoked: string[] = [];

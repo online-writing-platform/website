@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { prisma } from "../../db/index.js";
-import type { Prisma } from "../../generated/prisma/client.js";
-import { DefaultAuthSecurity } from "./auth.security.js";
+import { prisma } from "../../../db/index.js";
+import type { Prisma } from "../../../generated/prisma/client.js";
+import { DefaultAuthSecurity } from "../auth.security.js";
 import {
     QueuedVerificationEmailSender,
     decryptVerificationEmailPayload,
     handleVerificationEmailOutbox,
-} from "./verification-email-outbox.js";
+} from "../verification-email-outbox.js";
 
 type UnknownRecord = Record<string, unknown>;
 

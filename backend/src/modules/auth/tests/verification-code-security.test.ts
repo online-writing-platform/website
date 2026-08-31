@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { DefaultAuthSecurity } from "./auth.security.js";
+import { DefaultAuthSecurity } from "../auth.security.js";
 
 void test("email verification codes are six digits and hashes are scoped to the email", () => {
     const security = new DefaultAuthSecurity() as DefaultAuthSecurity & {

@@ -4,7 +4,7 @@ import test from "node:test";
 import {
     AuthenticateSessionUseCase,
     RefreshSessionUseCase,
-} from "./session.service.js";
+} from "../session.service.js";
 
 void test("an existing access token cannot authenticate an unverified account", async () => {
     const sessions = {
