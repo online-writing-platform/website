@@ -13,5 +13,8 @@
     "test": "npm --prefix backend run test && npm --prefix frontend run test",
     "check": "npm --prefix backend run prisma:validate && npm run typecheck && npm run lint && npm run test && npm run build",
     "start": "npm --prefix backend run start"
+  },
+  "dependencies": {
+    "libphonenumber-js": "^1.13.12"
   }
 }
