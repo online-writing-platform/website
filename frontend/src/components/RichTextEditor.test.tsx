@@ -11,6 +11,20 @@ import { RICH_TEXT_CONTENT_PREFIX } from "../lib/chapter-content";
 
 import RichTextEditor from "./RichTextEditor";
 
+if (!Range.prototype.getClientRects) {
+  Object.defineProperty(Range.prototype, "getClientRects", {
+    configurable: true,
+    value: () => [] as unknown as DOMRectList,
+  });
+}
+
+if (!Range.prototype.getBoundingClientRect) {
+  Object.defineProperty(Range.prototype, "getBoundingClientRect", {
+    configurable: true,
+    value: () => new DOMRect(),
+  });
+}
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     i18n: {

@@ -155,7 +155,7 @@ describe("PlatformHeader profile menu", () => {
 
     fireEvent.change(
       screen.getByRole("searchbox", {
-        name: "Search stories",
+        name: i18n.t("PlatformHeader.searchAriaLabel"),
       }),
       {
         target: {
