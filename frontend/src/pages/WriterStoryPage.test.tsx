@@ -105,7 +105,21 @@ describe("WriterStoryPage scheduled story metadata", () => {
 
           tags: [],
 
-          chapters: [],
+          chapters: [
+            {
+              id: "chapter-1",
+              title: "فصل اول",
+              position: 1,
+              content: "متن فصل",
+              version: 1,
+              status: "DRAFT",
+              moderationState: "VISIBLE",
+              wordCount: 2,
+              publishedAt: null,
+              createdAt: "2026-08-18T05:00:00.000Z",
+              updatedAt: "2026-08-18T05:30:00.000Z",
+            },
+          ],
         },
       },
     };
@@ -160,6 +174,16 @@ describe("WriterStoryPage scheduled story metadata", () => {
     );
 
     const titleInput = await screen.findByDisplayValue("عنوان قبلی");
+
+    expect(
+      screen
+        .getByRole("link", {
+          name: /فصل اول/u,
+        })
+        .getAttribute("href"),
+    ).toBe(`/write/${storyId}/chapters/chapter-1`);
+
+    expect(screen.queryByLabelText("متن فصل")).toBeNull();
 
     fireEvent.change(titleInput, {
       target: {

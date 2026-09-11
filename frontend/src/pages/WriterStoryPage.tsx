@@ -26,11 +26,9 @@ import {
 import { useTranslation } from "react-i18next";
 
 import useAuth from "../hooks/useAuth";
-import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 import { getStoryTextAttributes } from "../lib/story-language";
 import type {
-  Chapter,
   ChapterResponse,
   Story,
   StoryResponse,
@@ -59,49 +57,14 @@ interface MediaResponse {
   };
 }
 
-interface LocalDraft {
-  title: string;
-  content: string;
-  savedAt: string;
-}
-
-interface PendingDraft {
-  title: string;
-  content: string;
-  generation: number;
-}
-
-interface ConflictInfo {
-  currentVersion?: number;
-  updatedAt?: string;
-}
-
-type EditorSaveState =
-  | "idle"
-  | "local"
-  | "saving"
-  | "saved"
-  | "error"
-  | "conflict";
-
 const STORY_RIGHTS: StoryRights[] = [
   "ALL_RIGHTS_RESERVED",
   "CREATIVE_COMMONS",
   "PUBLIC_DOMAIN",
 ];
 
-function draftKey(storyId: string, chapterId: string): string {
-  return `writing-platform:draft:${storyId}:${chapterId}`;
-}
-
-function countWords(content: string): number {
-  const normalizedContent = content.trim();
-
-  return normalizedContent ? normalizedContent.split(/\s+/u).length : 0;
-}
-
 export default function WriterStoryPage() {
-  const { storyId = "", chapterId } = useParams();
+  const { storyId = "" } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { request } = useAuth();
@@ -120,15 +83,10 @@ export default function WriterStoryPage() {
 
   const [newChapterTitle, setNewChapterTitle] = useState("");
 
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-  const [editorTitle, setEditorTitle] = useState("");
-  const [editorContent, setEditorContent] = useState("");
-
   const [cover, setCover] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
 
   const [pageLoading, setPageLoading] = useState(true);
-  const [chapterLoading, setChapterLoading] = useState(false);
   const [metadataBusy, setMetadataBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
   const [chapterBusy, setChapterBusy] = useState(false);
@@ -136,21 +94,7 @@ export default function WriterStoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const [saveState, setSaveState] = useState<EditorSaveState>("idle");
-  const [saveMessage, setSaveMessage] = useState("");
-  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
-  const [localDraft, setLocalDraft] = useState<LocalDraft | null>(null);
-
   const coverInputRef = useRef<HTMLInputElement | null>(null);
-  const editorRef = useRef<HTMLElement | null>(null);
-
-  const saveTimerRef = useRef<number | undefined>(undefined);
-  const dirtyRef = useRef(false);
-  const chapterRef = useRef<Chapter | null>(null);
-  const latestDraftRef = useRef<PendingDraft | null>(null);
-  const editGenerationRef = useRef(0);
-  const saveLoopRef = useRef<Promise<boolean> | null>(null);
-  const conflictRef = useRef<ConflictInfo | null>(null);
 
   const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
     ? "en-US"
@@ -191,316 +135,43 @@ export default function WriterStoryPage() {
   useEffect(() => {
     let active = true;
 
-    setPageLoading(true);
-    setError(null);
+    async function refreshStory(): Promise<void> {
+      await Promise.resolve();
 
-    void loadStory()
-      .catch((cause) => {
+      if (!active) {
+        return;
+      }
+
+      setPageLoading(true);
+      setError(null);
+
+      try {
+        await loadStory();
+      } catch (cause) {
         if (active) {
           setError(getErrorMessage(cause));
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) {
           setPageLoading(false);
         }
-      });
+      }
+    }
+
+    void refreshStory();
 
     return () => {
       active = false;
     };
   }, [loadStory]);
 
-  const resetEditorRefs = useCallback((): void => {
-    window.clearTimeout(saveTimerRef.current);
-
-    dirtyRef.current = false;
-    chapterRef.current = null;
-    latestDraftRef.current = null;
-    editGenerationRef.current = 0;
-    saveLoopRef.current = null;
-    conflictRef.current = null;
-
-    setConflict(null);
-    setLocalDraft(null);
-    setSaveState("idle");
-    setSaveMessage("");
-  }, []);
-
-  const loadChapter = useCallback(
-    async (targetChapterId: string): Promise<void> => {
-      setChapterLoading(true);
-      setError(null);
-      resetEditorRefs();
-
-      try {
-        const response = await request<ChapterResponse>(
-          `/api/v1/stories/mine/${storyId}/chapters/${targetChapterId}`,
-        );
-
-        const chapter = response.data.chapter;
-        const serverContent = chapter.content ?? "";
-
-        chapterRef.current = chapter;
-
-        latestDraftRef.current = {
-          title: chapter.title,
-          content: serverContent,
-          generation: 0,
-        };
-
-        setSelectedChapter(chapter);
-        setEditorTitle(chapter.title);
-        setEditorContent(serverContent);
-        setSaveState("saved");
-        setSaveMessage(
-          t("writer.editor.loadedVersion", {
-            version: chapter.version,
-          }),
-        );
-
-        const rawDraft = localStorage.getItem(
-          draftKey(storyId, targetChapterId),
-        );
-
-        if (!rawDraft) {
-          setLocalDraft(null);
-          return;
-        }
-
-        try {
-          const parsedDraft = JSON.parse(rawDraft) as LocalDraft;
-
-          const differsFromServer =
-            parsedDraft.title !== chapter.title ||
-            parsedDraft.content !== serverContent;
-
-          if (differsFromServer) {
-            setLocalDraft(parsedDraft);
-          } else {
-            localStorage.removeItem(draftKey(storyId, targetChapterId));
-          }
-        } catch {
-          localStorage.removeItem(draftKey(storyId, targetChapterId));
-        }
-      } catch (cause) {
-        setSelectedChapter(null);
-        setError(getErrorMessage(cause));
-      } finally {
-        setChapterLoading(false);
-      }
-    },
-    [request, resetEditorRefs, storyId, t],
-  );
-
   useEffect(() => {
-    if (!chapterId) {
-      resetEditorRefs();
-      setSelectedChapter(null);
-      setEditorTitle("");
-      setEditorContent("");
-      return;
-    }
-
-    void loadChapter(chapterId);
-
     return () => {
-      window.clearTimeout(saveTimerRef.current);
-    };
-  }, [chapterId, loadChapter, resetEditorRefs]);
-
-  useEffect(() => {
-    if (!cover) {
-      setCoverPreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(cover);
-
-    setCoverPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [cover]);
-
-  function persistRecoveryDraft(nextTitle: string, nextContent: string): void {
-    if (!chapterId) {
-      return;
-    }
-
-    localStorage.setItem(
-      draftKey(storyId, chapterId),
-      JSON.stringify({
-        title: nextTitle,
-        content: nextContent,
-        savedAt: new Date().toISOString(),
-      }),
-    );
-  }
-
-  async function runSaveLoop(): Promise<boolean> {
-    if (!chapterId) {
-      return false;
-    }
-
-    while (dirtyRef.current && !conflictRef.current) {
-      const currentChapter = chapterRef.current;
-      const draft = latestDraftRef.current;
-
-      if (!currentChapter || !draft) {
-        return false;
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl);
       }
-
-      const sentGeneration = draft.generation;
-      const sentTitle = draft.title;
-      const sentContent = draft.content;
-      const expectedVersion = currentChapter.version;
-
-      setSaveState("saving");
-      setSaveMessage(t("writer.editor.savingServer"));
-      setError(null);
-
-      try {
-        const response = await request<ChapterResponse>(
-          `/api/v1/stories/${storyId}/chapters/${chapterId}`,
-          {
-            method: "PATCH",
-
-            body: JSON.stringify({
-              title: sentTitle.trim() || currentChapter.title,
-
-              content: sentContent,
-              expectedVersion,
-            }),
-          },
-        );
-
-        const value = response.data.chapter;
-
-        chapterRef.current = value;
-        setSelectedChapter(value);
-
-        setStory((currentStory) => {
-          if (!currentStory?.chapters) {
-            return currentStory;
-          }
-
-          return {
-            ...currentStory,
-
-            chapters: currentStory.chapters.map((item) =>
-              item.id === value.id
-                ? {
-                    ...item,
-                    ...value,
-                  }
-                : item,
-            ),
-          };
-        });
-
-        const latestDraft = latestDraftRef.current;
-
-        if (!latestDraft || latestDraft.generation === sentGeneration) {
-          dirtyRef.current = false;
-
-          localStorage.removeItem(draftKey(storyId, chapterId));
-
-          setLocalDraft(null);
-          setSaveState("saved");
-
-          setSaveMessage(
-            t("writer.editor.savedVersion", {
-              version: value.version,
-            }),
-          );
-
-          return true;
-        }
-
-        setSaveState("saving");
-
-        setSaveMessage(t("writer.editor.savingNewerChanges"));
-      } catch (cause) {
-        if (
-          cause instanceof ApiError &&
-          cause.status === 409 &&
-          cause.code === "CHAPTER_EDIT_CONFLICT"
-        ) {
-          const details = cause.details as ConflictInfo | undefined;
-
-          const nextConflict = details ?? {};
-
-          conflictRef.current = nextConflict;
-
-          setConflict(nextConflict);
-          setSaveState("conflict");
-          setSaveMessage(t("writer.editor.saveStoppedConflict"));
-
-          return false;
-        }
-
-        setError(getErrorMessage(cause));
-        setSaveState("error");
-
-        setSaveMessage(t("writer.editor.saveFailedLocalKept"));
-
-        return false;
-      }
-    }
-
-    return !dirtyRef.current && !conflictRef.current;
-  }
-
-  function saveToServer(): Promise<boolean> {
-    if (saveLoopRef.current) {
-      return saveLoopRef.current;
-    }
-
-    window.clearTimeout(saveTimerRef.current);
-
-    const savePromise = runSaveLoop();
-
-    saveLoopRef.current = savePromise;
-
-    void savePromise.finally(() => {
-      if (saveLoopRef.current === savePromise) {
-        saveLoopRef.current = null;
-      }
-    });
-
-    return savePromise;
-  }
-
-  function scheduleSave(nextTitle: string, nextContent: string): void {
-    if (!chapterId || !chapterRef.current || conflictRef.current) {
-      return;
-    }
-
-    const nextGeneration = editGenerationRef.current + 1;
-
-    editGenerationRef.current = nextGeneration;
-
-    latestDraftRef.current = {
-      title: nextTitle,
-      content: nextContent,
-      generation: nextGeneration,
     };
-
-    dirtyRef.current = true;
-
-    persistRecoveryDraft(nextTitle, nextContent);
-
-    setSaveState("local");
-    setSaveMessage(t("writer.editor.localSavedPending"));
-
-    window.clearTimeout(saveTimerRef.current);
-
-    saveTimerRef.current = window.setTimeout(() => {
-      void saveToServer();
-    }, 900);
-  }
+  }, [coverPreviewUrl]);
 
   async function saveMetadata(
     event: FormEvent<HTMLFormElement>,
@@ -565,6 +236,9 @@ export default function WriterStoryPage() {
     const selectedFile = event.target.files?.[0] ?? null;
 
     setCover(selectedFile);
+    setCoverPreviewUrl(
+      selectedFile ? URL.createObjectURL(selectedFile) : null,
+    );
     setError(null);
     setMessage(null);
   }
@@ -601,6 +275,7 @@ export default function WriterStoryPage() {
       );
 
       setCover(null);
+      setCoverPreviewUrl(null);
 
       if (coverInputRef.current) {
         coverInputRef.current.value = "";
@@ -657,13 +332,6 @@ export default function WriterStoryPage() {
       setNewChapterTitle("");
 
       navigate(`/write/${storyId}/chapters/${newChapter.id}`);
-
-      window.requestAnimationFrame(() => {
-        editorRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
@@ -704,133 +372,6 @@ export default function WriterStoryPage() {
     }
   }
 
-  async function toggleChapterPublish(): Promise<void> {
-    if (!selectedChapter || !chapterId || conflict || chapterBusy) {
-      return;
-    }
-
-    setChapterBusy(true);
-    setError(null);
-
-    try {
-      const saved = await saveToServer();
-
-      if (!saved || dirtyRef.current || conflictRef.current) {
-        return;
-      }
-
-      const currentChapter = chapterRef.current;
-
-      if (!currentChapter) {
-        return;
-      }
-
-      const action =
-        currentChapter.status === "PUBLISHED" ? "unpublish" : "publish";
-
-      const response = await request<ChapterResponse>(
-        `/api/v1/stories/${storyId}/chapters/${chapterId}/${action}`,
-        {
-          method: "POST",
-        },
-      );
-
-      const value = response.data.chapter;
-
-      chapterRef.current = value;
-      setSelectedChapter(value);
-
-      setStory((currentStory) => {
-        if (!currentStory?.chapters) {
-          return currentStory;
-        }
-
-        return {
-          ...currentStory,
-
-          chapters: currentStory.chapters.map((item) =>
-            item.id === value.id
-              ? {
-                  ...item,
-                  ...value,
-                }
-              : item,
-          ),
-        };
-      });
-
-      setSaveState("saved");
-
-      setSaveMessage(
-        value.status === "PUBLISHED"
-          ? t("writer.messages.chapterPublished")
-          : t("writer.messages.chapterUnpublished"),
-      );
-    } catch (cause) {
-      setError(getErrorMessage(cause));
-    } finally {
-      setChapterBusy(false);
-    }
-  }
-
-  function selectChapter(targetChapter: Chapter): void {
-    if (targetChapter.id === chapterId && selectedChapter) {
-      editorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      return;
-    }
-
-    navigate(`/write/${storyId}/chapters/${targetChapter.id}`);
-
-    window.requestAnimationFrame(() => {
-      editorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
-  }
-
-  function recoverLocalDraft(): void {
-    if (!localDraft || !chapterId) {
-      return;
-    }
-
-    const nextGeneration = editGenerationRef.current + 1;
-
-    editGenerationRef.current = nextGeneration;
-
-    latestDraftRef.current = {
-      title: localDraft.title,
-      content: localDraft.content,
-      generation: nextGeneration,
-    };
-
-    setEditorTitle(localDraft.title);
-    setEditorContent(localDraft.content);
-
-    dirtyRef.current = true;
-
-    setLocalDraft(null);
-    setSaveState("local");
-
-    setSaveMessage(t("writer.editor.localRecovered"));
-
-    persistRecoveryDraft(localDraft.title, localDraft.content);
-  }
-
-  function discardLocalDraft(): void {
-    if (!chapterId) {
-      return;
-    }
-
-    localStorage.removeItem(draftKey(storyId, chapterId));
-
-    setLocalDraft(null);
-  }
-
   if (pageLoading || !story) {
     return (
       <main className="writer-loading-page">
@@ -856,8 +397,6 @@ export default function WriterStoryPage() {
   }
 
   const displayedCoverUrl = coverPreviewUrl ?? story.coverUrl;
-
-  const wordCount = countWords(editorContent);
 
   const storyStatusLabel = t(`writer.status.${story.status}`, {
     defaultValue: story.status,
@@ -1286,54 +825,39 @@ export default function WriterStoryPage() {
 
           {chapters.length > 0 ? (
             <ol className="writer-chapter-list">
-              {chapters.map((chapter) => {
-                const isSelected = chapter.id === chapterId;
+              {chapters.map((chapter) => (
+                <li key={chapter.id}>
+                  <Link
+                    className="writer-chapter-item"
+                    to={`/write/${storyId}/chapters/${chapter.id}`}
+                  >
+                    <span className="writer-chapter-item__position">
+                      {chapter.position.toLocaleString(interfaceLocale)}
+                    </span>
 
-                return (
-                  <li key={chapter.id}>
-                    <button
-                      className={
-                        isSelected
-                          ? "writer-chapter-item writer-chapter-item--active"
-                          : "writer-chapter-item"
-                      }
-                      type="button"
-                      aria-current={isSelected ? "page" : undefined}
-                      onClick={() => selectChapter(chapter)}
-                    >
-                      <span className="writer-chapter-item__position">
-                        {chapter.position.toLocaleString(interfaceLocale)}
-                      </span>
+                    <span className="writer-chapter-item__content">
+                      <strong {...storyTextAttributes}>{chapter.title}</strong>
 
-                      <span className="writer-chapter-item__content">
-                        <strong {...storyTextAttributes}>
-                          {chapter.title}
-                        </strong>
+                      <small>
+                        {t(`writer.chapterStatus.${chapter.status}`)}
+                        {" · "}
+                        {t("writer.chapters.wordCount", {
+                          value:
+                            chapter.wordCount.toLocaleString(interfaceLocale),
+                        })}
+                        {" · "}
+                        {t("writer.chapters.version", {
+                          value: chapter.version.toLocaleString(interfaceLocale),
+                        })}
+                      </small>
+                    </span>
 
-                        <small>
-                          {t(`writer.chapterStatus.${chapter.status}`)}
-                          {" · "}
-                          {t("writer.chapters.wordCount", {
-                            value:
-                              chapter.wordCount.toLocaleString(interfaceLocale),
-                          })}
-                          {" · "}
-                          {t("writer.chapters.version", {
-                            value:
-                              chapter.version.toLocaleString(interfaceLocale),
-                          })}
-                        </small>
-                      </span>
-
-                      <span className="writer-chapter-item__action">
-                        {isSelected
-                          ? t("writer.chapters.editing")
-                          : t("writer.chapters.edit")}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
+                    <span className="writer-chapter-item__action">
+                      {t("writer.chapters.edit")}
+                    </span>
+                  </Link>
+                </li>
+              ))}
             </ol>
           ) : (
             <div className="writer-empty-chapters">
@@ -1342,227 +866,6 @@ export default function WriterStoryPage() {
               <h3>{t("writer.chapters.emptyTitle")}</h3>
 
               <p>{t("writer.chapters.emptyDescription")}</p>
-            </div>
-          )}
-        </section>
-
-        <section
-          ref={editorRef}
-          className="writer-card writer-editor"
-          aria-labelledby="chapter-editor-title"
-        >
-          {chapterLoading ? (
-            <div className="writer-editor__empty">
-              <LoaderCircle
-                className="writer-spin"
-                aria-hidden="true"
-                size={34}
-              />
-
-              <p>{t("writer.loading.chapter")}</p>
-            </div>
-          ) : selectedChapter && chapterId ? (
-            <>
-              <header className="writer-editor__toolbar">
-                <div>
-                  <p className="writer-eyebrow">
-                    {t("writer.editor.chapterNumber", {
-                      value:
-                        selectedChapter.position.toLocaleString(
-                          interfaceLocale,
-                        ),
-                    })}
-                  </p>
-
-                  <h2 id="chapter-editor-title" {...storyTextAttributes}>
-                    {selectedChapter.title}
-                  </h2>
-                </div>
-
-                <div className="writer-editor__toolbar-actions">
-                  <span
-                    className={`writer-save-state writer-save-state--${saveState}`}
-                    aria-live="polite"
-                  >
-                    {saveState === "saving" ? (
-                      <LoaderCircle
-                        className="writer-spin"
-                        aria-hidden="true"
-                        size={15}
-                      />
-                    ) : saveState === "saved" ? (
-                      <Check aria-hidden="true" size={15} />
-                    ) : saveState === "conflict" || saveState === "error" ? (
-                      <CircleAlert aria-hidden="true" size={15} />
-                    ) : null}
-
-                    {saveMessage || t("writer.editor.ready")}
-                  </span>
-
-                  <button
-                    className="writer-button writer-button--secondary"
-                    type="button"
-                    disabled={saveState === "saving" || Boolean(conflict)}
-                    onClick={() => void saveToServer()}
-                  >
-                    <Save aria-hidden="true" size={17} />
-
-                    {t("writer.actions.save")}
-                  </button>
-
-                  <button
-                    className="writer-button writer-button--publish"
-                    type="button"
-                    disabled={chapterBusy || Boolean(conflict)}
-                    onClick={() => void toggleChapterPublish()}
-                  >
-                    <Send aria-hidden="true" size={17} />
-
-                    {selectedChapter.status === "PUBLISHED"
-                      ? t("writer.actions.unpublishChapter")
-                      : t("writer.actions.publishChapter")}
-                  </button>
-                </div>
-              </header>
-
-              {localDraft && !conflict ? (
-                <div className="writer-recovery">
-                  <CircleAlert aria-hidden="true" size={21} />
-
-                  <div>
-                    <strong>{t("writer.recovery.title")}</strong>
-
-                    <p>
-                      {t("writer.recovery.description", {
-                        date: new Date(localDraft.savedAt).toLocaleString(
-                          interfaceLocale,
-                        ),
-                      })}
-                    </p>
-                  </div>
-
-                  <div className="writer-recovery__actions">
-                    <button
-                      className="writer-button writer-button--secondary"
-                      type="button"
-                      onClick={recoverLocalDraft}
-                    >
-                      {t("writer.recovery.restore")}
-                    </button>
-
-                    <button
-                      className="writer-button writer-button--quiet"
-                      type="button"
-                      onClick={discardLocalDraft}
-                    >
-                      {t("writer.recovery.discard")}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-
-              {conflict ? (
-                <div className="writer-conflict" role="alert">
-                  <CircleAlert aria-hidden="true" size={23} />
-
-                  <div>
-                    <strong>{t("writer.conflict.title")}</strong>
-
-                    <p>{t("writer.conflict.description")}</p>
-
-                    {conflict.currentVersion ? (
-                      <small>
-                        {t("writer.conflict.serverVersion", {
-                          version:
-                            conflict.currentVersion.toLocaleString(
-                              interfaceLocale,
-                            ),
-                        })}
-                      </small>
-                    ) : null}
-                  </div>
-
-                  <button
-                    className="writer-button writer-button--secondary"
-                    type="button"
-                    onClick={() => void loadChapter(chapterId)}
-                  >
-                    {t("writer.conflict.loadServer")}
-                  </button>
-                </div>
-              ) : null}
-
-              <div className="writer-editor__fields">
-                <label className="writer-field" htmlFor="chapter-title">
-                  <span>{t("writer.editor.titleLabel")}</span>
-
-                  <input
-                    id="chapter-title"
-                    className="writer-editor__title"
-                    value={editorTitle}
-                    maxLength={200}
-                    {...storyTextAttributes}
-                    onChange={(event) => {
-                      const nextTitle = event.target.value;
-
-                      setEditorTitle(nextTitle);
-
-                      scheduleSave(nextTitle, editorContent);
-                    }}
-                  />
-                </label>
-
-                <label className="writer-field" htmlFor="chapter-content">
-                  <span>{t("writer.editor.contentLabel")}</span>
-
-                  <textarea
-                    id="chapter-content"
-                    className="writer-editor__content"
-                    value={editorContent}
-                    maxLength={100000}
-                    spellCheck
-                    placeholder={t("writer.editor.contentPlaceholder")}
-                    {...storyTextAttributes}
-                    onChange={(event) => {
-                      const nextContent = event.target.value;
-
-                      setEditorContent(nextContent);
-
-                      scheduleSave(editorTitle, nextContent);
-                    }}
-                  />
-                </label>
-
-                <footer className="writer-editor__footer">
-                  <span>
-                    {t("writer.editor.wordCount", {
-                      value: wordCount.toLocaleString(interfaceLocale),
-                    })}
-                  </span>
-
-                  <span>
-                    {t("writer.editor.characterCount", {
-                      value:
-                        editorContent.length.toLocaleString(interfaceLocale),
-                    })}
-                  </span>
-
-                  <span>
-                    {t("writer.editor.version", {
-                      value:
-                        selectedChapter.version.toLocaleString(interfaceLocale),
-                    })}
-                  </span>
-                </footer>
-              </div>
-            </>
-          ) : (
-            <div className="writer-editor__empty">
-              <BookOpen aria-hidden="true" size={42} />
-
-              <h2 id="chapter-editor-title">{t("writer.editor.emptyTitle")}</h2>
-
-              <p>{t("writer.editor.emptyDescription")}</p>
             </div>
           )}
         </section>
