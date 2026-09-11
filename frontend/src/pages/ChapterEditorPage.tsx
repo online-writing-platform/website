@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpenText,
   Check,
   CircleAlert,
   Cloud,
@@ -64,10 +63,7 @@ const COPY = {
     locale: "fa-IR",
     loading: "در حال دریافت فصل…",
     back: "بازگشت به داستان",
-    workspace: "فضای نوشتن",
     autosave: "ذخیرهٔ خودکار فعال است",
-    draft: "پیش‌نویس",
-    published: "منتشرشده",
     save: "ذخیره",
     saving: "در حال ذخیره…",
     publish: "انتشار فصل",
@@ -107,10 +103,7 @@ const COPY = {
     locale: "en-US",
     loading: "Loading chapter…",
     back: "Back to story",
-    workspace: "Writing desk",
     autosave: "Autosave is active",
-    draft: "Draft",
-    published: "Published",
     save: "Save",
     saving: "Saving…",
     publish: "Publish chapter",
@@ -254,7 +247,7 @@ export default function ChapterEditorPage() {
 
   const [localDraft, setLocalDraft] = useState<LocalDraft | null>(null);
 
-  const saveTimer = useRef<number | undefined>(undefined);
+  const saveTimerRef = useRef<number | undefined>(undefined);
 
   const dirtyRef = useRef(false);
 
@@ -268,87 +261,103 @@ export default function ChapterEditorPage() {
 
   const conflictRef = useRef<ConflictInfo | null>(null);
 
-  const load = useCallback(async (): Promise<void> => {
+  const load = useCallback(async (signal?: AbortSignal): Promise<void> => {
     setError(null);
 
-    const [response, storyResponse] = await Promise.all([
-      request<ChapterResponse>(
-        `/api/v1/stories/mine/${storyId}/chapters/${chapterId}`,
-      ),
-      request<StoryResponse>(`/api/v1/stories/mine/${storyId}`),
-    ]);
-
-    const value = response.data.chapter;
-
-    const serverContent = value.content ?? "";
-
-    setStoryLanguage(storyResponse.data.story.language);
-
-    chapterRef.current = value;
-    conflictRef.current = null;
-    editGenerationRef.current = 0;
-
-    latestDraftRef.current = {
-      title: value.title,
-      content: serverContent,
-      generation: 0,
-    };
-
-    dirtyRef.current = false;
-
-    setChapter(value);
-    setTitle(value.title);
-    setContent(serverContent);
-    setWordCount(value.wordCount);
-    setCharacterCount(0);
-    setConflict(null);
-
-    setEditorStatus({
-      type: "loaded",
-      version: value.version,
-    });
-
-    const raw = localStorage.getItem(draftKey(storyId, chapterId));
-
-    if (!raw) {
-      setLocalDraft(null);
-      return;
-    }
-
     try {
-      const parsed = JSON.parse(raw) as LocalDraft;
+      const [response, storyResponse] = await Promise.all([
+        request<ChapterResponse>(
+          `/api/v1/stories/mine/${storyId}/chapters/${chapterId}`,
+          { signal },
+        ),
+        request<StoryResponse>(`/api/v1/stories/mine/${storyId}`, {
+          signal,
+        }),
+      ]);
 
-      const differsFromServer =
-        parsed.title !== value.title || parsed.content !== serverContent;
+      if (signal?.aborted) {
+        return;
+      }
 
-      if (differsFromServer) {
-        setLocalDraft(parsed);
-      } else {
+      const value = response.data.chapter;
+
+      const serverContent = value.content ?? "";
+
+      setStoryLanguage(storyResponse.data.story.language);
+
+      chapterRef.current = value;
+      conflictRef.current = null;
+      editGenerationRef.current = 0;
+
+      latestDraftRef.current = {
+        title: value.title,
+        content: serverContent,
+        generation: 0,
+      };
+
+      dirtyRef.current = false;
+
+      setChapter(value);
+      setTitle(value.title);
+      setContent(serverContent);
+      setWordCount(value.wordCount);
+      setCharacterCount(0);
+      setConflict(null);
+
+      setEditorStatus({
+        type: "loaded",
+        version: value.version,
+      });
+
+      const raw = localStorage.getItem(draftKey(storyId, chapterId));
+
+      if (!raw) {
+        setLocalDraft(null);
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(raw) as LocalDraft;
+
+        const differsFromServer =
+          parsed.title !== value.title || parsed.content !== serverContent;
+
+        if (differsFromServer) {
+          setLocalDraft(parsed);
+        } else {
+          localStorage.removeItem(draftKey(storyId, chapterId));
+
+          setLocalDraft(null);
+        }
+      } catch {
         localStorage.removeItem(draftKey(storyId, chapterId));
 
         setLocalDraft(null);
       }
-    } catch {
-      localStorage.removeItem(draftKey(storyId, chapterId));
+    } catch (cause) {
+      if (signal?.aborted) {
+        return;
+      }
 
-      setLocalDraft(null);
+      setError(getErrorMessage(cause));
+
+      setEditorStatus({
+        type: "save-failed",
+      });
     }
   }, [chapterId, request, storyId]);
 
   useEffect(() => {
-    const loadTimer = window.setTimeout(() => {
-      void load().catch((cause) => {
-        setError(getErrorMessage(cause));
+    const controller = new AbortController();
 
-        setEditorStatus({
-          type: "save-failed",
-        });
-      });
+    const loadTimer = window.setTimeout(() => {
+      void load(controller.signal);
     }, 0);
 
     return () => {
+      controller.abort();
       window.clearTimeout(loadTimer);
-      window.clearTimeout(saveTimer.current);
+      window.clearTimeout(saveTimerRef.current);
     };
   }, [load]);
 
@@ -386,9 +395,9 @@ export default function ChapterEditorPage() {
       type: "local-pending",
     });
 
-    window.clearTimeout(saveTimer.current);
+    window.clearTimeout(saveTimerRef.current);
 
-    saveTimer.current = window.setTimeout(() => {
+    saveTimerRef.current = window.setTimeout(() => {
       void saveToServer();
     }, 900);
   }
@@ -494,7 +503,7 @@ export default function ChapterEditorPage() {
       return saveLoopRef.current;
     }
 
-    window.clearTimeout(saveTimer.current);
+    window.clearTimeout(saveTimerRef.current);
 
     const savePromise = runSaveLoop();
 
@@ -644,12 +653,6 @@ export default function ChapterEditorPage() {
         : copy.automatic;
 
   const storyDirectionLabel = storyTextAttributes.dir.toUpperCase();
-
-  const displayTitle = title.trim();
-
-  const headingTextAttributes = displayTitle
-    ? storyTextAttributes
-    : { dir: direction, lang: interfaceLanguage };
 
   const formattedRecoveryDate = localDraft
     ? new Date(localDraft.savedAt).toLocaleString(copy.locale)

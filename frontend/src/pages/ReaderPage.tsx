@@ -49,6 +49,16 @@ interface ReaderSettings {
   lineHeight: number;
 }
 
+interface ChapterState {
+  key: string;
+  response: ChapterResponse;
+}
+
+interface ReaderSettingsState {
+  key: string;
+  value: ReaderSettings;
+}
+
 interface LibraryStatusResponse {
   data: {
     inLibrary: boolean;
@@ -88,14 +98,19 @@ export default function ReaderPage() {
   const { t, i18n } = useTranslation();
   const { status, request, user } = useAuth();
 
+  const settingsKey =
+    status === "authenticated" && user ? `user:${user.id}` : "anonymous";
+
   const [storyResponse, setStoryResponse] = useState<StoryResponse | null>(
     null,
   );
 
-  const [chapterResponse, setChapterResponse] =
-    useState<ChapterResponse | null>(null);
+  const [chapterState, setChapterState] = useState<ChapterState | null>(null);
 
-  const [settings, setSettings] = useState<ReaderSettings>(DEFAULT_SETTINGS);
+  const [settingsState, setSettingsState] = useState<ReaderSettingsState>(() => ({
+    key: settingsKey,
+    value: DEFAULT_SETTINGS,
+  }));
 
   const [showTableOfContents, setShowTableOfContents] = useState(false);
   const [showReaderSettings, setShowReaderSettings] = useState(false);
@@ -115,7 +130,6 @@ export default function ReaderPage() {
   const chapterContentRef = useRef<HTMLElement | null>(null);
 
   const story = storyResponse?.data.story;
-  const chapter = chapterResponse?.data.chapter;
 
   const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
     ? "en-US"
@@ -133,6 +147,19 @@ export default function ReaderPage() {
   );
 
   const requestedChapterId = chapterId || publishedChapters[0]?.id || "";
+
+  const chapterKey =
+    story && requestedChapterId ? `${story.id}:${requestedChapterId}` : null;
+
+  const chapter =
+    chapterKey && chapterState?.key === chapterKey
+      ? chapterState.response.data.chapter
+      : undefined;
+
+  const settings =
+    settingsState.key === settingsKey
+      ? settingsState.value
+      : DEFAULT_SETTINGS;
 
   const currentChapterIndex = useMemo(
     () => publishedChapters.findIndex((item) => item.id === requestedChapterId),
@@ -205,7 +232,6 @@ export default function ReaderPage() {
     async function loadStory(): Promise<void> {
       setStoryLoading(true);
       setError(null);
-      setChapterResponse(null);
       setLibraryState(null);
       setLibraryMessage(null);
       setShareMessage(null);
@@ -251,13 +277,13 @@ export default function ReaderPage() {
    * تابع async نیز undefined نیست.
    */
   useEffect(() => {
-    if (!story || !requestedChapterId) {
-      setChapterResponse(null);
+    if (!story || !requestedChapterId || !chapterKey) {
       return;
     }
 
     const currentStory = story;
     const currentChapterId = requestedChapterId;
+    const currentChapterKey = chapterKey;
     const controller = new AbortController();
 
     async function loadChapter(): Promise<void> {
@@ -283,7 +309,10 @@ export default function ReaderPage() {
           return;
         }
 
-        setChapterResponse(result);
+        setChapterState({
+          key: currentChapterKey,
+          response: result,
+        });
 
         if (!chapterId) {
           navigate(getChapterPath(currentStory.slug, result.data.chapter.id), {
@@ -314,18 +343,26 @@ export default function ReaderPage() {
     void loadChapter();
 
     return () => controller.abort();
-  }, [chapterId, navigate, request, requestedChapterId, status, story]);
+  }, [
+    chapterId,
+    chapterKey,
+    navigate,
+    request,
+    requestedChapterId,
+    status,
+    story,
+  ]);
 
   /*
    * دریافت تنظیمات مطالعه برای کاربر واردشده.
    */
   useEffect(() => {
-    if (status !== "authenticated") {
-      setSettings(DEFAULT_SETTINGS);
+    if (status !== "authenticated" || settingsKey === "anonymous") {
       return;
     }
 
     const controller = new AbortController();
+    const currentSettingsKey = settingsKey;
 
     void request<PreferenceResponse>("/api/v1/preferences", {
       signal: controller.signal,
@@ -335,10 +372,13 @@ export default function ReaderPage() {
           return;
         }
 
-        setSettings({
-          theme: result.data.preferences.readerTheme,
-          fontScale: result.data.preferences.fontScale,
-          lineHeight: result.data.preferences.lineHeight,
+        setSettingsState({
+          key: currentSettingsKey,
+          value: {
+            theme: result.data.preferences.readerTheme,
+            fontScale: result.data.preferences.fontScale,
+            lineHeight: result.data.preferences.lineHeight,
+          },
         });
       })
       .catch(() => {
@@ -349,7 +389,7 @@ export default function ReaderPage() {
       });
 
     return () => controller.abort();
-  }, [request, status]);
+  }, [request, settingsKey, status]);
 
   /*
    * بررسی حضور داستان در کتابخانه.
@@ -458,7 +498,10 @@ export default function ReaderPage() {
       ...next,
     };
 
-    setSettings(value);
+    setSettingsState({
+      key: settingsKey,
+      value,
+    });
 
     if (status !== "authenticated") {
       return;
