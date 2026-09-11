@@ -6,7 +6,7 @@ import type { SocialListQuery, SocialUsernameParams } from "./social.schema.js";
 import { Router } from "express";
 import { socialWriteRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { validateParams, validateQuery } from "../../middlewares/validate.middleware.js";
-import { authenticate, requireVerifiedEmail } from "../auth/auth.middleware.js";
+import { authenticate, requireVerifiedAccount } from "../auth/auth.middleware.js";
 import {
     socialListQuerySchema,
     socialUsernameParamsSchema,
@@ -133,7 +133,7 @@ for (const [path, handler] of [
         path,
         socialWriteRateLimiter,
         authenticate,
-        requireVerifiedEmail,
+        requireVerifiedAccount,
         validateParams(socialUsernameParamsSchema),
         handler,
     );
@@ -148,7 +148,7 @@ for (const [path, handler] of [
         path,
         socialWriteRateLimiter,
         authenticate,
-        requireVerifiedEmail,
+        requireVerifiedAccount,
         validateParams(socialUsernameParamsSchema),
         handler,
     );

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LuEyeClosed, LuEye } from "react-icons/lu";
 
+import SocialAuthButtons from "../components/SocialAuthButtons";
 import useAuth from "../hooks/useAuth";
 import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
@@ -129,6 +130,12 @@ function Login() {
             {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
           </button>
         </form>
+
+        <div className="external-auth-divider">یا</div>
+        <SocialAuthButtons />
+        <p className="form-footer">
+          <Link to="/phone-auth">ورود یا ثبت‌نام با شماره موبایل</Link>
+        </p>
 
         <p className="form-footer">
           <Link to="/forgot-password">{t("auth.login.forgotPassword")}</Link>

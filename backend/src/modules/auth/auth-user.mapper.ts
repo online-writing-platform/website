@@ -8,6 +8,7 @@ export function mapAuthenticatedUser(user: AuthUserRecord): AuthenticatedUser {
         displayName: user.displayName,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
+        verified: user.verifiedAt !== null || user.emailVerifiedAt !== null,
         emailVerified: user.emailVerifiedAt !== null,
         role: user.role,
         createdAt: user.createdAt,

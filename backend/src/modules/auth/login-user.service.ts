@@ -33,10 +33,9 @@ export class LoginUserUseCase {
             );
         }
 
-        const passwordIsValid = await this.security.verifyPassword(
-            user.passwordHash,
-            input.password,
-        );
+        const passwordIsValid = user.passwordHash
+            ? await this.security.verifyPassword(user.passwordHash, input.password)
+            : false;
 
         if (!passwordIsValid || user.status === "DELETED") {
             throw AppError.unauthorized(
@@ -52,7 +51,7 @@ export class LoginUserUseCase {
             );
         }
 
-        if (user.emailVerifiedAt === null) {
+        if (user.verifiedAt === null && user.emailVerifiedAt === null) {
             throw AppError.forbidden(
                 "Email verification is required before signing in.",
                 "EMAIL_VERIFICATION_REQUIRED",

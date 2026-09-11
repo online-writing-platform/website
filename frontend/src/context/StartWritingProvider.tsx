@@ -202,7 +202,7 @@ export default function StartWritingProvider({
       busy ||
       !normalizedTitle ||
       status !== "authenticated" ||
-      !user?.emailVerified
+      !user?.verified
     ) {
       return;
     }
@@ -315,7 +315,7 @@ export default function StartWritingProvider({
                 </button>
               </header>
 
-              {!user?.emailVerified ? (
+              {!user?.verified ? (
                 <div
                   className="mt-5 flex items-start gap-2 rounded-xl border p-3 text-sm"
                   style={{
@@ -387,7 +387,7 @@ export default function StartWritingProvider({
                     minLength={1}
                     maxLength={200}
                     required
-                    disabled={busy || !user?.emailVerified}
+                    disabled={busy || !user?.verified}
                     placeholder={copy.titlePlaceholder}
                     {...storyTextAttributes}
                     onChange={(event) => setTitle(event.target.value)}
@@ -423,7 +423,7 @@ export default function StartWritingProvider({
                       color: "var(--primary-foreground)",
                     }}
                     type="submit"
-                    disabled={busy || !title.trim() || !user?.emailVerified}
+                    disabled={busy || !title.trim() || !user?.verified}
                   >
                     {busy ? (
                       <LoaderCircle

@@ -38,6 +38,43 @@ const environmentSchema = z
             ),
         EMAIL_VERIFICATION_SECRET: optionalEnvironmentString,
         PHONE_OTP_SECRET: optionalEnvironmentString,
+        PHONE_OTP_TTL_MINUTES: z.coerce
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .default(5),
+        PHONE_OTP_RESEND_COOLDOWN_SECONDS: z.coerce
+            .number()
+            .int()
+            .min(15)
+            .max(3600)
+            .default(60),
+        PHONE_OTP_MAX_ATTEMPTS: z.coerce
+            .number()
+            .int()
+            .min(3)
+            .max(10)
+            .default(5),
+        AUTH_SIGNUP_GRANT_TTL_MINUTES: z.coerce
+            .number()
+            .int()
+            .min(5)
+            .max(60)
+            .default(15),
+
+        SMS_TRANSPORT: z.enum(["console", "kavenegar"]).default("console"),
+        KAVENEGAR_API_KEY: optionalEnvironmentString,
+        KAVENEGAR_OTP_TEMPLATE: optionalEnvironmentString,
+
+        GOOGLE_CLIENT_ID: optionalEnvironmentString,
+
+        APPLE_CLIENT_ID: optionalEnvironmentString,
+        APPLE_TEAM_ID: optionalEnvironmentString,
+        APPLE_KEY_ID: optionalEnvironmentString,
+        APPLE_PRIVATE_KEY: optionalEnvironmentString,
+        APPLE_REDIRECT_URI: optionalEnvironmentString,
+
         ACCESS_TOKEN_TTL_SECONDS: z.coerce
             .number()
             .int()
@@ -195,13 +232,60 @@ const environmentSchema = z
                     "EMAIL_VERIFICATION_SECRET must contain at least 32 characters in production.",
             });
         }
-        if (values.NODE_ENV === "production" &&
+        if (
+            values.NODE_ENV === "production" &&
             (!values.PHONE_OTP_SECRET || values.PHONE_OTP_SECRET.length < 32)
         ) {
             context.addIssue({
                 code: "custom",
                 path: ["PHONE_OTP_SECRET"],
                 message: "PHONE_OTP_SECRET must contain at least 32 characters in production.",
+            });
+        }
+        if (
+            values.NODE_ENV === "production" &&
+            values.SMS_TRANSPORT !== "kavenegar"
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["SMS_TRANSPORT"],
+                message: "SMS_TRANSPORT must be kavenegar in production.",
+            });
+        }
+        if (values.SMS_TRANSPORT === "kavenegar" && !values.KAVENEGAR_API_KEY) {
+            context.addIssue({
+                code: "custom",
+                path: ["KAVENEGAR_API_KEY"],
+                message: "KAVENEGAR_API_KEY is required when SMS_TRANSPORT is kavenegar.",
+            });
+        }
+        if (
+            values.SMS_TRANSPORT === "kavenegar" &&
+            !values.KAVENEGAR_OTP_TEMPLATE
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["KAVENEGAR_OTP_TEMPLATE"],
+                message: "KAVENEGAR_OTP_TEMPLATE is required when SMS_TRANSPORT is kavenegar.",
+            });
+        }
+
+        const appleValues = [
+            values.APPLE_CLIENT_ID,
+            values.APPLE_TEAM_ID,
+            values.APPLE_KEY_ID,
+            values.APPLE_PRIVATE_KEY,
+            values.APPLE_REDIRECT_URI,
+        ];
+        const configuredAppleValues = appleValues.filter(Boolean).length;
+        if (
+            configuredAppleValues !== 0 &&
+            configuredAppleValues !== appleValues.length
+        ) {
+            context.addIssue({
+                code: "custom",
+                path: ["APPLE_CLIENT_ID"],
+                message: "All APPLE_* authentication variables must be configured together.",
             });
         }
         if (
@@ -294,6 +378,19 @@ const env = Object.freeze({
         values.EMAIL_VERIFICATION_SECRET ?? values.ACCESS_TOKEN_SECRET,
     phoneOtpSecret:
         values.PHONE_OTP_SECRET ?? values.ACCESS_TOKEN_SECRET,
+    phoneOtpTtlMinutes: values.PHONE_OTP_TTL_MINUTES,
+    phoneOtpResendCooldownSeconds: values.PHONE_OTP_RESEND_COOLDOWN_SECONDS,
+    phoneOtpMaxAttempts: values.PHONE_OTP_MAX_ATTEMPTS,
+    authSignupGrantTtlMinutes: values.AUTH_SIGNUP_GRANT_TTL_MINUTES,
+    smsTransport: values.SMS_TRANSPORT,
+    kavenegarApiKey: values.KAVENEGAR_API_KEY,
+    kavenegarOtpTemplate: values.KAVENEGAR_OTP_TEMPLATE,
+    googleClientId: values.GOOGLE_CLIENT_ID,
+    appleClientId: values.APPLE_CLIENT_ID,
+    appleTeamId: values.APPLE_TEAM_ID,
+    appleKeyId: values.APPLE_KEY_ID,
+    applePrivateKey: values.APPLE_PRIVATE_KEY?.replaceAll("\\n", "\n"),
+    appleRedirectUri: values.APPLE_REDIRECT_URI,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     sessionTtlDays: values.SESSION_TTL_DAYS,
     refreshCookieName: values.REFRESH_COOKIE_NAME,

@@ -13,6 +13,7 @@ void test("an existing access token cannot authenticate an unverified account", 
                 userId: "user-1",
                 sessionId: "session-1",
                 role: "USER" as const,
+                verified: false,
                 emailVerified: false,
             }),
     };
@@ -31,7 +32,7 @@ void test("an existing access token cannot authenticate an unverified account", 
             typeof error === "object" &&
             error !== null &&
             "code" in error &&
-            error.code === "EMAIL_VERIFICATION_REQUIRED",
+            error.code === "ACCOUNT_VERIFICATION_REQUIRED",
     );
 });
 
@@ -54,6 +55,7 @@ void test("refresh revokes a legacy session for an unverified account", async ()
                     bio: null,
                     avatarUrl: null,
                     emailVerifiedAt: null,
+                    verifiedAt: null,
                     status: "ACTIVE" as const,
                     role: "USER" as const,
                     createdAt: new Date(),
@@ -82,7 +84,7 @@ void test("refresh revokes a legacy session for an unverified account", async ()
             typeof error === "object" &&
             error !== null &&
             "code" in error &&
-            error.code === "EMAIL_VERIFICATION_REQUIRED",
+            error.code === "ACCOUNT_VERIFICATION_REQUIRED",
     );
     assert.equal(revokedSessionId, "session-1");
 });

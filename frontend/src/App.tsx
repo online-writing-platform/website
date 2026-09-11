@@ -18,6 +18,8 @@ import StartWritingProvider from "./context/StartWritingProvider";
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const PhoneAuthPage = lazy(() => import("./pages/PhoneAuthPage"));
+const CompleteSignupPage = lazy(() => import("./pages/CompleteSignupPage"));
 const ReaderPage = lazy(() => import("./pages/ReaderPage"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
 const SocialListPage = lazy(() => import("./pages/SocialListPage"));
@@ -122,6 +124,10 @@ function App() {
                 <Route path="/login" element={<Login />} />
 
                 <Route path="/register" element={<Register />} />
+
+                <Route path="/phone-auth" element={<PhoneAuthPage />} />
+
+                <Route path="/complete-signup" element={<CompleteSignupPage />} />
 
                 <Route
                   path="/forgot-password"

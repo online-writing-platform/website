@@ -32,6 +32,13 @@ export class ChangePasswordUseCase {
             );
         }
 
+        if (!user.passwordHash) {
+            throw AppError.forbidden(
+                "This account does not have password authentication.",
+                "PASSWORD_AUTH_REQUIRED",
+            );
+        }
+
         const currentPasswordValid = await this.security.verifyPassword(
             user.passwordHash,
             currentPassword,
@@ -83,7 +90,9 @@ export class ChangePasswordUseCase {
         }
 
         try {
-            await this.emailSender.sendPasswordChangedNotice(user.email);
+            if (user.email) {
+                await this.emailSender.sendPasswordChangedNotice(user.email);
+            }
         } catch (error) {
             this.logger.error(
                 error,

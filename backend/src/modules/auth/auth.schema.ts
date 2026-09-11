@@ -6,7 +6,10 @@ import {
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
 } from "./auth.security.js";
-import { normalizeIranianMobile } from "../../shared/validation/phone-number.js";
+import {
+    normalizeDecimalDigits,
+    normalizeIranianMobile,
+} from "../../shared/validation/phone-number.js";
 
 const emailSchema = z
     .string()
@@ -60,6 +63,46 @@ const opaqueTokenSchema = z
     .trim()
     .min(32, "Token is invalid.")
     .max(256, "Token is invalid.");
+
+const phoneOtpCodeSchema = z
+    .string()
+    .trim()
+    .transform((value) => normalizeDecimalDigits(value))
+    .refine(
+        (value) => /^\d{6}$/u.test(value),
+        "Verification code must contain exactly six digits.",
+    );
+
+export const verifyPhoneOtpSchema = z
+    .object({
+        phoneNumber: iranianMobileSchema,
+        code: phoneOtpCodeSchema,
+    })
+    .strict();
+
+export const googleAuthSchema = z
+    .object({
+        credential: z.string().trim().min(100).max(12_000),
+    })
+    .strict();
+
+export const appleAuthSchema = z
+    .object({
+        code: z.string().trim().min(8).max(4_096),
+        displayName: z.string().trim().min(1).max(80).optional(),
+    })
+    .strict();
+
+export const completeExternalSignupSchema = z
+    .object({
+        signupToken: opaqueTokenSchema,
+        username: usernameSchema,
+        birthDate: birthDateSchema,
+        acceptTerms: z.literal(true, {
+            error: "You must accept the terms before registering.",
+        }),
+    })
+    .strict();
 
 export const registerSchema = z
     .object({
@@ -152,6 +195,12 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RequestPhoneOtpInput = z.infer<
     typeof requestPhoneOtpSchema
+>;
+export type VerifyPhoneOtpInput = z.infer<typeof verifyPhoneOtpSchema>;
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;
+export type AppleAuthInput = z.infer<typeof appleAuthSchema>;
+export type CompleteExternalSignupInput = z.infer<
+    typeof completeExternalSignupSchema
 >;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type ResendVerificationEmailInput = z.infer<

@@ -1,4 +1,4 @@
-import { createHmac, randomInt } from "node:crypto";
+import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 
 import env from "../../config/env.js";
 import { generateOpaqueToken, hashOpaqueToken } from "../../security/opaque-token.js";
@@ -9,6 +9,8 @@ import { type AccessTokenContext, type AuthSecurity } from "./auth.types.js";
 const PASSWORD_RESET_TOKEN_BYTES = 32;
 
 const EMAIL_CHANGE_TOKEN_BYTES = 32;
+
+const SIGNUP_GRANT_TOKEN_BYTES = 32;
 
 export class DefaultAuthSecurity implements AuthSecurity {
     public hashPassword(password: string): Promise<string> {
@@ -62,6 +64,26 @@ export class DefaultAuthSecurity implements AuthSecurity {
             .update("\0", "utf8")
             .update(code, "utf8")
             .digest("hex");
+    }
+
+    public verifyPhoneOtpCode(
+        phoneNumber: string,
+        code: string,
+        expectedHash: string,
+    ): boolean {
+        const actualHash = this.hashPhoneOtpCode(phoneNumber, code);
+        const actual = Buffer.from(actualHash, "hex");
+        const expected = Buffer.from(expectedHash, "hex");
+
+        return actual.length === expected.length && timingSafeEqual(actual, expected);
+    }
+
+    public generateSignupGrantToken(): string {
+        return generateOpaqueToken(SIGNUP_GRANT_TOKEN_BYTES);
+    }
+
+    public hashSignupGrantToken(token: string): string {
+        return hashOpaqueToken(token);
     }
 
     public generatePasswordResetToken(): string {

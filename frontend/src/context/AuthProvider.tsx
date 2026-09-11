@@ -17,6 +17,9 @@ import { ApiError, apiRequest } from "../lib/api";
 import type {
   AuthResponse,
   AuthUser,
+  CompleteExternalSignupInput,
+  ExternalAuthResponse,
+  ExternalAuthResult,
   LoginInput,
   RegisterInput,
   RegistrationResponse,
@@ -153,6 +156,88 @@ function AuthProvider({ children }: AuthProviderProps) {
     [],
   );
 
+  const applyExternalAuthentication = useCallback(
+    (response: ExternalAuthResponse): ExternalAuthResult => {
+      if (response.data.status === "signup_required") {
+        return response.data;
+      }
+
+      const authResponse: AuthResponse = {
+        data: {
+          user: response.data.user,
+          accessToken: response.data.accessToken,
+        },
+      };
+      applyAuthentication(authResponse);
+      return { status: "authenticated", user: response.data.user };
+    },
+    [applyAuthentication],
+  );
+
+  const requestPhoneOtp = useCallback(async (phoneNumber: string): Promise<void> => {
+    await apiRequest("/api/v1/auth/phone/request-code", {
+      method: "POST",
+      body: JSON.stringify({ phoneNumber }),
+    });
+  }, []);
+
+  const verifyPhoneOtp = useCallback(
+    async (phoneNumber: string, code: string): Promise<ExternalAuthResult> => {
+      const response = await apiRequest<ExternalAuthResponse>(
+        "/api/v1/auth/phone/verify-code",
+        {
+          method: "POST",
+          body: JSON.stringify({ phoneNumber, code }),
+        },
+      );
+      return applyExternalAuthentication(response);
+    },
+    [applyExternalAuthentication],
+  );
+
+  const loginWithGoogle = useCallback(
+    async (credential: string): Promise<ExternalAuthResult> => {
+      const response = await apiRequest<ExternalAuthResponse>(
+        "/api/v1/auth/oauth/google",
+        {
+          method: "POST",
+          body: JSON.stringify({ credential }),
+        },
+      );
+      return applyExternalAuthentication(response);
+    },
+    [applyExternalAuthentication],
+  );
+
+  const loginWithApple = useCallback(
+    async (code: string, displayName?: string): Promise<ExternalAuthResult> => {
+      const response = await apiRequest<ExternalAuthResponse>(
+        "/api/v1/auth/oauth/apple",
+        {
+          method: "POST",
+          body: JSON.stringify({ code, ...(displayName ? { displayName } : {}) }),
+        },
+      );
+      return applyExternalAuthentication(response);
+    },
+    [applyExternalAuthentication],
+  );
+
+  const completeExternalSignup = useCallback(
+    async (input: CompleteExternalSignupInput): Promise<AuthUser> => {
+      const response = await apiRequest<AuthResponse>(
+        "/api/v1/auth/external-signup/complete",
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      );
+      applyAuthentication(response);
+      return response.data.user;
+    },
+    [applyAuthentication],
+  );
+
   const login = useCallback(
     async (input: LoginInput): Promise<AuthUser> => {
       const response = await apiRequest<AuthResponse>("/api/v1/auth/login", {
@@ -241,6 +326,11 @@ function AuthProvider({ children }: AuthProviderProps) {
       register,
       verifyEmail,
       resendVerificationEmail,
+      requestPhoneOtp,
+      verifyPhoneOtp,
+      loginWithGoogle,
+      loginWithApple,
+      completeExternalSignup,
       logout,
       updateProfile,
       request,
@@ -252,6 +342,11 @@ function AuthProvider({ children }: AuthProviderProps) {
       register,
       verifyEmail,
       resendVerificationEmail,
+      requestPhoneOtp,
+      verifyPhoneOtp,
+      loginWithGoogle,
+      loginWithApple,
+      completeExternalSignup,
       logout,
       updateProfile,
       request,

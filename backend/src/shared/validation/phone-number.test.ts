@@ -51,3 +51,10 @@ void test("rejects malformed mobile numbers", () => {
         null,
     );
 });
+
+void test("accepts Persian digits and normalizes them to ASCII", () => {
+    assert.equal(
+        normalizeIranianMobile("۰۹۱۲۳۴۵۶۷۸۹"),
+        "09123456789",
+    );
+});

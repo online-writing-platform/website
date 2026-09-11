@@ -1,42 +1,30 @@
-import parsePhoneNumber from "libphonenumber-js/max";
+const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
-export function normalizeIranianMobile(
-    input: string,
-): string | null {
-    let value = input.trim();
+export function normalizeDecimalDigits(value: string): string {
+    return [...value]
+        .map((character) => {
+            const persianIndex = PERSIAN_DIGITS.indexOf(character);
+            if (persianIndex >= 0) return String(persianIndex);
 
-    if (!value) {
-        return null;
-    }
+            const arabicIndex = ARABIC_DIGITS.indexOf(character);
+            if (arabicIndex >= 0) return String(arabicIndex);
 
-    value = value.replace(/[\s()-]/g, "");
+            return character;
+        })
+        .join("");
+}
+
+export function normalizeIranianMobile(input: string): string | null {
+    let value = normalizeDecimalDigits(input.trim()).replace(/[\s()-]/gu, "");
 
     if (value.startsWith("0098")) {
-        value = `+98${value.slice(4)}`;
+        value = `0${value.slice(4)}`;
+    } else if (value.startsWith("+98")) {
+        value = `0${value.slice(3)}`;
+    } else if (value.startsWith("98")) {
+        value = `0${value.slice(2)}`;
     }
 
-    if (value.startsWith("98") && !value.startsWith("+")) {
-        value = `+${value}`;
-    }
-
-    const phoneNumber = parsePhoneNumber(value, {
-        defaultCountry: "IR",
-        extract: false,
-    });
-
-    if (!phoneNumber || !phoneNumber.isValid()) {
-        return null;
-    }
-
-    if (phoneNumber.country !== "IR") {
-        return null;
-    }
-
-    const e164 = phoneNumber.number;
-
-    if (!/^\+989\d{9}$/.test(e164)) {
-        return null;
-    }
-
-    return `0${e164.slice(3)}`;
+    return /^09\d{9}$/u.test(value) ? value : null;
 }

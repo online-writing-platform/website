@@ -15,6 +15,7 @@ const unverifiedUser = {
     bio: null,
     avatarUrl: null,
     emailVerifiedAt: null,
+    verifiedAt: null,
     status: "ACTIVE" as const,
     role: "USER" as const,
     createdAt: now,
@@ -107,7 +108,7 @@ void test("login rejects a valid password for an unverified account before creat
 
 void test("verification consumes the six-digit code and returns the verified user", async () => {
     let consumedCodeHash: string | undefined;
-    const verifiedUser = { ...unverifiedUser, emailVerifiedAt: now };
+    const verifiedUser = { ...unverifiedUser, emailVerifiedAt: now, verifiedAt: now };
     const users = {
         findVerificationByEmail: () =>
             Promise.resolve({
@@ -159,7 +160,7 @@ void test("successful email verification creates the first authenticated session
 
     assert.equal(typeof Constructor, "function");
 
-    const verifiedUser = { ...unverifiedUser, emailVerifiedAt: now };
+    const verifiedUser = { ...unverifiedUser, emailVerifiedAt: now, verifiedAt: now };
     const emailVerification = {
         verify: (email: string, code: string) => {
             assert.equal(email, "writer@example.com");
@@ -340,7 +341,7 @@ void test("verification rejects a suspended account without creating a session",
 });
 
 void test("verification rejects a code left behind for an already verified account", async () => {
-    const alreadyVerifiedUser = { ...unverifiedUser, emailVerifiedAt: now };
+    const alreadyVerifiedUser = { ...unverifiedUser, emailVerifiedAt: now, verifiedAt: now };
     const service = new EmailVerificationService(
         {
             findVerificationByEmail: () =>

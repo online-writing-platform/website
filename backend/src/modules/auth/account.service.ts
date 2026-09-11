@@ -27,6 +27,13 @@ export class ChangeUsernameUseCase {
             );
         }
 
+        if (!user.passwordHash) {
+            throw AppError.forbidden(
+                "This account does not have password authentication.",
+                "PASSWORD_AUTH_REQUIRED",
+            );
+        }
+
         const passwordValid = await this.security.verifyPassword(
             user.passwordHash,
             currentPassword,
@@ -154,6 +161,13 @@ export class DeleteAccountUseCase {
             );
         }
 
+        if (!user.passwordHash) {
+            throw AppError.forbidden(
+                "This account does not have password authentication.",
+                "PASSWORD_AUTH_REQUIRED",
+            );
+        }
+
         const passwordValid = await this.security.verifyPassword(
             user.passwordHash,
             currentPassword,
@@ -213,6 +227,13 @@ export class RequestEmailChangeUseCase {
             throw AppError.unauthorized(
                 "The account is no longer active.",
                 "INACTIVE_ACCOUNT",
+            );
+        }
+
+        if (!user.passwordHash) {
+            throw AppError.forbidden(
+                "This account does not have password authentication.",
+                "PASSWORD_AUTH_REQUIRED",
             );
         }
 

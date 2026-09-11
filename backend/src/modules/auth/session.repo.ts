@@ -10,6 +10,7 @@ const authUserSelect = {
     bio: true,
     avatarUrl: true,
     emailVerifiedAt: true,
+    verifiedAt: true,
     status: true,
     role: true,
     createdAt: true,
@@ -165,6 +166,7 @@ export class SessionRepository {
                     select: {
                         role: true,
                         emailVerifiedAt: true,
+                        verifiedAt: true,
                     },
                 },
             },
@@ -178,6 +180,9 @@ export class SessionRepository {
             userId: session.userId,
             sessionId: session.id,
             role: session.user.role,
+            verified:
+                session.user.verifiedAt !== null ||
+                session.user.emailVerifiedAt !== null,
             emailVerified: session.user.emailVerifiedAt !== null,
         };
     }

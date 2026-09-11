@@ -67,7 +67,7 @@ export async function optionalAuthenticate(
     }
 }
 
-export function requireVerifiedEmail(
+export function requireVerifiedAccount(
     request: Request,
     _response: Response,
     next: NextFunction,
@@ -77,11 +77,11 @@ export function requireVerifiedEmail(
         return;
     }
 
-    if (!request.auth.emailVerified) {
+    if (!request.auth.verified) {
         next(
             AppError.forbidden(
-                "Email verification is required for this action.",
-                "EMAIL_VERIFICATION_REQUIRED",
+                "Account verification is required for this action.",
+                "ACCOUNT_VERIFICATION_REQUIRED",
             ),
         );
         return;

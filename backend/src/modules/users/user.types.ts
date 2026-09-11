@@ -13,12 +13,13 @@ export interface PublicationActivityDay {
 
 export interface PrivateUserProfile {
   id: string;
-  email: string;
+  email: string | null;
   username: string;
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
   birthDate: string;
+  verified: boolean;
   emailVerified: boolean;
   role: UserRoleValue;
   counts: UserCounts;
@@ -45,13 +46,14 @@ export interface UpdateProfileInput {
 
 export interface PrivateUserProfileRecord {
   id: string;
-  email: string;
+  email: string | null;
   username: string;
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
   birthDate: Date;
   emailVerifiedAt: Date | null;
+  verifiedAt: Date | null;
   role: UserRoleValue;
   createdAt: Date;
   updatedAt: Date;

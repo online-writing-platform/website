@@ -4,13 +4,15 @@ import type { PasswordResetRecord, PasswordResetUserRecord } from "./auth.types.
 class AuthTransactionStateError extends Error {}
 
 export class PasswordRepository {
-    public findPasswordResetUser(
+    public async findPasswordResetUser(
         email: string,
         usernameNormalized: string,
     ): Promise<PasswordResetUserRecord | null> {
-        return prisma.user.findFirst({
+        const user = await prisma.user.findFirst({
             where: {
                 OR: [{ email }, { usernameNormalized }],
+                email: { not: null },
+                passwordHash: { not: null },
             },
             select: {
                 id: true,
@@ -19,6 +21,8 @@ export class PasswordRepository {
                 status: true,
             },
         });
+
+        return user?.email ? { ...user, email: user.email } : null;
     }
 
     public findPasswordResetState(userId: string): Promise<{ sentAt: Date } | null> {
@@ -53,10 +57,10 @@ export class PasswordRepository {
         });
     }
 
-    public findPasswordResetByTokenHash(
+    public async findPasswordResetByTokenHash(
         tokenHash: string,
     ): Promise<PasswordResetRecord | null> {
-        return prisma.passwordResetToken.findUnique({
+        const reset = await prisma.passwordResetToken.findUnique({
             where: { tokenHash },
             select: {
                 userId: true,
@@ -70,6 +74,12 @@ export class PasswordRepository {
                 },
             },
         });
+
+        if (!reset?.user.email) return null;
+        return {
+            ...reset,
+            user: { ...reset.user, email: reset.user.email },
+        };
     }
 
     public async resetPasswordAndRevokeSessions(
@@ -104,6 +114,11 @@ export class PasswordRepository {
                     throw new AuthTransactionStateError();
                 }
 
+                await transaction.authIdentity.updateMany({
+                    where: { userId, provider: "PASSWORD" },
+                    data: { passwordHash },
+                });
+
                 await transaction.session.updateMany({
                     where: { userId, revokedAt: null },
                     data: { revokedAt: resetAt },
@@ -135,6 +150,11 @@ export class PasswordRepository {
             if (updated.count !== 1) {
                 return false;
             }
+
+            await transaction.authIdentity.updateMany({
+                where: { userId, provider: "PASSWORD" },
+                data: { passwordHash },
+            });
 
             await transaction.passwordResetToken.deleteMany({ where: { userId } });
 

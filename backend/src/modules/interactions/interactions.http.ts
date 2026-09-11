@@ -16,7 +16,7 @@ import { validateBody, validateParams, validateQuery } from "../../middlewares/v
 import {
     authenticate,
     optionalAuthenticate,
-    requireVerifiedEmail,
+    requireVerifiedAccount,
 } from "../auth/auth.middleware.js";
 import {
     chapterCommentParamsSchema,
@@ -114,8 +114,8 @@ const commentRouter = Router();
 
 chapterRouter.get("/:chapterId/votes", optionalAuthenticate, validateParams(chapterParamsSchema), getVoteCount);
 chapterRouter.get("/:chapterId/vote", authenticate, validateParams(chapterParamsSchema), getVoteState);
-chapterRouter.post("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedEmail, validateParams(chapterParamsSchema), addVote);
-chapterRouter.delete("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedEmail, validateParams(chapterParamsSchema), removeVote);
+chapterRouter.post("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedAccount, validateParams(chapterParamsSchema), addVote);
+chapterRouter.delete("/:chapterId/vote", socialWriteRateLimiter, authenticate, requireVerifiedAccount, validateParams(chapterParamsSchema), removeVote);
 chapterRouter.get(
     "/:chapterId/comments",
     optionalAuthenticate,
@@ -134,7 +134,7 @@ chapterRouter.post(
     "/:chapterId/comments",
     socialWriteRateLimiter,
     authenticate,
-    requireVerifiedEmail,
+    requireVerifiedAccount,
     validateParams(chapterParamsSchema),
     validateBody(createCommentSchema),
     createComment,
@@ -144,7 +144,7 @@ commentRouter.patch(
     "/:commentId",
     socialWriteRateLimiter,
     authenticate,
-    requireVerifiedEmail,
+    requireVerifiedAccount,
     validateParams(commentParamsSchema),
     validateBody(updateCommentSchema),
     updateComment,

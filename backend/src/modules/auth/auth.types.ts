@@ -9,6 +9,7 @@ export interface AccessTokenContext {
 
 export interface AuthContext extends AccessTokenContext {
     role: UserRoleValue;
+    verified: boolean;
     emailVerified: boolean;
 }
 
@@ -32,12 +33,13 @@ export interface LoginUserInput {
 
 export interface AuthUserRecord {
     id: string;
-    email: string;
+    email: string | null;
     username: string;
     displayName: string;
     bio: string | null;
     avatarUrl: string | null;
     emailVerifiedAt: Date | null;
+    verifiedAt: Date | null;
     status: UserStatusValue;
     role: UserRoleValue;
     createdAt: Date;
@@ -45,16 +47,17 @@ export interface AuthUserRecord {
 }
 
 export interface AuthUserWithPassword extends AuthUserRecord {
-    passwordHash: string;
+    passwordHash: string | null;
 }
 
 export interface AuthenticatedUser {
     id: string;
-    email: string;
+    email: string | null;
     username: string;
     displayName: string;
     bio: string | null;
     avatarUrl: string | null;
+    verified: boolean;
     emailVerified: boolean;
     role: UserRoleValue;
     createdAt: Date;
@@ -85,7 +88,7 @@ export interface SessionView {
 }
 
 export interface IdentityConflictRecord {
-    email: string;
+    email: string | null;
     usernameNormalized: string;
 }
 
@@ -156,10 +159,10 @@ export interface PasswordResetRecord {
 
 export interface AccountSecurityUserRecord {
     id: string;
-    email: string;
+    email: string | null;
     username: string;
     usernameNormalized: string;
-    passwordHash: string;
+    passwordHash: string | null;
     status: UserStatusValue;
 }
 
@@ -183,6 +186,9 @@ export interface AuthSecurity {
     generateVerificationCode(): string;
     hashVerificationCode(email: string, code: string): string;
     hashPhoneOtpCode(phoneNumber: string, code: string): string;
+    verifyPhoneOtpCode(phoneNumber: string, code: string, expectedHash: string): boolean;
+    generateSignupGrantToken(): string;
+    hashSignupGrantToken(token: string): string;
     generatePasswordResetToken(): string;
     hashPasswordResetToken(token: string): string;
     generateEmailChangeToken(): string;

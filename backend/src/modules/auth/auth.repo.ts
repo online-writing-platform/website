@@ -18,6 +18,7 @@ const authUserSelect = {
     bio: true,
     avatarUrl: true,
     emailVerifiedAt: true,
+    verifiedAt: true,
     status: true,
     role: true,
     createdAt: true,
@@ -51,6 +52,13 @@ export class AuthRepository {
                     displayName: input.displayName,
                     birthDate: input.birthDate,
                     termsVersion: input.termsVersion,
+                    authIdentities: {
+                        create: {
+                            provider: "PASSWORD",
+                            providerSubject: input.email,
+                            passwordHash: input.passwordHash,
+                        },
+                    },
                 },
                 select: authUserSelect,
             });
@@ -109,10 +117,10 @@ export class AuthRepository {
         });
     }
 
-    public findVerificationUserByEmail(
+    public async findVerificationUserByEmail(
         email: string,
     ): Promise<VerificationUserRecord | null> {
-        return prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
             where: { email },
             select: {
                 id: true,
@@ -121,6 +129,8 @@ export class AuthRepository {
                 status: true,
             },
         });
+
+        return user?.email ? { ...user, email: user.email } : null;
     }
 
     public async deleteVerificationCode(
@@ -207,12 +217,20 @@ export class AuthRepository {
                     status: "ACTIVE",
                     emailVerifiedAt: null,
                 },
-                data: { emailVerifiedAt: verifiedAt },
+                data: {
+                    emailVerifiedAt: verifiedAt,
+                    verifiedAt,
+                },
             });
 
             if (verified.count !== 1) {
                 return null;
             }
+
+            await transaction.authIdentity.updateMany({
+                where: { userId, provider: "PASSWORD" },
+                data: { verifiedAt },
+            });
 
             return transaction.user.findUnique({
                 where: { id: userId },

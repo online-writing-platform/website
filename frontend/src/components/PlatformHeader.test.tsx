@@ -47,6 +47,7 @@ const authenticatedUser = {
   displayName: "Test Writer",
   bio: null,
   avatarUrl: null,
+  verified: true,
   emailVerified: true,
   role: "USER",
   createdAt: "2026-08-19T00:00:00.000Z",

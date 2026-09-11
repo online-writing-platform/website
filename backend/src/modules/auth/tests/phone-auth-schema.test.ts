@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requestPhoneOtpSchema } from "../auth.schema.js";
+import {
+    requestPhoneOtpSchema,
+    verifyPhoneOtpSchema,
+} from "../auth.schema.js";
 
 void test("accepts a normal Iranian mobile number", () => {
     const result = requestPhoneOtpSchema.parse({
@@ -42,4 +45,14 @@ void test("rejects unknown fields", () => {
     });
 
     assert.equal(result.success, false);
+});
+
+void test("normalizes Persian digits in the OTP code", () => {
+    const result = verifyPhoneOtpSchema.parse({
+        phoneNumber: "۰۹۱۲۳۴۵۶۷۸۹",
+        code: "۱۲۳۴۵۶",
+    });
+
+    assert.equal(result.phoneNumber, "09123456789");
+    assert.equal(result.code, "123456");
 });

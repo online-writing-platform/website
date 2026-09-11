@@ -69,3 +69,25 @@ export const searchRateLimiter = policy("search", 60_000, 60, "SEARCH_RATE_LIMIT
 export const uploadRateLimiter = policy("upload", 60 * 60_000, 30, "UPLOAD_RATE_LIMIT_EXCEEDED", "Too many uploads. Please try again later.");
 export const reportRateLimiter = policy("report", 60 * 60_000, 10, "REPORT_RATE_LIMIT_EXCEEDED", "Too many reports. Please try again later.");
 export const moderationRateLimiter = policy("moderation", 15 * 60_000, 120, "MODERATION_RATE_LIMIT_EXCEEDED", "Too many moderation actions. Please try again later.");
+
+export const phoneOtpRequestRateLimiter = policy(
+    "phone-otp-request",
+    15 * 60_000,
+    8,
+    "PHONE_OTP_REQUEST_RATE_LIMIT_EXCEEDED",
+    "Too many phone verification requests. Please try again later.",
+);
+export const phoneOtpVerifyRateLimiter = policy(
+    "phone-otp-verify",
+    15 * 60_000,
+    30,
+    "PHONE_OTP_VERIFY_RATE_LIMIT_EXCEEDED",
+    "Too many phone verification attempts. Please try again later.",
+);
+export const federatedAuthRateLimiter = policy(
+    "federated-auth",
+    15 * 60_000,
+    30,
+    "FEDERATED_AUTH_RATE_LIMIT_EXCEEDED",
+    "Too many external sign-in attempts. Please try again later.",
+);

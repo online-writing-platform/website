@@ -13,7 +13,7 @@ import type {
 import { Router } from "express";
 import { moderationRateLimiter, reportRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { validateBody, validateParams, validateQuery } from "../../middlewares/validate.middleware.js";
-import { authenticate, requireRole, requireVerifiedEmail } from "../auth/auth.middleware.js";
+import { authenticate, requireRole, requireVerifiedAccount } from "../auth/auth.middleware.js";
 import {
     createReportSchema,
     moderationActionSchema,
@@ -111,7 +111,7 @@ reportRoutes.post(
     "/",
     reportRateLimiter,
     authenticate,
-    requireVerifiedEmail,
+    requireVerifiedAccount,
     validateBody(createReportSchema),
     createReport,
 );

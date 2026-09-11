@@ -383,7 +383,7 @@ function ProfileSettingsDialog({
   }
 
   async function resendVerification() {
-    if (!user) return;
+    if (!user?.email) return;
 
     beginAction("verification");
 
@@ -744,7 +744,7 @@ function ProfileSettingsDialog({
                   {t("settings.sections.security.description")}
                 </p>
 
-                {!user?.emailVerified ? (
+                {user?.email && !user.emailVerified ? (
                   <div className="profile-settings-notice">
                     <Mail aria-hidden="true" />
                     <div>

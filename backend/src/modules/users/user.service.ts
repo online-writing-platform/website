@@ -43,6 +43,7 @@ export class UserProfileService {
     return {
       ...user,
       birthDate: user.birthDate.toISOString().slice(0, 10),
+      verified: user.verifiedAt !== null || user.emailVerifiedAt !== null,
       emailVerified: user.emailVerifiedAt !== null,
       counts,
     };
@@ -106,6 +107,7 @@ export class UserProfileService {
     return {
       ...user,
       birthDate: user.birthDate.toISOString().slice(0, 10),
+      verified: user.verifiedAt !== null || user.emailVerifiedAt !== null,
       emailVerified: user.emailVerifiedAt !== null,
       counts: await this.store.getCounts(userId),
     };

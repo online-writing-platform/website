@@ -100,11 +100,11 @@ export class RegisterUserUseCase {
 
         const delivered = await this.emailVerification.sendInitial(
             user.id,
-            user.email,
+            email,
         );
 
         return {
-            email: user.email,
+            email,
             verificationRequired: true,
             deliveryStatus: delivered ? "sent" : "failed",
         };

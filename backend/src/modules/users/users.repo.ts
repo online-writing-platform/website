@@ -16,6 +16,7 @@ const privateSelect = {
   avatarUrl: true,
   birthDate: true,
   emailVerifiedAt: true,
+  verifiedAt: true,
   role: true,
   createdAt: true,
   updatedAt: true,

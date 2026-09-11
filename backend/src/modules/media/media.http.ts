@@ -7,7 +7,7 @@ import multer from "multer";
 import env from "../../config/env.js";
 import { uploadRateLimiter } from "../../middlewares/rate-limit.middleware.js";
 import { validateParams } from "../../middlewares/validate.middleware.js";
-import { authenticate, requireVerifiedEmail } from "../auth/auth.middleware.js";
+import { authenticate, requireVerifiedAccount } from "../auth/auth.middleware.js";
 import {
   mediaAssetParamsSchema,
   storyCoverParamsSchema,
@@ -158,7 +158,7 @@ router.post(
 
   authenticate,
 
-  requireVerifiedEmail,
+  requireVerifiedAccount,
 
   validateParams(storyCoverParamsSchema),
 

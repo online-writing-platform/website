@@ -35,10 +35,10 @@ export class AuthenticateSessionUseCase {
             );
         }
 
-        if (!principal.emailVerified) {
+        if (!principal.verified) {
             throw AppError.forbidden(
-                "Email verification is required before using this session.",
-                "EMAIL_VERIFICATION_REQUIRED",
+                "Account verification is required before using this session.",
+                "ACCOUNT_VERIFICATION_REQUIRED",
             );
         }
 
@@ -127,12 +127,15 @@ export class RefreshSessionUseCase {
             );
         }
 
-        if (session.user.emailVerifiedAt === null) {
+        if (
+            session.user.verifiedAt === null &&
+            session.user.emailVerifiedAt === null
+        ) {
             await this.sessions.revokeSessionById(session.id, now);
 
             throw AppError.forbidden(
-                "Email verification is required before using this session.",
-                "EMAIL_VERIFICATION_REQUIRED",
+                "Account verification is required before using this session.",
+                "ACCOUNT_VERIFICATION_REQUIRED",
             );
         }
 

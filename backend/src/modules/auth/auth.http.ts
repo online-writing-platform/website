@@ -11,23 +11,31 @@ import {
     setRefreshTokenCookie,
 } from "./auth.cookie.js";
 import type {
+    AppleAuthInput,
     ChangePasswordInput,
     ChangeUsernameInput,
+    CompleteExternalSignupInput,
     ConfirmEmailChangeInput,
+    GoogleAuthInput,
     DeleteAccountInput,
     LoginInput,
     RegisterInput,
     ResendVerificationEmailInput,
     RequestEmailChangeInput,
     RequestPasswordResetInput,
+    RequestPhoneOtpInput,
     ResetPasswordInput,
     SessionParams,
     VerifyEmailInput,
+    VerifyPhoneOtpInput,
 } from "./auth.schema.js";
 import { Router } from "express";
 import {
     emailVerificationRateLimiter,
+    federatedAuthRateLimiter,
     loginRateLimiter,
+    phoneOtpRequestRateLimiter,
+    phoneOtpVerifyRateLimiter,
     passwordResetConfirmRateLimiter,
     passwordResetRequestRateLimiter,
     refreshRateLimiter,
@@ -42,18 +50,23 @@ import {
 import { authenticate } from "./auth.middleware.js";
 import { requireTrustedOrigin } from "../../shared/http/origin-policy.js";
 import {
+    appleAuthSchema,
     changePasswordSchema,
     changeUsernameSchema,
+    completeExternalSignupSchema,
     confirmEmailChangeSchema,
+    googleAuthSchema,
     deleteAccountSchema,
     loginSchema,
     registerSchema,
     resendVerificationEmailSchema,
     requestEmailChangeSchema,
     requestPasswordResetSchema,
+    requestPhoneOtpSchema,
     resetPasswordSchema,
     sessionParamsSchema,
     verifyEmailSchema,
+    verifyPhoneOtpSchema,
 } from "./auth.schema.js";
 
 function getClientInformation(request: Request): ClientInformation {
@@ -101,6 +114,103 @@ export async function login(
     );
 
     response.status(200).json({
+        data: {
+            user: result.user,
+            accessToken: result.accessToken,
+        },
+    });
+}
+
+async function sendExternalAuthResult(
+    response: Response,
+    result: Awaited<ReturnType<typeof authService.verifyPhoneOtp>>,
+): Promise<void> {
+    if (result.status === "signup_required") {
+        response.status(200).json({ data: result });
+        return;
+    }
+
+    const authentication = result.authentication;
+    setRefreshTokenCookie(
+        response,
+        authentication.refreshToken,
+        authentication.sessionExpiresAt,
+    );
+    response.status(200).json({
+        data: {
+            status: "authenticated",
+            user: authentication.user,
+            accessToken: authentication.accessToken,
+        },
+    });
+}
+
+export async function requestPhoneOtp(
+    request: Request<Record<string, never>, unknown, RequestPhoneOtpInput>,
+    response: Response,
+): Promise<void> {
+    await authService.requestPhoneOtp(request.body.phoneNumber);
+    response.status(202).json({ data: { status: "sent" } });
+}
+
+export async function verifyPhoneOtp(
+    request: Request<Record<string, never>, unknown, VerifyPhoneOtpInput>,
+    response: Response,
+): Promise<void> {
+    const result = await authService.verifyPhoneOtp(
+        request.body.phoneNumber,
+        request.body.code,
+        getClientInformation(request),
+    );
+    await sendExternalAuthResult(response, result);
+}
+
+export async function googleAuth(
+    request: Request<Record<string, never>, unknown, GoogleAuthInput>,
+    response: Response,
+): Promise<void> {
+    const result = await authService.google(
+        request.body.credential,
+        getClientInformation(request),
+    );
+    await sendExternalAuthResult(response, result);
+}
+
+export async function appleAuth(
+    request: Request<Record<string, never>, unknown, AppleAuthInput>,
+    response: Response,
+): Promise<void> {
+    const result = await authService.apple(
+        request.body.code,
+        request.body.displayName,
+        getClientInformation(request),
+    );
+    await sendExternalAuthResult(response, result);
+}
+
+export async function completeExternalSignup(
+    request: Request<
+        Record<string, never>,
+        unknown,
+        CompleteExternalSignupInput
+    >,
+    response: Response,
+): Promise<void> {
+    const result = await authService.completeExternalSignup(
+        {
+            signupToken: request.body.signupToken,
+            username: request.body.username,
+            birthDate: request.body.birthDate,
+        },
+        getClientInformation(request),
+    );
+
+    setRefreshTokenCookie(
+        response,
+        result.refreshToken,
+        result.sessionExpiresAt,
+    );
+    response.status(201).json({
         data: {
             user: result.user,
             accessToken: result.accessToken,
@@ -346,6 +456,41 @@ router.post(
     loginRateLimiter,
     validateBody(loginSchema),
     login,
+);
+
+router.post(
+    "/phone/request-code",
+    phoneOtpRequestRateLimiter,
+    validateBody(requestPhoneOtpSchema),
+    requestPhoneOtp,
+);
+
+router.post(
+    "/phone/verify-code",
+    phoneOtpVerifyRateLimiter,
+    validateBody(verifyPhoneOtpSchema),
+    verifyPhoneOtp,
+);
+
+router.post(
+    "/oauth/google",
+    federatedAuthRateLimiter,
+    validateBody(googleAuthSchema),
+    googleAuth,
+);
+
+router.post(
+    "/oauth/apple",
+    federatedAuthRateLimiter,
+    validateBody(appleAuthSchema),
+    appleAuth,
+);
+
+router.post(
+    "/external-signup/complete",
+    registrationRateLimiter,
+    validateBody(completeExternalSignupSchema),
+    completeExternalSignup,
 );
 
 router.post("/refresh", refreshRateLimiter, requireTrustedOrigin, refresh);

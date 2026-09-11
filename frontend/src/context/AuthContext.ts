@@ -2,6 +2,8 @@ import { createContext } from "react";
 
 import type {
   AuthUser,
+  CompleteExternalSignupInput,
+  ExternalAuthResult,
   LoginInput,
   RegisterInput,
   RegistrationResult,
@@ -22,6 +24,16 @@ export interface AuthContextValue {
   verifyEmail(input: VerifyEmailInput): Promise<AuthUser>;
 
   resendVerificationEmail(email: string): Promise<void>;
+
+  requestPhoneOtp(phoneNumber: string): Promise<void>;
+
+  verifyPhoneOtp(phoneNumber: string, code: string): Promise<ExternalAuthResult>;
+
+  loginWithGoogle(credential: string): Promise<ExternalAuthResult>;
+
+  loginWithApple(code: string, displayName?: string): Promise<ExternalAuthResult>;
+
+  completeExternalSignup(input: CompleteExternalSignupInput): Promise<AuthUser>;
 
   logout(): Promise<void>;
 

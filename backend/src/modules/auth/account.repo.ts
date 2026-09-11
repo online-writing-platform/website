@@ -136,12 +136,21 @@ export class AccountRepository {
                     data: {
                         email: newEmail,
                         emailVerifiedAt: changedAt,
+                        verifiedAt: changedAt,
                     },
                 });
 
                 if (updated.count !== 1) {
                     throw new AuthTransactionStateError();
                 }
+
+                await transaction.authIdentity.updateMany({
+                    where: { userId, provider: "PASSWORD" },
+                    data: {
+                        providerSubject: newEmail,
+                        verifiedAt: changedAt,
+                    },
+                });
 
                 await transaction.emailVerificationToken.deleteMany({ where: { userId } });
                 await transaction.passwordResetToken.deleteMany({ where: { userId } });
@@ -184,6 +193,7 @@ export class AccountRepository {
                     bio: null,
                     avatarUrl: null,
                     emailVerifiedAt: null,
+                    verifiedAt: null,
                     status: "DELETED",
                     role: "USER",
                 },

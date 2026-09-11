@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { LuEyeClosed, LuEye } from "react-icons/lu";
 
 import Button from "../components/Button";
+import SocialAuthButtons from "../components/SocialAuthButtons";
 import BirthDatePicker from "../components/BirthDatePicker";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
@@ -278,6 +279,12 @@ function Register() {
               : t("auth.register.submit")}
           </Button>
         </form>
+
+        <div className="external-auth-divider">یا</div>
+        <SocialAuthButtons />
+        <p className="form-footer">
+          <Link to="/phone-auth">ثبت‌نام با شماره موبایل</Link>
+        </p>
 
         <p className="form-footer">
           {t("auth.register.hasAccount")}{" "}
