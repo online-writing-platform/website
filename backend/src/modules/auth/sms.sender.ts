@@ -6,11 +6,13 @@ export interface SmsSender {
 }
 
 class ConsoleSmsSender implements SmsSender {
-    public async sendOtp(phoneNumber: string, code: string): Promise<void> {
+    public sendOtp(phoneNumber: string, code: string): Promise<void> {
         logger.info(
             { phoneNumber, code },
             "Development phone OTP (SMS_TRANSPORT=console)",
         );
+
+        return Promise.resolve();
     }
 }
 

@@ -121,10 +121,10 @@ export async function login(
     });
 }
 
-async function sendExternalAuthResult(
+function sendExternalAuthResult(
     response: Response,
     result: Awaited<ReturnType<typeof authService.verifyPhoneOtp>>,
-): Promise<void> {
+): void {
     if (result.status === "signup_required") {
         response.status(200).json({ data: result });
         return;
@@ -162,7 +162,7 @@ export async function verifyPhoneOtp(
         request.body.code,
         getClientInformation(request),
     );
-    await sendExternalAuthResult(response, result);
+    sendExternalAuthResult(response, result);
 }
 
 export async function googleAuth(
@@ -173,7 +173,7 @@ export async function googleAuth(
         request.body.credential,
         getClientInformation(request),
     );
-    await sendExternalAuthResult(response, result);
+    sendExternalAuthResult(response, result);
 }
 
 export async function appleAuth(
@@ -185,7 +185,7 @@ export async function appleAuth(
         request.body.displayName,
         getClientInformation(request),
     );
-    await sendExternalAuthResult(response, result);
+    sendExternalAuthResult(response, result);
 }
 
 export async function completeExternalSignup(
