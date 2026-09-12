@@ -5,8 +5,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import i18n from "../i18n";
 import { RICH_TEXT_CONTENT_PREFIX } from "../lib/chapter-content";
 
 import RichTextEditor from "./RichTextEditor";
@@ -25,14 +26,9 @@ if (!Range.prototype.getBoundingClientRect) {
   });
 }
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    i18n: {
-      dir: () => "rtl",
-      resolvedLanguage: "fa",
-    },
-  }),
-}));
+beforeEach(async () => {
+  await i18n.changeLanguage("fa");
+});
 
 afterEach(() => {
   cleanup();

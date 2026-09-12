@@ -1,302 +1,66 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Bell, CheckCheck, LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
+import useNotifications from "../features/notifications/hooks/useNotifications";
+import {
+  formatNotificationDate,
+  getInitials,
+  getNotificationLabel,
+  getNotificationTarget,
+} from "../features/notifications/presentation";
 import useAuth from "../hooks/useAuth";
+import useInterfaceLocale from "../hooks/useInterfaceLocale";
 
 import "./NotificationMenu.css";
-
-type InterfaceLanguage = "fa" | "en";
-
-type NotificationType =
-  | "FOLLOW"
-  | "COMMENT"
-  | "COMMENT_REPLY"
-  | "CHAPTER_VOTE"
-  | "STORY_PUBLISHED"
-  | "CHAPTER_PUBLISHED"
-  | "MODERATION"
-  | "SECURITY";
-
-interface HeaderNotification {
-  id: string;
-  type: NotificationType | string;
-  data: Record<string, unknown>;
-  readAt: string | null;
-  createdAt: string;
-  actor: {
-    username: string;
-    displayName: string;
-    avatarUrl: string | null;
-  } | null;
-}
-
-interface NotificationsResponse {
-  data: {
-    items: HeaderNotification[];
-    hasMore: boolean;
-    nextCursor: string | null;
-  };
-}
-
-const COPY = {
-  fa: {
-    title: "اعلان‌ها",
-    open: "باز کردن اعلان‌ها",
-    close: "بستن اعلان‌ها",
-    unreadCount: (count: number) => `${count} اعلان خوانده‌نشده`,
-    markAllRead: "خواندن همه",
-    markingAllRead: "در حال ثبت...",
-    loading: "در حال دریافت اعلان‌ها...",
-    empty: "اعلان جدیدی ندارید.",
-    loadError: "دریافت اعلان‌ها ناموفق بود.",
-    updateError: "ثبت وضعیت اعلان ناموفق بود.",
-    retry: "تلاش دوباره",
-    viewAll: "مشاهده همه اعلان‌ها",
-    system: "سامانه",
-    newNotification: "اعلان جدید",
-  },
-  en: {
-    title: "Notifications",
-    open: "Open notifications",
-    close: "Close notifications",
-    unreadCount: (count: number) =>
-      `${count} unread notification${count === 1 ? "" : "s"}`,
-    markAllRead: "Mark all as read",
-    markingAllRead: "Marking...",
-    loading: "Loading notifications...",
-    empty: "You have no new notifications.",
-    loadError: "Notifications could not be loaded.",
-    updateError: "The notification status could not be updated.",
-    retry: "Try again",
-    viewAll: "View all notifications",
-    system: "System",
-    newNotification: "New notification",
-  },
-} as const;
 
 const HEADER_NOTIFICATION_LIMIT = 50;
 const VISIBLE_NOTIFICATION_LIMIT = 8;
 
-function stringData(item: HeaderNotification, key: string): string | null {
-  const value = item.data[key];
-
-  return typeof value === "string" && value.trim() ? value : null;
-}
-
-function notificationLabel(
-  item: HeaderNotification,
-  language: InterfaceLanguage,
-): string {
-  const copy = COPY[language];
-  const actor = item.actor?.displayName ?? copy.system;
-  const storyTitle = stringData(item, "storyTitle");
-  const chapterTitle = stringData(item, "chapterTitle");
-
-  if (language === "en") {
-    switch (item.type) {
-      case "FOLLOW":
-        return `${actor} followed you.`;
-
-      case "COMMENT":
-        return `${actor} commented on your chapter.`;
-
-      case "COMMENT_REPLY":
-        return `${actor} replied to your comment.`;
-
-      case "CHAPTER_VOTE":
-        return `${actor} voted for your chapter.`;
-
-      case "STORY_PUBLISHED":
-        return storyTitle
-          ? `The story “${storyTitle}” was published.`
-          : "A new story was published.";
-
-      case "CHAPTER_PUBLISHED":
-        return chapterTitle
-          ? `The chapter “${chapterTitle}” was published.`
-          : storyTitle
-            ? `A new chapter of “${storyTitle}” was published.`
-            : "A new chapter was published.";
-
-      case "MODERATION":
-        return "A moderation event was recorded for your account or content.";
-
-      case "SECURITY":
-        return "A security event was recorded for your account.";
-
-      default:
-        return copy.newNotification;
-    }
-  }
-
-  switch (item.type) {
-    case "FOLLOW":
-      return `${actor} شما را دنبال کرد.`;
-
-    case "COMMENT":
-      return `${actor} برای فصل شما نظر نوشت.`;
-
-    case "COMMENT_REPLY":
-      return `${actor} به نظر شما پاسخ داد.`;
-
-    case "CHAPTER_VOTE":
-      return `${actor} به فصل شما رأی داد.`;
-
-    case "STORY_PUBLISHED":
-      return storyTitle
-        ? `داستان «${storyTitle}» منتشر شد.`
-        : "داستان تازه‌ای منتشر شد.";
-
-    case "CHAPTER_PUBLISHED":
-      return chapterTitle
-        ? `فصل «${chapterTitle}» منتشر شد.`
-        : storyTitle
-          ? `فصل تازه‌ای از «${storyTitle}» منتشر شد.`
-          : "فصل تازه‌ای منتشر شد.";
-
-    case "MODERATION":
-      return "یک رویداد مدیریتی برای حساب یا محتوای شما ثبت شد.";
-
-    case "SECURITY":
-      return "یک رویداد امنیتی برای حساب شما ثبت شد.";
-
-    default:
-      return copy.newNotification;
-  }
-}
-
-function notificationTarget(item: HeaderNotification): string {
-  const storySlug = stringData(item, "storySlug");
-  const chapterId = stringData(item, "chapterId");
-
-  if (storySlug && chapterId) {
-    return `/stories/${encodeURIComponent(
-      storySlug,
-    )}/chapters/${encodeURIComponent(chapterId)}`;
-  }
-
-  if (item.type === "SECURITY") {
-    return "/settings";
-  }
-
-  if (
-    item.actor &&
-    (item.type === "FOLLOW" ||
-      item.type === "STORY_PUBLISHED" ||
-      item.type === "CHAPTER_PUBLISHED")
-  ) {
-    return `/users/${encodeURIComponent(item.actor.username)}`;
-  }
-
-  return "/notifications";
-}
-
-function initials(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
-
-  if (parts.length === 0) {
-    return "?";
-  }
-
-  return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
-}
-
-function formatDate(value: string, locale: string): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 export default function NotificationMenu() {
-  const { i18n } = useTranslation();
   const { request } = useAuth();
-
-  const language: InterfaceLanguage = i18n.resolvedLanguage
-    ?.toLowerCase()
-    .startsWith("en")
-    ? "en"
-    : "fa";
-
-  const copy = COPY[language];
-  const locale = language === "fa" ? "fa-IR" : "en-US";
-  const direction = language === "fa" ? "rtl" : "ltr";
-
+  const { t } = useTranslation();
+  const { language, direction, locale } = useInterfaceLocale();
+  const copy = {
+    title: t("notifications.menu.title"),
+    open: t("notifications.menu.open"),
+    close: t("notifications.menu.close"),
+    unreadCount: (count: number) =>
+      t("notifications.common.unreadCount", { count }),
+    markAllRead: t("notifications.common.markAllRead"),
+    markingAllRead: t("notifications.common.markingAllRead"),
+    loading: t("notifications.common.loading"),
+    empty: t("notifications.menu.empty"),
+    loadError: t("notifications.common.loadError"),
+    updateError: t("notifications.common.updateError"),
+    retry: t("notifications.common.retry"),
+    viewAll: t("notifications.menu.viewAll"),
+  };
   const rootRef = useRef<HTMLDivElement>(null);
-  const requestSequenceRef = useRef(0);
   const panelId = useId();
-
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<HeaderNotification[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [markingAllRead, setMarkingAllRead] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const unreadCount = useMemo(
-    () => items.filter((item) => item.readAt === null).length,
-    [items],
-  );
+  const {
+    items,
+    loadingInitial,
+    refreshing,
+    markingAllRead,
+    error,
+    unreadCount,
+    fetchFirstPage,
+    markRead,
+    markAllRead,
+  } = useNotifications({
+    request,
+    pageSize: HEADER_NOTIFICATION_LIMIT,
+  });
 
   const visibleItems = useMemo(
     () => items.slice(0, VISIBLE_NOTIFICATION_LIMIT),
     [items],
   );
-
-  const loadNotifications = useCallback(async (): Promise<void> => {
-    if (typeof request !== "function") {
-      return;
-    }
-
-    const requestSequence = requestSequenceRef.current + 1;
-    requestSequenceRef.current = requestSequence;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await request<NotificationsResponse>(
-        `/api/v1/notifications?limit=${HEADER_NOTIFICATION_LIMIT}`,
-      );
-
-      if (requestSequence === requestSequenceRef.current) {
-        setItems(response.data.items);
-      }
-    } catch {
-      if (requestSequence === requestSequenceRef.current) {
-        setError(copy.loadError);
-      }
-    } finally {
-      if (requestSequence === requestSequenceRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [copy.loadError, request]);
-
-  useEffect(() => {
-    const initialLoadTimer = window.setTimeout(() => {
-      void loadNotifications();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(initialLoadTimer);
-      requestSequenceRef.current += 1;
-    };
-  }, [loadNotifications]);
+  const loading = loadingInitial || refreshing;
 
   useEffect(() => {
     if (!open) {
@@ -337,62 +101,7 @@ export default function NotificationMenu() {
     }
 
     setOpen(true);
-    void loadNotifications();
-  };
-
-  const markRead = async (notificationId: string): Promise<void> => {
-    const notification = items.find((item) => item.id === notificationId);
-
-    if (!notification || notification.readAt) {
-      return;
-    }
-
-    try {
-      await request(`/api/v1/notifications/${notificationId}/read`, {
-        method: "POST",
-      });
-
-      setItems((current) =>
-        current.map((item) =>
-          item.id === notificationId
-            ? {
-                ...item,
-                readAt: new Date().toISOString(),
-              }
-            : item,
-        ),
-      );
-    } catch {
-      setError(copy.updateError);
-    }
-  };
-
-  const markAllRead = async (): Promise<void> => {
-    if (unreadCount === 0 || markingAllRead) {
-      return;
-    }
-
-    setMarkingAllRead(true);
-    setError(null);
-
-    try {
-      await request("/api/v1/notifications/read-all", {
-        method: "POST",
-      });
-
-      const readAt = new Date().toISOString();
-
-      setItems((current) =>
-        current.map((item) => ({
-          ...item,
-          readAt: item.readAt ?? readAt,
-        })),
-      );
-    } catch {
-      setError(copy.updateError);
-    } finally {
-      setMarkingAllRead(false);
-    }
+    void fetchFirstPage(true);
   };
 
   const badgeText = unreadCount > 9 ? "9+" : String(unreadCount);
@@ -421,15 +130,14 @@ export default function NotificationMenu() {
         onClick={toggleMenu}
       >
         <Bell aria-hidden="true" />
-
-        {unreadCount > 0 && (
+        {unreadCount > 0 ? (
           <span className="notification-menu__badge" aria-hidden="true">
             {badgeText}
           </span>
-        )}
+        ) : null}
       </button>
 
-      {open && (
+      {open ? (
         <section
           id={panelId}
           className="notification-menu__panel"
@@ -441,8 +149,7 @@ export default function NotificationMenu() {
           <header className="notification-menu__header">
             <div>
               <h2>{copy.title}</h2>
-
-              {unreadCount > 0 && <span>{copy.unreadCount(unreadCount)}</span>}
+              {unreadCount > 0 ? <span>{copy.unreadCount(unreadCount)}</span> : null}
             </div>
 
             <button
@@ -459,22 +166,18 @@ export default function NotificationMenu() {
               ) : (
                 <CheckCheck aria-hidden="true" />
               )}
-
-              <span>
-                {markingAllRead ? copy.markingAllRead : copy.markAllRead}
-              </span>
+              <span>{markingAllRead ? copy.markingAllRead : copy.markAllRead}</span>
             </button>
           </header>
 
-          {error && (
+          {error ? (
             <div className="notification-menu__error" role="alert">
-              <span>{error}</span>
-
-              <button type="button" onClick={() => void loadNotifications()}>
+              <span>{error === "load" ? copy.loadError : copy.updateError}</span>
+              <button type="button" onClick={() => void fetchFirstPage(true)}>
                 {copy.retry}
               </button>
             </div>
-          )}
+          ) : null}
 
           {loading && items.length === 0 ? (
             <div className="notification-menu__state" role="status">
@@ -482,7 +185,6 @@ export default function NotificationMenu() {
                 className="notification-menu__spinner"
                 aria-hidden="true"
               />
-
               <span>{copy.loading}</span>
             </div>
           ) : visibleItems.length === 0 ? (
@@ -493,7 +195,7 @@ export default function NotificationMenu() {
           ) : (
             <ul className="notification-menu__list">
               {visibleItems.map((item) => {
-                const date = formatDate(item.createdAt, locale);
+                const date = formatNotificationDate(item.createdAt, locale);
 
                 return (
                   <li key={item.id}>
@@ -501,7 +203,7 @@ export default function NotificationMenu() {
                       className={`notification-menu__row${
                         item.readAt ? "" : " notification-menu__row--unread"
                       }`}
-                      to={notificationTarget(item)}
+                      to={getNotificationTarget(item)}
                       onClick={() => {
                         setOpen(false);
                         void markRead(item.id);
@@ -514,34 +216,29 @@ export default function NotificationMenu() {
                         {item.actor?.avatarUrl ? (
                           <img src={item.actor.avatarUrl} alt="" />
                         ) : item.actor ? (
-                          initials(item.actor.displayName)
+                          getInitials(item.actor.displayName)
                         ) : (
                           <Bell />
                         )}
                       </span>
 
                       <span className="notification-menu__content">
-                        <strong>{notificationLabel(item, language)}</strong>
-
+                        <strong>{getNotificationLabel(item, t)}</strong>
                         <span className="notification-menu__meta">
-                          {item.actor && <span>@{item.actor.username}</span>}
-
-                          {item.actor && date && (
-                            <span aria-hidden="true">•</span>
-                          )}
-
-                          {date && (
+                          {item.actor ? <span>@{item.actor.username}</span> : null}
+                          {item.actor && date ? <span aria-hidden="true">•</span> : null}
+                          {date ? (
                             <time dateTime={item.createdAt}>{date}</time>
-                          )}
+                          ) : null}
                         </span>
                       </span>
 
-                      {!item.readAt && (
+                      {!item.readAt ? (
                         <span
                           className="notification-menu__unread-dot"
                           aria-label={copy.unreadCount(1)}
                         />
-                      )}
+                      ) : null}
                     </Link>
                   </li>
                 );
@@ -555,7 +252,7 @@ export default function NotificationMenu() {
             </Link>
           </footer>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

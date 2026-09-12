@@ -121,6 +121,14 @@
   gap: 0.55rem;
 }
 
+.profile-settings-placeholder {
+  width: 7.5rem;
+  min-height: 2.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-hover);
+}
+
 .profile-action {
   min-height: 2.55rem;
   display: inline-flex;

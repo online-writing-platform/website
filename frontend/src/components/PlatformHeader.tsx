@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { lazy, Suspense, type FormEvent, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +30,8 @@ import {
 } from "./ui/navigation-menu";
 
 import "./PlatformHeader.css";
-import NotificationMenu from "./NotificationMenu";
+
+const NotificationMenu = lazy(() => import("./NotificationMenu"));
 
 function PlatformHeader() {
   const { t } = useTranslation();
@@ -118,7 +119,16 @@ function PlatformHeader() {
 
           {status === "authenticated" && user ? (
             <>
-              <NotificationMenu />
+              <Suspense
+                fallback={
+                  <span
+                    className="platform-notification-placeholder"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <NotificationMenu />
+              </Suspense>
 
               <NavigationMenu
                 className="platform-profile"

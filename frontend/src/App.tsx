@@ -1,4 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BrowserRouter,
   Navigate,
@@ -9,11 +10,13 @@ import {
 
 import "./App.css";
 
+import AppErrorBoundary from "./components/AppErrorBoundary";
 import Footer from "./components/Footer";
 import PlatformHeader from "./components/PlatformHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 import StartWritingProvider from "./context/StartWritingProvider";
+import useInterfaceLocale from "./hooks/useInterfaceLocale";
 
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
@@ -51,21 +54,33 @@ function LegacySearchRedirect() {
   return <Navigate replace to={`/browse${location.search}`} />;
 }
 
+function RouteLoader() {
+  const { t } = useTranslation();
+  const { direction, language } = useInterfaceLocale();
+
+  return (
+    <main
+      className="page-shell"
+      dir={direction}
+      lang={language}
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <p>{t("errors.boundary.loading")}</p>
+    </main>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <StartWritingProvider>
-        <div className="app-shell">
-          <PlatformHeader />
+      <AppErrorBoundary>
+        <StartWritingProvider>
+          <div className="app-shell">
+            <PlatformHeader />
 
-          <div className="app-main">
-            <Suspense
-              fallback={
-                <main className="page-shell">
-                  <p>در حال بارگذاری…</p>
-                </main>
-              }
-            >
+            <div className="app-main">
+              <Suspense fallback={<RouteLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
 
@@ -219,12 +234,13 @@ function App() {
 
                 <Route path="*" element={<ErrorPage />} />
               </Routes>
-            </Suspense>
-          </div>
+              </Suspense>
+            </div>
 
-          <Footer />
-        </div>
-      </StartWritingProvider>
+            <Footer />
+          </div>
+        </StartWritingProvider>
+      </AppErrorBoundary>
     </BrowserRouter>
   );
 }

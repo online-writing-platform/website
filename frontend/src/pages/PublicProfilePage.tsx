@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Ban,
   BookOpen,
@@ -15,7 +15,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
-import ProfileSettings from "../components/ProfileSettings";
 import ReportForm from "../components/ReportForm";
 import StoryCard from "../components/StoryCard";
 import MonoActivityHeatmap, {
@@ -32,6 +31,8 @@ import {
 import type { Story } from "../types/story";
 
 import "./Profile.css";
+
+const ProfileSettings = lazy(() => import("../components/ProfileSettings"));
 
 interface Pagination {
   hasMore: boolean;
@@ -642,12 +643,21 @@ export default function PublicProfilePage() {
 
           <div className="profile-actions" aria-busy={actionIsPending}>
             {isSelf ? (
-              <ProfileSettings
-                activeSection={activeSettingsSection}
-                onSelect={selectSettingsSection}
-                onClose={closeSettings}
-                onProfileUpdated={load}
-              />
+              <Suspense
+                fallback={
+                  <span
+                    className="profile-settings-placeholder"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <ProfileSettings
+                  activeSection={activeSettingsSection}
+                  onSelect={selectSettingsSection}
+                  onClose={closeSettings}
+                  onProfileUpdated={load}
+                />
+              </Suspense>
             ) : status === "authenticated" && relationship ? (
               <>
                 <button

@@ -50,15 +50,15 @@ function addAccessToken(
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-
   const [status, setStatus] = useState<AuthStatus>("loading");
+
+  const accessTokenRef = useRef<string | null>(null);
 
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
 
   const clearAuthentication = useCallback((): void => {
     setUser(null);
-    setAccessToken(null);
+    accessTokenRef.current = null;
     setStatus("anonymous");
   }, []);
 
@@ -67,7 +67,7 @@ function AuthProvider({ children }: AuthProviderProps) {
       response.data;
 
     setUser(authenticatedUser);
-    setAccessToken(nextAccessToken);
+    accessTokenRef.current = nextAccessToken;
     setStatus("authenticated");
 
     return nextAccessToken;
@@ -267,7 +267,7 @@ function AuthProvider({ children }: AuthProviderProps) {
 
   const request = useCallback(
     async <T,>(path: string, options: RequestInit = {}): Promise<T> => {
-      let currentAccessToken = accessToken;
+      let currentAccessToken = accessTokenRef.current;
 
       if (!currentAccessToken) {
         currentAccessToken = await refreshSession();
@@ -287,9 +287,14 @@ function AuthProvider({ children }: AuthProviderProps) {
           throw error;
         }
 
-        setAccessToken(null);
-
-        const refreshedAccessToken = await refreshSession();
+        const latestAccessToken = accessTokenRef.current;
+        const refreshedAccessToken =
+          latestAccessToken && latestAccessToken !== currentAccessToken
+            ? latestAccessToken
+            : await (() => {
+                accessTokenRef.current = null;
+                return refreshSession();
+              })();
 
         if (!refreshedAccessToken) {
           throw error;
@@ -301,7 +306,7 @@ function AuthProvider({ children }: AuthProviderProps) {
         );
       }
     },
-    [accessToken, refreshSession],
+    [refreshSession],
   );
 
   const updateProfile = useCallback(

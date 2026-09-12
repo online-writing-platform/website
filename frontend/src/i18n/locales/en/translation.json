@@ -97,7 +97,15 @@
     "INVALID_IMAGE": "The selected file is not a valid image.",
     "IMAGE_LIMIT_EXCEEDED": "Use a JPEG or PNG image between 200 and 8,000 pixels and smaller than 5 MB.",
     "UPLOAD_RATE_LIMIT_EXCEEDED": "Too many images were uploaded. Please try again later.",
-    "UNEXPECTED_ERROR": "An unexpected error occurred."
+    "UNEXPECTED_ERROR": "An unexpected error occurred.",
+    "boundary": {
+      "eyebrow": "Something went wrong",
+      "title": "This page encountered an error",
+      "description": "Your account data is safe. Reload the page to try again, or return to the home page.",
+      "reload": "Reload page",
+      "home": "Back to home",
+      "loading": "Loading page…"
+    }
   },
   "genres": {
     "title": "Browse by Genre",
@@ -302,7 +310,8 @@
     },
     "languages": {
       "fa": "Persian",
-      "en": "English"
+      "en": "English",
+      "automatic": "Automatic detection"
     },
     "genres": {
       "none": "No genre"
@@ -346,6 +355,8 @@
       "PUBLISHED": "Published"
     },
     "editor": {
+      "back": "Back to story",
+      "autosave": "Autosave is active",
       "chapterNumber": "Chapter {{value}}",
       "ready": "Ready to edit",
       "titleLabel": "Chapter title",
@@ -376,6 +387,30 @@
       "description": "This chapter was changed elsewhere. Autosave has stopped to prevent data loss, and your local copy remains in the browser.",
       "serverVersion": "Latest server version: {{version}}",
       "loadServer": "Load server version"
+    },
+    "richText": {
+      "toolbar": "Text formatting tools",
+      "paragraph": "Paragraph",
+      "heading2": "Section heading",
+      "heading3": "Subheading",
+      "undo": "Undo",
+      "redo": "Redo",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strike": "Strikethrough",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list",
+      "quote": "Block quote",
+      "link": "Add link",
+      "unlink": "Remove link",
+      "clear": "Clear formatting",
+      "alignLeft": "Align left",
+      "alignCenter": "Align center",
+      "alignRight": "Align right",
+      "alignJustify": "Justify",
+      "linkPrompt": "Enter the link URL:",
+      "invalidLink": "The link URL is not valid."
     }
   },
   "browse": {
@@ -410,6 +445,63 @@
       "votes": "Votes",
       "chapters": "Chapters",
       "chapterLabel": "chapters"
+    }
+  },
+  "notifications": {
+    "common": {
+      "markAllRead": "Mark all as read",
+      "markingAllRead": "Marking...",
+      "loading": "Loading notifications...",
+      "loadError": "Notifications could not be loaded.",
+      "updateError": "The notification status could not be updated.",
+      "retry": "Try again",
+      "unreadCount_one": "{{count}} unread notification",
+      "unreadCount_other": "{{count}} unread notifications"
+    },
+    "menu": {
+      "title": "Notifications",
+      "open": "Open notifications",
+      "close": "Close notifications",
+      "empty": "You have no new notifications.",
+      "viewAll": "View all notifications"
+    },
+    "page": {
+      "eyebrow": "Account",
+      "title": "All notifications",
+      "description": "Updates about stories, chapters, and account interactions appear here.",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "loaded": "Loaded",
+      "unread": "Unread",
+      "read": "Read",
+      "filtersLabel": "Notification filters",
+      "filterAll": "All",
+      "filterUnread": "Unread",
+      "filterRead": "Read",
+      "newBadge": "New",
+      "readStatus": "Read",
+      "markRead": "Mark as read",
+      "markingRead": "Marking...",
+      "emptyAll": "You do not have any notifications yet.",
+      "emptyUnread": "You have read all your notifications.",
+      "emptyRead": "You do not have any read notifications yet.",
+      "loadMore": "Load more notifications",
+      "loadingMore": "Loading..."
+    },
+    "items": {
+      "system": "System",
+      "fallback": "New notification",
+      "follow": "{{actor}} followed you.",
+      "comment": "{{actor}} commented on your chapter.",
+      "commentReply": "{{actor}} replied to your comment.",
+      "chapterVote": "{{actor}} voted for your chapter.",
+      "storyPublishedNamed": "The story “{{storyTitle}}” was published.",
+      "storyPublished": "A new story was published.",
+      "chapterPublishedNamed": "The chapter “{{chapterTitle}}” was published.",
+      "storyChapterPublished": "A new chapter of “{{storyTitle}}” was published.",
+      "chapterPublished": "A new chapter was published.",
+      "moderation": "A moderation event was recorded for your account or content.",
+      "security": "A security event was recorded for your account."
     }
   },
   "PlatformHeader": {

@@ -78,57 +78,6 @@ const EMPTY_TOOLBAR_STATE = {
   isUnderline: false,
 } as const;
 
-const COPY = {
-  fa: {
-    toolbar: "ابزارهای قالب‌بندی متن",
-    paragraph: "متن معمولی",
-    heading2: "عنوان بخش",
-    heading3: "زیرعنوان",
-    undo: "واگرد",
-    redo: "انجام دوباره",
-    bold: "پررنگ",
-    italic: "مورب",
-    underline: "زیرخط",
-    strike: "خط‌خورده",
-    bulletList: "فهرست نشانه‌دار",
-    orderedList: "فهرست شماره‌دار",
-    quote: "نقل‌قول",
-    link: "افزودن پیوند",
-    unlink: "حذف پیوند",
-    clear: "پاک‌کردن قالب‌بندی",
-    alignLeft: "تراز چپ",
-    alignCenter: "تراز وسط",
-    alignRight: "تراز راست",
-    alignJustify: "تراز دوطرفه",
-    linkPrompt: "نشانی پیوند را وارد کنید:",
-    invalidLink: "نشانی پیوند معتبر نیست.",
-  },
-  en: {
-    toolbar: "Text formatting tools",
-    paragraph: "Paragraph",
-    heading2: "Section heading",
-    heading3: "Subheading",
-    undo: "Undo",
-    redo: "Redo",
-    bold: "Bold",
-    italic: "Italic",
-    underline: "Underline",
-    strike: "Strikethrough",
-    bulletList: "Bullet list",
-    orderedList: "Numbered list",
-    quote: "Block quote",
-    link: "Add link",
-    unlink: "Remove link",
-    clear: "Clear formatting",
-    alignLeft: "Align left",
-    alignCenter: "Align center",
-    alignRight: "Align right",
-    alignJustify: "Justify",
-    linkPrompt: "Enter the link URL:",
-    invalidLink: "The link URL is not valid.",
-  },
-} as const;
-
 function ToolbarButton({
   active,
   children,
@@ -195,8 +144,31 @@ export default function RichTextEditor({
   placeholder = "",
   value,
 }: RichTextEditorProps) {
-  const { i18n } = useTranslation();
-  const copy = i18n.resolvedLanguage?.startsWith("en") ? COPY.en : COPY.fa;
+  const { i18n, t } = useTranslation();
+  const copy = {
+    alignCenter: t("writer.richText.alignCenter"),
+    alignJustify: t("writer.richText.alignJustify"),
+    alignLeft: t("writer.richText.alignLeft"),
+    alignRight: t("writer.richText.alignRight"),
+    bold: t("writer.richText.bold"),
+    bulletList: t("writer.richText.bulletList"),
+    clear: t("writer.richText.clear"),
+    heading2: t("writer.richText.heading2"),
+    heading3: t("writer.richText.heading3"),
+    invalidLink: t("writer.richText.invalidLink"),
+    italic: t("writer.richText.italic"),
+    link: t("writer.richText.link"),
+    linkPrompt: t("writer.richText.linkPrompt"),
+    orderedList: t("writer.richText.orderedList"),
+    paragraph: t("writer.richText.paragraph"),
+    quote: t("writer.richText.quote"),
+    redo: t("writer.richText.redo"),
+    strike: t("writer.richText.strike"),
+    toolbar: t("writer.richText.toolbar"),
+    underline: t("writer.richText.underline"),
+    undo: t("writer.richText.undo"),
+    unlink: t("writer.richText.unlink"),
+  };
 
   const editor = useEditor({
     content: getChapterEditorHtml(value),
