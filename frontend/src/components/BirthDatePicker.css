@@ -63,6 +63,35 @@
   inset-inline-start: 0;
 }
 
+.jalali-calendar-minimal {
+  --jdp-width: min(20rem, calc(100vw - 2.5rem));
+  --jdp-bg: var(--surface);
+  --jdp-fg: var(--text);
+  --jdp-muted-fg: var(--text-muted);
+  --jdp-disabled-fg: var(--text-muted);
+  --jdp-border: var(--border);
+  --jdp-hover-bg: var(--surface-hover);
+  --jdp-selected-bg: var(--primary);
+  --jdp-selected-fg: var(--primary-foreground);
+  --jdp-range-bg: var(--primary-soft);
+  --jdp-off-fg: var(--text-muted);
+  --jdp-outside-off-fg: var(--text-muted);
+  --jdp-today-ring: var(--accent);
+  --jdp-today-bg: transparent;
+  --jdp-primary: var(--primary);
+  --jdp-primary-fg: var(--primary-foreground);
+  --jdp-focus-ring: var(--ring);
+  --jdp-radius: calc(var(--radius) * 1.4);
+  --jdp-control-radius: var(--radius);
+  --jdp-cell-radius: calc(var(--radius) * 0.8);
+  --jdp-shadow: var(--shadow);
+  --jdp-grid-gap: 0.12rem;
+  --jdp-day-font-size: 0.875rem;
+  --jdp-weekday-height: 2rem;
+  --jdp-weekday-font-size: 0.72rem;
+  --jdp-font: "Estedad", system-ui, sans-serif;
+}
+
 .gregorian-calendar {
   width: min(20rem, calc(100vw - 2.5rem));
   padding: 0.75rem;

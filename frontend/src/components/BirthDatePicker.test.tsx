@@ -56,4 +56,34 @@ describe("BirthDatePicker interface calendar", () => {
       screen.queryByRole("group", { name: "Gregorian calendar" }),
     ).toBeNull();
   });
+
+  it("keeps the Persian calendar Jalali while applying the minimal theme", async () => {
+    await i18n.changeLanguage("fa");
+
+    const { container } = render(
+      <div className="form-group">
+        <label htmlFor="birthDate">تاریخ تولد</label>
+        <BirthDatePicker
+          value="2000-01-15"
+          onChange={() => undefined}
+          required
+        />
+      </div>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "انتخاب تاریخ تولد" }),
+    );
+
+    const jalaliCalendar = container.querySelector(
+      ".jalali-calendar-minimal",
+    );
+
+    expect(jalaliCalendar).toBeTruthy();
+    expect(jalaliCalendar?.getAttribute("dir")).toBe("rtl");
+    expect(
+      container.querySelector(".birth-date-calendar--fa"),
+    ).toBeTruthy();
+    expect(screen.queryByText("امروز")).toBeNull();
+  });
 });

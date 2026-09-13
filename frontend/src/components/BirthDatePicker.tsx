@@ -127,7 +127,7 @@ function BirthDatePicker({
 
       {isOpen ? (
         <div
-          className="birth-date-calendar"
+          className={"birth-date-calendar birth-date-calendar--" + language}
           onClick={(event) => event.stopPropagation()}
         >
           {language === "en" ? (
@@ -140,10 +140,13 @@ function BirthDatePicker({
             />
           ) : (
             <JalaliDatePicker
+              className="jalali-calendar-minimal"
               value={selectedJalaliDate}
               onChange={handleJalaliDateChange}
               selectionMode="single"
               mode="instant"
+              showFooter={false}
+              tintWeekends={false}
             />
           )}
         </div>
