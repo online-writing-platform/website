@@ -1,14 +1,23 @@
 import { useState, type FormEvent } from "react";
+import {
+  AtSign,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  LockKeyhole,
+  LogIn,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { LuEyeClosed, LuEye } from "react-icons/lu";
 
 import SocialAuthButtons from "../components/SocialAuthButtons";
+import AuthPageShell from "../features/auth/components/AuthPageShell";
 import useAuth from "../hooks/useAuth";
 import { ApiError } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
 
-import "./Login.css";
 import "../styles/Form.css";
 
 interface LoginLocationState {
@@ -69,21 +78,42 @@ function Login() {
   }
 
   return (
-    <main className="login-page">
-      <section className="form-card">
-        <h1 className="form-title">{t("auth.login.title")}</h1>
+    <AuthPageShell
+      eyebrow={t("auth.login.eyebrow")}
+      footer={
+        <>
+          <p className="auth-security-note">
+            <ShieldCheck aria-hidden="true" size={15} />
+            <span>{t("auth.login.securityNote")}</span>
+          </p>
 
-        <p className="form-subtitle">{t("auth.login.subtitle")}</p>
+          <p className="auth-account-switch">
+            {t("auth.login.noAccount")}
+            <Link to="/register">{t("auth.login.register")}</Link>
+          </p>
+        </>
+      }
+      icon={<LogIn size={29} />}
+      subtitle={t("auth.login.subtitle")}
+      title={t("auth.login.title")}
+      titleId="login-title"
+    >
+      {errorMessage ? (
+        <p className="form-message form-message-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
 
-        <form className="form" onSubmit={(event) => void handleSubmit(event)}>
-          {errorMessage && (
-            <p className="form-message form-message-error" role="alert">
-              {errorMessage}
-            </p>
-          )}
+      <form className="form" onSubmit={(event) => void handleSubmit(event)}>
+        <div className="form-group">
+          <label htmlFor="identifier">{t("auth.login.identifier")}</label>
 
-          <div className="form-group">
-            <label htmlFor="identifier">{t("auth.login.identifier")}</label>
+          <div className="auth-field-shell">
+            <AtSign
+              className="auth-field-shell__icon"
+              aria-hidden="true"
+              size={18}
+            />
 
             <input
               id="identifier"
@@ -91,62 +121,106 @@ function Login() {
               value={identifier}
               maxLength={320}
               autoComplete="username"
+              placeholder={t("auth.login.identifierPlaceholder")}
+              dir="auto"
               required
-              onChange={(event) => setIdentifier(event.target.value)}
+              autoFocus
+              onChange={(event) => {
+                setIdentifier(event.target.value);
+                setErrorMessage(null);
+              }}
             />
           </div>
+        </div>
 
-          <div className="form-group">
+        <div className="form-group">
+          <div className="auth-label-row">
             <label htmlFor="password">{t("auth.login.password")}</label>
 
-            <div className="password-input-wrapper">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                maxLength={128}
-                autoComplete="current-password"
-                required
-                onChange={(event) => setPassword(event.target.value)}
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={
-                  showPassword
-                    ? t("auth.common.hidePassword")
-                    : t("auth.common.showPassword")
-                }
-              >
-                {showPassword ? <LuEye /> : <LuEyeClosed />}
-              </button>
-            </div>
+            <Link className="auth-label-link" to="/forgot-password">
+              {t("auth.login.forgotPassword")}
+            </Link>
           </div>
 
-          <button className="button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
-          </button>
-        </form>
+          <div className="auth-field-shell auth-field-shell--password">
+            <LockKeyhole
+              className="auth-field-shell__icon"
+              aria-hidden="true"
+              size={18}
+            />
 
-        <div className="external-auth-divider">{t("auth.common.or")}</div>
-        <SocialAuthButtons />
-        <p className="form-footer">
-          <Link to="/phone-auth">{t("auth.login.phoneAuth")}</Link>
-        </p>
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              maxLength={128}
+              autoComplete="current-password"
+              placeholder={t("auth.login.passwordPlaceholder")}
+              dir="ltr"
+              required
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrorMessage(null);
+              }}
+            />
 
-        <p className="form-footer">
-          <Link to="/forgot-password">{t("auth.login.forgotPassword")}</Link>
-        </p>
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={
+                showPassword
+                  ? t("auth.common.hidePassword")
+                  : t("auth.common.showPassword")
+              }
+              aria-pressed={showPassword}
+            >
+              {showPassword ? (
+                <EyeOff aria-hidden="true" size={18} />
+              ) : (
+                <Eye aria-hidden="true" size={18} />
+              )}
+            </button>
+          </div>
+        </div>
 
-        <p className="form-footer">
-          {t("auth.login.noAccount")}{" "}
-          <Link to="/register">{t("auth.login.register")}</Link>
-        </p>
-      </section>
-    </main>
+        <button
+          className="button button--primary auth-submit"
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <LoaderCircle className="auth-spin" aria-hidden="true" size={18} />
+          ) : (
+            <LogIn aria-hidden="true" size={18} />
+          )}
+
+          <span>
+            {isSubmitting
+              ? t("auth.login.submitting")
+              : t("auth.login.submit")}
+          </span>
+        </button>
+      </form>
+
+      <div className="auth-divider">
+        <span>{t("auth.common.or")}</span>
+      </div>
+
+      <SocialAuthButtons />
+
+      <Link className="auth-phone-link" to="/phone-auth">
+        <span className="auth-phone-link__icon" aria-hidden="true">
+          <Smartphone size={19} />
+        </span>
+
+        <span className="auth-phone-link__copy">
+          <strong>{t("auth.login.phoneAuth")}</strong>
+          <small>{t("auth.login.phoneAuthHelp")}</small>
+        </span>
+      </Link>
+    </AuthPageShell>
   );
 }
 

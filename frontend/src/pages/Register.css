@@ -1,17 +1,11 @@
-.register-page {
-  min-height: 85vh;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 40px 20px;
+.auth-register-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.15rem;
 }
 
-.form-help {
-  font-size: 12px;
-  padding-right: 6px;
-  color: var(--text-secondary);
+.auth-register-field--full {
+  grid-column: 1 / -1;
 }
 
 .birth-date-picker {
@@ -24,36 +18,47 @@
   width: 100%;
 }
 
-.birth-date-input-wrapper input {
+.auth-card .birth-date-input-wrapper input {
   width: 100%;
-  box-sizing: border-box;
+  direction: ltr;
+  text-align: start;
+}
+
+.auth-page[dir="ltr"] .auth-card .birth-date-input-wrapper input {
+  padding-right: 3rem;
+}
+
+.auth-page[dir="rtl"] .auth-card .birth-date-input-wrapper input {
   padding-left: 3rem;
 }
 
 .birth-date-calendar-button {
   position: absolute;
-  left: 0.75rem;
   top: 50%;
-  transform: translateY(-50%);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
   width: 2rem;
   height: 2rem;
-
   padding: 0;
-  border: none;
+  place-items: center;
+  border: 0;
+  border-radius: 0.35rem;
   background: transparent;
-
   color: var(--text-secondary);
-
-  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+  inset-inline-end: 0.65rem;
 }
 
 .birth-date-calendar-button:hover {
+  background: var(--surface-hover);
   color: var(--primary);
+}
+
+.birth-date-calendar-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent);
+  outline-offset: 1px;
 }
 
 .birth-date-calendar-button svg {
@@ -63,45 +68,46 @@
 
 .birth-date-calendar {
   position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
   z-index: 1000;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-start: 0;
 }
 
-.password-input-wrapper {
-  position: relative;
+.auth-register-terms {
+  align-items: flex-start;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-hover);
+  line-height: 1.7;
 }
 
-.password-input-wrapper input {
-  width: 100%;
-  padding-left: 3rem;
+.auth-register-terms input {
+  flex: 0 0 auto;
+  margin-block-start: 0.2rem;
 }
 
-.password-toggle {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0;
-  border: none;
-  background: transparent;
-
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1.2rem;
-}
-
-.password-toggle:hover {
+.auth-register-terms a {
   color: var(--primary);
+  font-weight: 800;
 }
 
-.password-toggle:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: 0.25rem;
+.auth-register-terms a:hover {
+  color: var(--primary-hover);
+}
+
+@media (max-width: 42rem) {
+  .auth-register-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-register-field--full {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .birth-date-calendar-button {
+    transition: none;
+  }
 }

@@ -16,40 +16,57 @@
       "or": "or"
     },
     "login": {
+      "eyebrow": "Welcome back",
       "title": "Log in",
-      "subtitle": "Log in to your account to continue.",
+      "subtitle": "Continue your reading, writing, and conversations from where you left off.",
       "identifier": "Email or username",
+      "identifierPlaceholder": "name@example.com or username",
       "password": "Password",
+      "passwordPlaceholder": "Enter your password",
       "submitting": "Logging in…",
       "submit": "Log in",
       "forgotPassword": "Forgot your password?",
       "noAccount": "Don't have an account?",
       "register": "Register",
-      "phoneAuth": "Continue with mobile number"
+      "phoneAuth": "Continue with mobile number",
+      "phoneAuthHelp": "Receive a one-time code; no password needed.",
+      "securityNote": "Your sign-in details are transferred securely."
     },
     "register": {
+      "eyebrow": "Start your story",
       "title": "Register",
-      "subtitle": "Create your reading and writing account.",
+      "subtitle": "Create one account for publishing stories, discovering writers, and building your library.",
       "username": "Username",
+      "usernamePlaceholder": "your_username",
       "usernameHelp": "3–20 characters; English letters, numbers, underscores, and hyphens.",
       "email": "Email",
+      "emailPlaceholder": "name@example.com",
       "birthDate": "Date of birth",
       "birthDatePlaceholder": "Date of birth",
       "chooseBirthDate": "Choose date of birth",
       "birthDateHelp": "Used by the server to apply the mature-content policy.",
       "password": "Password",
+      "passwordPlaceholder": "Create a secure password",
+      "passwordHelp": "Use at least 10 characters and avoid your username.",
       "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Enter your password again",
       "acceptTerms": "I have read and accept the <termsLink>Terms of Service</termsLink>.",
       "submitting": "Creating account…",
       "submit": "Register",
       "hasAccount": "Already have an account?",
       "login": "Log in",
       "phoneAuth": "Register with a mobile number",
+      "phoneAuthHelp": "Start with a one-time verification code.",
+      "securityNote": "Your account information is transferred securely.",
       "validation": {
         "birthDateRequired": "Please choose your date of birth.",
         "passwordsMismatch": "The passwords do not match.",
         "termsRequired": "You must accept the Terms of Service to register."
       }
+    },
+    "social": {
+      "connectingApple": "Connecting…",
+      "continueApple": "Continue with Apple"
     },
     "verifyEmail": {
       "title": "Verify your email",

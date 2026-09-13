@@ -16,40 +16,57 @@
       "or": "یا"
     },
     "login": {
+      "eyebrow": "خوش برگشتید",
       "title": "ورود",
-      "subtitle": "برای ادامه وارد حساب خود شوید.",
+      "subtitle": "مطالعه، نوشتن و گفت‌وگوهایتان را از همان‌جایی که رها کردید ادامه دهید.",
       "identifier": "ایمیل یا نام کاربری",
+      "identifierPlaceholder": "name@example.com یا نام کاربری",
       "password": "رمز عبور",
+      "passwordPlaceholder": "رمز عبور خود را وارد کنید",
       "submitting": "در حال ورود…",
       "submit": "ورود",
       "forgotPassword": "رمز عبور را فراموش کرده‌اید؟",
       "noAccount": "حساب ندارید؟",
       "register": "ثبت‌نام",
-      "phoneAuth": "ادامه با شماره موبایل"
+      "phoneAuth": "ادامه با شماره موبایل",
+      "phoneAuthHelp": "بدون نیاز به رمز عبور، کد یک‌بارمصرف دریافت کنید.",
+      "securityNote": "اطلاعات ورود شما به‌صورت امن منتقل می‌شود."
     },
     "register": {
+      "eyebrow": "داستانتان را آغاز کنید",
       "title": "ثبت‌نام",
-      "subtitle": "حساب نویسندگی و مطالعه خود را بسازید.",
+      "subtitle": "یک حساب برای انتشار داستان، کشف نویسنده‌ها و ساخت کتابخانه‌تان بسازید.",
       "username": "نام کاربری",
+      "usernamePlaceholder": "your_username",
       "usernameHelp": "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، زیرخط و خط تیره.",
       "email": "ایمیل",
+      "emailPlaceholder": "name@example.com",
       "birthDate": "تاریخ تولد",
       "birthDatePlaceholder": "تاریخ تولد",
       "chooseBirthDate": "انتخاب تاریخ تولد",
       "birthDateHelp": "برای اعمال سیاست محتوای بزرگسال در سمت سرور استفاده می‌شود.",
       "password": "رمز عبور",
+      "passwordPlaceholder": "یک رمز عبور امن بسازید",
+      "passwordHelp": "حداقل ۱۰ کاراکتر وارد کنید و از نام کاربری‌تان استفاده نکنید.",
       "confirmPassword": "تکرار رمز عبور",
+      "confirmPasswordPlaceholder": "رمز عبور را دوباره وارد کنید",
       "acceptTerms": "<termsLink>قوانین سایت</termsLink> را مطالعه کرده‌ام و می‌پذیرم.",
       "submitting": "در حال ثبت‌نام…",
       "submit": "ثبت‌نام",
       "hasAccount": "حساب کاربری دارید؟",
       "login": "ورود",
       "phoneAuth": "ثبت‌نام با شماره موبایل",
+      "phoneAuthHelp": "با یک کد تأیید یک‌بارمصرف شروع کنید.",
+      "securityNote": "اطلاعات حساب شما به‌صورت امن منتقل می‌شود.",
       "validation": {
         "birthDateRequired": "لطفاً تاریخ تولد خود را انتخاب کنید.",
         "passwordsMismatch": "رمز عبور و تکرار آن یکسان نیستند.",
         "termsRequired": "برای ثبت‌نام باید قوانین سایت را بپذیرید."
       }
+    },
+    "social": {
+      "connectingApple": "در حال اتصال…",
+      "continueApple": "ادامه با اپل"
     },
     "verifyEmail": {
       "title": "تأیید ایمیل",

@@ -1,17 +1,27 @@
 import { useState, type FormEvent } from "react";
+import {
+  AtSign,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  LockKeyhole,
+  ShieldCheck,
+  Smartphone,
+  UserRound,
+  UserRoundPlus,
+} from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { LuEyeClosed, LuEye } from "react-icons/lu";
 
-import Button from "../components/Button";
-import SocialAuthButtons from "../components/SocialAuthButtons";
 import BirthDatePicker from "../components/BirthDatePicker";
+import SocialAuthButtons from "../components/SocialAuthButtons";
+import AuthPageShell from "../features/auth/components/AuthPageShell";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
 
 import "@aliasadollahi/jalali-datepicker/styles.css";
-import "./Register.css";
 import "../styles/Form.css";
+import "./Register.css";
 
 interface RegisterForm {
   username: string;
@@ -20,6 +30,11 @@ interface RegisterForm {
   password: string;
   confirmPassword: string;
   acceptTerms: boolean;
+}
+
+interface VisiblePasswords {
+  password: boolean;
+  confirmPassword: boolean;
 }
 
 const initialForm: RegisterForm = {
@@ -31,6 +46,11 @@ const initialForm: RegisterForm = {
   acceptTerms: false,
 };
 
+const initialVisiblePasswords: VisiblePasswords = {
+  password: false,
+  confirmPassword: false,
+};
+
 function Register() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,10 +59,19 @@ function Register() {
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState<VisiblePasswords>(
+    initialVisiblePasswords,
+  );
 
   if (status === "authenticated") {
     return <Navigate to="/settings" replace />;
+  }
+
+  function togglePassword(field: keyof VisiblePasswords): void {
+    setVisiblePasswords((current) => ({
+      ...current,
+      [field]: !current[field],
+    }));
   }
 
   async function handleSubmit(
@@ -79,7 +108,7 @@ function Register() {
 
       const search = new URLSearchParams({ email: result.email }).toString();
 
-      navigate(`/verify-email?${search}`, {
+      navigate("/verify-email?" + search, {
         replace: true,
         state: { deliveryStatus: result.deliveryStatus },
       });
@@ -91,49 +120,75 @@ function Register() {
   }
 
   return (
-    <main className="register-page">
-      <section className="form-card" aria-labelledby="register-title">
-        <h1 id="register-title" className="form-title">
-          {t("auth.register.title")}
-        </h1>
+    <AuthPageShell
+      eyebrow={t("auth.register.eyebrow")}
+      footer={
+        <>
+          <p className="auth-security-note">
+            <ShieldCheck aria-hidden="true" size={15} />
+            <span>{t("auth.register.securityNote")}</span>
+          </p>
 
-        <p className="form-subtitle">{t("auth.register.subtitle")}</p>
+          <p className="auth-account-switch">
+            {t("auth.register.hasAccount")}
+            <Link to="/login">{t("auth.register.login")}</Link>
+          </p>
+        </>
+      }
+      icon={<UserRoundPlus size={29} />}
+      subtitle={t("auth.register.subtitle")}
+      title={t("auth.register.title")}
+      titleId="register-title"
+      width="wide"
+    >
+      {errorMessage ? (
+        <p className="form-message form-message-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
 
-        <form
-          className="form"
-          onSubmit={(event) => {
-            void handleSubmit(event);
-          }}
-        >
-          {errorMessage && (
-            <p className="form-message form-message-error" role="alert">
-              {errorMessage}
-            </p>
-          )}
-
+      <form
+        className="form"
+        onSubmit={(event) => {
+          void handleSubmit(event);
+        }}
+      >
+        <div className="auth-register-grid">
           <div className="form-group">
             <label htmlFor="username">{t("auth.register.username")}</label>
 
-            <input
-              id="username"
-              name="username"
-              type="text"
-              value={form.username}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  username: event.target.value,
-                }));
-              }}
-              minLength={3}
-              maxLength={20}
-              pattern="[A-Za-z0-9_-]+"
-              autoComplete="username"
-              dir="ltr"
-              required
-            />
+            <div className="auth-field-shell">
+              <UserRound
+                className="auth-field-shell__icon"
+                aria-hidden="true"
+                size={18}
+              />
 
-            <small className="form-help">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={form.username}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    username: event.target.value,
+                  }));
+                  setErrorMessage(null);
+                }}
+                minLength={3}
+                maxLength={20}
+                pattern="[A-Za-z0-9_-]+"
+                autoComplete="username"
+                placeholder={t("auth.register.usernamePlaceholder")}
+                aria-describedby="username-help"
+                dir="ltr"
+                required
+                autoFocus
+              />
+            </div>
+
+            <small id="username-help" className="form-help">
               {t("auth.register.usernameHelp")}
             </small>
           </div>
@@ -141,24 +196,34 @@ function Register() {
           <div className="form-group">
             <label htmlFor="email">{t("auth.register.email")}</label>
 
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  email: event.target.value,
-                }));
-              }}
-              autoComplete="email"
-              dir="ltr"
-              required
-            />
+            <div className="auth-field-shell">
+              <AtSign
+                className="auth-field-shell__icon"
+                aria-hidden="true"
+                size={18}
+              />
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    email: event.target.value,
+                  }));
+                  setErrorMessage(null);
+                }}
+                autoComplete="email"
+                placeholder={t("auth.register.emailPlaceholder")}
+                dir="ltr"
+                required
+              />
+            </div>
           </div>
 
-          <div className="form-group">
+          <div className="form-group auth-register-field--full">
             <label htmlFor="birthDate">{t("auth.register.birthDate")}</label>
 
             <BirthDatePicker
@@ -168,6 +233,7 @@ function Register() {
                   ...current,
                   birthDate,
                 }));
+                setErrorMessage(null);
               }}
               required
             />
@@ -180,37 +246,56 @@ function Register() {
           <div className="form-group">
             <label htmlFor="password">{t("auth.register.password")}</label>
 
-            <div className="password-input-wrapper">
+            <div className="auth-field-shell auth-field-shell--password">
+              <LockKeyhole
+                className="auth-field-shell__icon"
+                aria-hidden="true"
+                size={18}
+              />
+
               <input
                 id="password"
                 name="password"
-                type={showPassword ? "text" : "password"}
+                type={visiblePasswords.password ? "text" : "password"}
                 value={form.password}
                 onChange={(event) => {
                   setForm((current) => ({
                     ...current,
                     password: event.target.value,
                   }));
+                  setErrorMessage(null);
                 }}
                 minLength={10}
                 maxLength={128}
                 autoComplete="new-password"
+                placeholder={t("auth.register.passwordPlaceholder")}
+                aria-describedby="password-help"
+                dir="ltr"
                 required
               />
 
               <button
                 type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((current) => !current)}
+                className="auth-password-toggle"
+                onClick={() => togglePassword("password")}
                 aria-label={
-                  showPassword
+                  visiblePasswords.password
                     ? t("auth.common.hidePassword")
                     : t("auth.common.showPassword")
                 }
+                aria-pressed={visiblePasswords.password}
               >
-                {showPassword ? <LuEye /> : <LuEyeClosed />}
+                {visiblePasswords.password ? (
+                  <EyeOff aria-hidden="true" size={18} />
+                ) : (
+                  <Eye aria-hidden="true" size={18} />
+                )}
               </button>
             </div>
+
+            <small id="password-help" className="form-help">
+              {t("auth.register.passwordHelp")}
+            </small>
           </div>
 
           <div className="form-group">
@@ -218,80 +303,113 @@ function Register() {
               {t("auth.register.confirmPassword")}
             </label>
 
-            <div className="password-input-wrapper">
+            <div className="auth-field-shell auth-field-shell--password">
+              <LockKeyhole
+                className="auth-field-shell__icon"
+                aria-hidden="true"
+                size={18}
+              />
+
               <input
                 id="confirmPassword"
                 name="confirmPassword"
-                type={showPassword ? "text" : "password"}
+                type={visiblePasswords.confirmPassword ? "text" : "password"}
                 value={form.confirmPassword}
                 onChange={(event) => {
                   setForm((current) => ({
                     ...current,
                     confirmPassword: event.target.value,
                   }));
+                  setErrorMessage(null);
                 }}
                 minLength={10}
                 maxLength={128}
                 autoComplete="new-password"
+                placeholder={t("auth.register.confirmPasswordPlaceholder")}
+                dir="ltr"
                 required
               />
 
               <button
                 type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((current) => !current)}
+                className="auth-password-toggle"
+                onClick={() => togglePassword("confirmPassword")}
                 aria-label={
-                  showPassword
+                  visiblePasswords.confirmPassword
                     ? t("auth.common.hidePassword")
                     : t("auth.common.showPassword")
                 }
+                aria-pressed={visiblePasswords.confirmPassword}
               >
-                {showPassword ? <LuEye /> : <LuEyeClosed />}
+                {visiblePasswords.confirmPassword ? (
+                  <EyeOff aria-hidden="true" size={18} />
+                ) : (
+                  <Eye aria-hidden="true" size={18} />
+                )}
               </button>
             </div>
           </div>
+        </div>
 
-          <label className="form-checkbox">
-            <input
-              type="checkbox"
-              checked={form.acceptTerms}
-              onChange={(event) => {
-                setForm((current) => ({
-                  ...current,
-                  acceptTerms: event.target.checked,
-                }));
+        <label className="form-checkbox auth-register-terms">
+          <input
+            type="checkbox"
+            checked={form.acceptTerms}
+            onChange={(event) => {
+              setForm((current) => ({
+                ...current,
+                acceptTerms: event.target.checked,
+              }));
+              setErrorMessage(null);
+            }}
+          />
+
+          <span>
+            <Trans
+              i18nKey="auth.register.acceptTerms"
+              components={{
+                termsLink: <Link to="/terms" />,
               }}
             />
+          </span>
+        </label>
 
-            <span>
-              <Trans
-                i18nKey="auth.register.acceptTerms"
-                components={{
-                  termsLink: <Link to="/terms" />,
-                }}
-              />
-            </span>
-          </label>
+        <button
+          className="button button--primary auth-submit"
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <LoaderCircle className="auth-spin" aria-hidden="true" size={18} />
+          ) : (
+            <UserRoundPlus aria-hidden="true" size={18} />
+          )}
 
-          <Button type="submit" disabled={isSubmitting}>
+          <span>
             {isSubmitting
               ? t("auth.register.submitting")
               : t("auth.register.submit")}
-          </Button>
-        </form>
+          </span>
+        </button>
+      </form>
 
-        <div className="external-auth-divider">{t("auth.common.or")}</div>
-        <SocialAuthButtons />
-        <p className="form-footer">
-          <Link to="/phone-auth">{t("auth.register.phoneAuth")}</Link>
-        </p>
+      <div className="auth-divider">
+        <span>{t("auth.common.or")}</span>
+      </div>
 
-        <p className="form-footer">
-          {t("auth.register.hasAccount")}{" "}
-          <Link to="/login">{t("auth.register.login")}</Link>
-        </p>
-      </section>
-    </main>
+      <SocialAuthButtons />
+
+      <Link className="auth-phone-link" to="/phone-auth">
+        <span className="auth-phone-link__icon" aria-hidden="true">
+          <Smartphone size={19} />
+        </span>
+
+        <span className="auth-phone-link__copy">
+          <strong>{t("auth.register.phoneAuth")}</strong>
+          <small>{t("auth.register.phoneAuthHelp")}</small>
+        </span>
+      </Link>
+    </AuthPageShell>
   );
 }
 

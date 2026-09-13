@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import useAuth from "../hooks/useAuth";
@@ -90,6 +91,7 @@ function goToSignup(
 }
 
 export default function SocialAuthButtons() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { loginWithGoogle, loginWithApple } = useAuth();
   const googleHost = useRef<HTMLDivElement | null>(null);
@@ -203,7 +205,9 @@ export default function SocialAuthButtons() {
           disabled={appleBusy}
           onClick={() => void handleApple()}
         >
-          {appleBusy ? "Connecting…" : "Continue with Apple"}
+          {appleBusy
+            ? t("auth.social.connectingApple")
+            : t("auth.social.continueApple")}
         </button>
       ) : null}
     </div>
