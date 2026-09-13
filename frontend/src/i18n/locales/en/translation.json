@@ -12,7 +12,8 @@
   "auth": {
     "common": {
       "showPassword": "Show password",
-      "hidePassword": "Hide password"
+      "hidePassword": "Hide password",
+      "or": "or"
     },
     "login": {
       "title": "Log in",
@@ -23,7 +24,8 @@
       "submit": "Log in",
       "forgotPassword": "Forgot your password?",
       "noAccount": "Don't have an account?",
-      "register": "Register"
+      "register": "Register",
+      "phoneAuth": "Continue with mobile number"
     },
     "register": {
       "title": "Register",
@@ -42,6 +44,7 @@
       "submit": "Register",
       "hasAccount": "Already have an account?",
       "login": "Log in",
+      "phoneAuth": "Register with a mobile number",
       "validation": {
         "birthDateRequired": "Please choose your date of birth.",
         "passwordsMismatch": "The passwords do not match.",
@@ -60,6 +63,30 @@
       "resendAccepted": "If this email is awaiting verification, a new code has been sent.",
       "initialDeliveryFailed": "The first email could not be sent. Request a new code below.",
       "backToLogin": "Back to login"
+    },
+    "phone": {
+      "stepPhone": "Step 1 of 2 · Mobile number",
+      "stepCode": "Step 2 of 2 · Verification",
+      "title": "Log in or register",
+      "subtitle": "Enter your Iranian mobile number to receive a one-time verification code.",
+      "progressLabel": "Mobile authentication progress",
+      "phoneLabel": "Mobile number",
+      "phonePlaceholder": "09123456789",
+      "phoneHelp": "Use an Iranian mobile number beginning with 09, or its +98 format.",
+      "sending": "Sending code…",
+      "sendCode": "Send verification code",
+      "verifyTitle": "Enter verification code",
+      "verifySubtitle": "We sent a six-digit verification code to this number:",
+      "codeLabel": "Six-digit code",
+      "codePlaceholder": "••••••",
+      "codeHelp": "You can enter English, Persian, or Arabic digits.",
+      "checking": "Verifying…",
+      "verify": "Verify and continue",
+      "resend": "Resend code",
+      "changeNumber": "Change number",
+      "codeResent": "A new verification code was sent.",
+      "securityNote": "The code is used only to verify your identity.",
+      "backToPassword": "Log in with email and password"
     }
   },
   "errors": {

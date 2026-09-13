@@ -280,10 +280,10 @@ function Register() {
           </Button>
         </form>
 
-        <div className="external-auth-divider">یا</div>
+        <div className="external-auth-divider">{t("auth.common.or")}</div>
         <SocialAuthButtons />
         <p className="form-footer">
-          <Link to="/phone-auth">ثبت‌نام با شماره موبایل</Link>
+          <Link to="/phone-auth">{t("auth.register.phoneAuth")}</Link>
         </p>
 
         <p className="form-footer">
