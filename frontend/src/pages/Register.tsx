@@ -19,7 +19,6 @@ import AuthPageShell from "../features/auth/components/AuthPageShell";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
 
-import "@aliasadollahi/jalali-datepicker/styles.css";
 import "../styles/Form.css";
 import "./Register.css";
 

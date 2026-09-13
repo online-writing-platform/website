@@ -5,7 +5,6 @@ import BirthDatePicker from "../components/BirthDatePicker";
 import useAuth from "../hooks/useAuth";
 import { getErrorMessage } from "../lib/error-message";
 import type { SignupRequiredResult } from "../types/auth";
-import "@aliasadollahi/jalali-datepicker/styles.css";
 import "../styles/Form.css";
 
 export default function CompleteSignupPage() {

@@ -58,6 +58,13 @@
       "phoneAuth": "Register with a mobile number",
       "phoneAuthHelp": "Start with a one-time verification code.",
       "securityNote": "Your account information is transferred securely.",
+      "calendar": {
+        "label": "Gregorian calendar",
+        "previousMonth": "Previous month",
+        "nextMonth": "Next month",
+        "month": "Month",
+        "year": "Year"
+      },
       "validation": {
         "birthDateRequired": "Please choose your date of birth.",
         "passwordsMismatch": "The passwords do not match.",

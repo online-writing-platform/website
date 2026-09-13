@@ -1,0 +1,203 @@
+.birth-date-picker {
+  position: relative;
+  width: 100%;
+}
+
+.birth-date-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.form-group .birth-date-input-wrapper input {
+  width: 100%;
+  direction: ltr;
+  text-align: start;
+}
+
+.birth-date-picker[dir="ltr"] .birth-date-input-wrapper input {
+  padding-right: 3rem;
+}
+
+.birth-date-picker[dir="rtl"] .birth-date-input-wrapper input {
+  padding-left: 3rem;
+}
+
+.birth-date-calendar-button {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+  inset-inline-end: 0.65rem;
+}
+
+.birth-date-calendar-button:hover {
+  background: var(--surface-hover);
+  color: var(--primary);
+}
+
+.birth-date-calendar-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.birth-date-calendar-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.birth-date-calendar {
+  position: absolute;
+  z-index: 1000;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-start: 0;
+}
+
+.gregorian-calendar {
+  width: min(20rem, calc(100vw - 2.5rem));
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-family: "Geist Variable", system-ui, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  user-select: none;
+}
+
+.gregorian-calendar__header {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.15rem 0.65rem;
+}
+
+.gregorian-calendar__nav {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.gregorian-calendar__nav:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: var(--surface-hover);
+  color: var(--primary);
+}
+
+.gregorian-calendar__selectors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem;
+  gap: 0.35rem;
+}
+
+.gregorian-calendar__selectors select {
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.gregorian-calendar__nav:focus-visible,
+.gregorian-calendar__selectors select:focus-visible,
+.gregorian-calendar__day:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.gregorian-calendar__weekdays,
+.gregorian-calendar__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.gregorian-calendar__weekdays span {
+  display: grid;
+  height: 2rem;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gregorian-calendar__days {
+  gap: 0.12rem;
+}
+
+.gregorian-calendar__day,
+.gregorian-calendar__empty {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.gregorian-calendar__day {
+  display: grid;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.8);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.gregorian-calendar__day:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--primary);
+}
+
+.gregorian-calendar__day[data-today="true"] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.gregorian-calendar__day[data-selected="true"],
+.gregorian-calendar__day[data-selected="true"]:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 800;
+}
+
+.gregorian-calendar__day:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .birth-date-calendar-button,
+  .gregorian-calendar__nav,
+  .gregorian-calendar__day {
+    transition: none;
+  }
+}

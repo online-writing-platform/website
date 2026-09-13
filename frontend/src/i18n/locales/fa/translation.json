@@ -58,6 +58,13 @@
       "phoneAuth": "ثبت‌نام با شماره موبایل",
       "phoneAuthHelp": "با یک کد تأیید یک‌بارمصرف شروع کنید.",
       "securityNote": "اطلاعات حساب شما به‌صورت امن منتقل می‌شود.",
+      "calendar": {
+        "label": "تقویم میلادی",
+        "previousMonth": "ماه قبل",
+        "nextMonth": "ماه بعد",
+        "month": "ماه",
+        "year": "سال"
+      },
       "validation": {
         "birthDateRequired": "لطفاً تاریخ تولد خود را انتخاب کنید.",
         "passwordsMismatch": "رمز عبور و تکرار آن یکسان نیستند.",
