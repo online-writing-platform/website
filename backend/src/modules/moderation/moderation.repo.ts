@@ -1,6 +1,7 @@
 import { prisma } from "../../db/index.js";
 import { buildCursorPage } from "../../shared/pagination/page.js";
 import { isPrismaErrorCode } from "../../utils/prisma-error.js";
+import { reconcileStoryCommentCount } from "../stories/story-comment-stats.js";
 
 import type { ModerationStore } from "./moderation.types.js";
 import type { ModerationActionValue, ReportTargetTypeValue } from "./moderation.types.js";
@@ -87,14 +88,42 @@ export class ModerationRepository implements ModerationStore {
                 return (await prisma.comment.findFirst({
                     where: {
                         id: targetId,
-                        status: { not: "DELETED" },
+                        userId: { not: reporterId },
+                        status: "ACTIVE",
+                        OR: [
+                            { parentId: null },
+                            {
+                                parent: {
+                                    status: { not: "HIDDEN" },
+                                    user: {
+                                        blocksCreated: {
+                                            none: { blockedId: reporterId },
+                                        },
+                                        blocksReceived: {
+                                            none: { blockerId: reporterId },
+                                        },
+                                    },
+                                },
+                            },
+                        ],
+                        user: {
+                            blocksCreated: { none: { blockedId: reporterId } },
+                            blocksReceived: { none: { blockerId: reporterId } },
+                        },
                         chapter: {
+                            deletedAt: null,
                             status: "PUBLISHED",
                             moderationState: "VISIBLE",
                             story: {
+                                deletedAt: null,
                                 visibility: { in: ["PUBLIC", "UNLISTED"] },
                                 publishedAt: { not: null },
                                 moderationState: "VISIBLE",
+                                author: {
+                                    status: "ACTIVE",
+                                    blocksCreated: { none: { blockedId: reporterId } },
+                                    blocksReceived: { none: { blockerId: reporterId } },
+                                },
                             },
                         },
                     },
@@ -251,22 +280,42 @@ export class ModerationRepository implements ModerationStore {
                 currentModerator.role !== input.moderatorRole
             ) return false;
 
-            const currentOwner = input.targetType === "USER"
-                ? await transaction.user.findUnique({
-                    where: { id: input.targetId }, select: { id: true, role: true },
-                })
-                : input.targetType === "STORY"
-                  ? (await transaction.story.findUnique({
-                    where: { id: input.targetId }, select: { author: { select: { id: true, role: true } } },
-                }))?.author ?? null
-                  : input.targetType === "CHAPTER"
-                    ? (await transaction.chapter.findUnique({
+            let affectedStoryId: string | null = null;
+            let currentOwner: { id: string; role: "USER" | "MODERATOR" | "ADMIN" } | null;
+
+            if (input.targetType === "USER") {
+                currentOwner = await transaction.user.findUnique({
                     where: { id: input.targetId },
-                    select: { story: { select: { author: { select: { id: true, role: true } } } } },
-                }))?.story.author ?? null
-                    : (await transaction.comment.findUnique({
-                    where: { id: input.targetId }, select: { user: { select: { id: true, role: true } } },
-                }))?.user ?? null;
+                    select: { id: true, role: true },
+                });
+            } else if (input.targetType === "STORY") {
+                const story = await transaction.story.findUnique({
+                    where: { id: input.targetId },
+                    select: { id: true, author: { select: { id: true, role: true } } },
+                });
+                currentOwner = story?.author ?? null;
+                affectedStoryId = story?.id ?? null;
+            } else if (input.targetType === "CHAPTER") {
+                const chapter = await transaction.chapter.findUnique({
+                    where: { id: input.targetId },
+                    select: {
+                        storyId: true,
+                        story: { select: { author: { select: { id: true, role: true } } } },
+                    },
+                });
+                currentOwner = chapter?.story.author ?? null;
+                affectedStoryId = chapter?.storyId ?? null;
+            } else {
+                const comment = await transaction.comment.findUnique({
+                    where: { id: input.targetId },
+                    select: {
+                        user: { select: { id: true, role: true } },
+                        chapter: { select: { storyId: true } },
+                    },
+                });
+                currentOwner = comment?.user ?? null;
+                affectedStoryId = comment?.chapter.storyId ?? null;
+            }
             if (
                 !currentOwner ||
                 currentOwner.id === input.moderatorId ||
@@ -333,6 +382,13 @@ export class ModerationRepository implements ModerationStore {
             }
 
             if (changed !== 1) return false;
+
+            if (
+                affectedStoryId &&
+                (input.targetType === "COMMENT" || input.targetType === "CHAPTER")
+            ) {
+                await reconcileStoryCommentCount(transaction, affectedStoryId);
+            }
 
             await transaction.moderationAction.create({
                 data: {

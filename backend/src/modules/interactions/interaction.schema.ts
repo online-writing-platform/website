@@ -1,11 +1,16 @@
 import { z } from "zod";
 
-import { paginationQuerySchema, uuidSchema } from "../../shared/validation/common.schema.js";
+import { pageLimitSchema, uuidSchema } from "../../shared/validation/common.schema.js";
 
 export const chapterParamsSchema = z.object({ chapterId: uuidSchema });
 export const commentParamsSchema = z.object({ commentId: uuidSchema });
 export const chapterCommentParamsSchema = z.object({ chapterId: uuidSchema, commentId: uuidSchema });
-export const interactionListQuerySchema = paginationQuerySchema;
+export const interactionListQuerySchema = z
+    .object({
+        cursor: z.string().trim().min(1).max(1000).optional(),
+        limit: pageLimitSchema,
+    })
+    .strict();
 
 export const createCommentSchema = z
     .object({

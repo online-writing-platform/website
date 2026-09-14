@@ -9,6 +9,10 @@
       "en": "تغییر زبان به انگلیسی"
     }
   },
+  "common": {
+    "cancel": "انصراف",
+    "retry": "تلاش دوباره"
+  },
   "auth": {
     "common": {
       "showPassword": "نمایش رمز عبور",
@@ -141,6 +145,16 @@
     "ACCOUNT_STATE_CHANGED": "وضعیت حساب شما تغییر کرده است. دوباره وارد شوید.",
     "INACTIVE_ACCOUNT": "این حساب فعال نیست.",
     "USER_NOT_FOUND": "کاربر موردنظر پیدا نشد.",
+    "INVALID_CURSOR": "این صفحه از نتایج دیگر معتبر نیست. فهرست را دوباره بارگذاری و تلاش کنید.",
+    "CHAPTER_NOT_FOUND": "این فصل در دسترس نیست.",
+    "COMMENT_NOT_FOUND": "این نظر پیدا نشد یا دیگر در دسترس نیست.",
+    "INVALID_PARENT_COMMENT": "نظری که می‌خواهید به آن پاسخ دهید معتبر نیست.",
+    "COMMENT_NESTING_LIMIT_REACHED": "پاسخ فقط برای نظر اصلی قابل ثبت است.",
+    "INTERACTION_BLOCKED": "به‌دلیل رابطهٔ مسدودسازی، این تعامل در دسترس نیست.",
+    "SOCIAL_WRITE_RATE_LIMIT_EXCEEDED": "تعداد تعامل‌های شما بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.",
+    "REPORT_TARGET_NOT_FOUND": "محتوای موردنظر برای گزارش در دسترس نیست.",
+    "REPORT_ALREADY_EXISTS": "قبلاً یک گزارش فعال برای این محتوا ثبت کرده‌اید.",
+    "REPORT_RATE_LIMIT_EXCEEDED": "تعداد گزارش‌های شما بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.",
     "IMAGE_REQUIRED": "یک تصویر برای بارگذاری انتخاب کنید.",
     "EMPTY_UPLOAD": "تصویر انتخاب‌شده خالی است.",
     "UPLOAD_TOO_LARGE": "حجم تصویر انتخاب‌شده بیشتر از ۵ مگابایت است.",
@@ -263,20 +277,48 @@
       "next": "فصل بعد"
     },
     "interactions": {
+      "eyebrow": "گفت‌وگوی خوانندگان",
       "vote": "رأی",
       "removeVote": "برداشتن رأی",
       "voteCount": "{{value}} رأی",
       "title": "گفت‌وگو درباره این فصل",
+      "description": "دیدگاهتان را بنویسید و به گفت‌وگوی خوانندگان دیگر بپیوندید.",
       "yourComment": "نظر شما",
+      "commentPlaceholder": "درباره این فصل چه فکر می‌کنید؟",
       "submit": "ارسال نظر",
       "submitting": "در حال ارسال…",
       "loginPrefix": "برای رأی دادن یا نوشتن نظر",
       "loginLink": "وارد شوید",
       "loginSuffix": ".",
       "empty": "هنوز نظری ثبت نشده است.",
+      "emptyDescription": "اولین نفری باشید که درباره این فصل گفت‌وگو را شروع می‌کند.",
+      "loadingComments": "در حال دریافت نظرها…",
+      "loadingMore": "در حال دریافت…",
+      "loadMoreComments": "نمایش نظرهای بیشتر",
       "deletedUser": "کاربر حذف‌شده",
+      "unavailableUser": "کاربر در دسترس نیست",
       "unavailableComment": "این نظر در دسترس نیست.",
-      "replyCount": "{{value}} پاسخ"
+      "edited": "ویرایش‌شده",
+      "reply": "پاسخ",
+      "edit": "ویرایش",
+      "delete": "حذف",
+      "editLabel": "ویرایش نظر",
+      "saveEdit": "ذخیره ویرایش",
+      "savingEdit": "در حال ذخیره…",
+      "deleteConfirmation": "این نظر حذف شود؟ پاسخ‌های ثبت‌شده در گفت‌وگو باقی می‌مانند.",
+      "confirmDelete": "بله، حذف شود",
+      "deleting": "در حال حذف…",
+      "replyCount": "{{value}} پاسخ",
+      "showReplies": "نمایش پاسخ‌ها ({{value}})",
+      "hideReplies": "بستن پاسخ‌ها",
+      "repliesLabel": "پاسخ‌های این نظر",
+      "yourReply": "پاسخ شما",
+      "replyPlaceholder": "پاسختان را بنویسید…",
+      "submitReply": "ارسال پاسخ",
+      "submittingReply": "در حال ارسال…",
+      "loadingReplies": "در حال دریافت پاسخ‌ها…",
+      "loadMoreReplies": "نمایش پاسخ‌های بیشتر",
+      "noReplies": "هنوز پاسخی ثبت نشده است."
     }
   },
   "report": {

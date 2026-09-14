@@ -1,6 +1,7 @@
 import { prisma } from "../db/index.js";
 import { NotificationRepository } from "../modules/notifications/notifications.repo.js";
 import { handleVerificationEmailOutbox } from "../modules/auth/verification-email-outbox.js";
+import { reconcileStoryCommentCount } from "../modules/stories/story-comment-stats.js";
 import type {
     ClaimedJob,
     ClaimedOutbox,
@@ -90,6 +91,7 @@ export async function handleJob(
                         },
                     },
                 });
+                await reconcileStoryCommentCount(transaction, storyId);
             }
         });
 
@@ -131,6 +133,10 @@ export async function handleJob(
             });
 
             if (result.count === 1) {
+                const chapter = await transaction.chapter.findUniqueOrThrow({
+                    where: { id: chapterId },
+                    select: { storyId: true },
+                });
                 await transaction.outboxMessage.create({
                     data: {
                         eventType: "CHAPTER_PUBLISHED",
@@ -146,6 +152,10 @@ export async function handleJob(
                         },
                     },
                 });
+                await reconcileStoryCommentCount(
+                    transaction,
+                    chapter.storyId,
+                );
             }
         });
 
@@ -155,82 +165,96 @@ export async function handleJob(
     if (job.type === "RECONCILE_STORY_COUNTERS") {
         const storyId = stringField(payload, "storyId");
 
-        const [votes, comments, library, qualifiedViews, readers] =
-            await Promise.all([
-                prisma.chapterVote.count({
-                    where: {
-                        chapter: {
+        await prisma.$transaction(async (transaction) => {
+            await transaction.$queryRaw`
+                SELECT pg_advisory_xact_lock(hashtextextended(${storyId}, 5))
+            `;
+
+            const [votes, comments, library, qualifiedViews, readers] =
+                await Promise.all([
+                    transaction.chapterVote.count({
+                        where: {
+                            chapter: {
+                                storyId,
+                                deletedAt: null,
+                            },
+                        },
+                    }),
+
+                    transaction.comment.count({
+                        where: {
+                            chapter: {
+                                storyId,
+                                deletedAt: null,
+                                status: "PUBLISHED",
+                                moderationState: "VISIBLE",
+                            },
+
+                            status: "ACTIVE",
+
+                            OR: [
+                                { parentId: null },
+                                { parent: { status: { not: "HIDDEN" } } },
+                            ],
+                        },
+                    }),
+
+                    transaction.libraryEntry.count({
+                        where: {
                             storyId,
-                            deletedAt: null,
                         },
-                    },
-                }),
+                    }),
 
-                prisma.comment.count({
-                    where: {
-                        chapter: {
+                    transaction.readSignal.count({
+                        where: {
                             storyId,
                         },
+                    }),
 
-                        status: "ACTIVE",
-                    },
-                }),
+                    transaction.readSignal.groupBy({
+                        by: ["userId"],
 
-                prisma.libraryEntry.count({
-                    where: {
-                        storyId,
-                    },
-                }),
+                        where: {
+                            storyId,
 
-                prisma.readSignal.count({
-                    where: {
-                        storyId,
-                    },
-                }),
-
-                prisma.readSignal.groupBy({
-                    by: ["userId"],
-
-                    where: {
-                        storyId,
-
-                        userId: {
-                            not: null,
+                            userId: {
+                                not: null,
+                            },
                         },
-                    },
-                }),
-            ]);
+                    }),
+                ]);
 
-        await prisma.storyStats.upsert({
-            where: {
-                storyId,
-            },
+            await transaction.storyStats.upsert({
+                where: {
+                    storyId,
+                },
 
-            create: {
-                storyId,
+                create: {
+                    storyId,
 
-                voteCount: votes,
+                    voteCount: votes,
 
-                commentCount: comments,
+                    commentCount: comments,
 
-                libraryCount: library,
+                    libraryCount: library,
 
-                qualifiedViews,
+                    qualifiedViews,
 
-                authenticatedReaders: readers.length,
-            },
+                    authenticatedReaders: readers.length,
+                },
 
-            update: {
-                voteCount: votes,
+                update: {
+                    voteCount: votes,
 
-                commentCount: comments,
+                    commentCount: comments,
 
-                libraryCount: library,
+                    libraryCount: library,
 
-                qualifiedViews,
+                    qualifiedViews,
 
-                authenticatedReaders: readers.length,
-            },
+                    authenticatedReaders: readers.length,
+                },
+            });
         });
 
         return;

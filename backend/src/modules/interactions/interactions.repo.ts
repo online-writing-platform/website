@@ -1,28 +1,57 @@
 import { prisma } from "../../db/index.js";
+import env from "../../config/env.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import { buildCursorPage } from "../../shared/pagination/page.js";
+import { createCursorCodec } from "../../shared/http/cursor.js";
+import { reconcileStoryCommentCount } from "../stories/story-comment-stats.js";
+import { z } from "zod";
 
 import type { InteractionStore } from "./interaction.types.js";
 import type { CommentView } from "./interaction.types.js";
 
-const commentSelect = {
-    id: true,
-    chapterId: true,
-    parentId: true,
-    content: true,
-    status: true,
-    createdAt: true,
-    updatedAt: true,
-    user: {
-        select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-            status: true,
+const cursorCodec = createCursorCodec(env.cursorSecret);
+const commentCursorSchema = z.object({
+    at: z.string().datetime(),
+    id: z.string().uuid(),
+});
+
+function blockedUserFilter(viewerId: string): Prisma.UserWhereInput {
+    return {
+        blocksCreated: { none: { blockedId: viewerId } },
+        blocksReceived: { none: { blockerId: viewerId } },
+    };
+}
+
+function commentSelect(viewerId?: string) {
+    return {
+        id: true,
+        chapterId: true,
+        parentId: true,
+        content: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+            select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+                status: true,
+            },
         },
-    },
-    _count: { select: { replies: { where: { status: { not: "DELETED" } } } } },
-} as const;
+        _count: {
+            select: {
+                replies: {
+                    where: {
+                        status: { not: "HIDDEN" as const },
+                        ...(viewerId ? { user: blockedUserFilter(viewerId) } : {}),
+                    },
+                },
+            },
+        },
+    } satisfies Prisma.CommentSelect;
+}
 
 interface CommentRow {
     id: string;
@@ -42,8 +71,11 @@ interface CommentRow {
     _count: { replies: number };
 }
 
-async function findCommentRow(commentId: string): Promise<CommentRow | null> {
-    return prisma.comment.findUnique({ where: { id: commentId }, select: commentSelect });
+async function findCommentRow(commentId: string, viewerId?: string): Promise<CommentRow | null> {
+    return prisma.comment.findUnique({
+        where: { id: commentId },
+        select: commentSelect(viewerId),
+    });
 }
 
 function mapComment(row: CommentRow): CommentView {
@@ -113,15 +145,53 @@ export class InteractionRepository implements InteractionStore {
         });
     }
 
+    public async getVisibleComment(
+        chapterId: string,
+        commentId: string,
+        viewerId?: string,
+    ): Promise<CommentView | null> {
+        const row = await prisma.comment.findFirst({
+            where: {
+                id: commentId,
+                chapterId,
+                status: { not: "HIDDEN" },
+                OR: [
+                    { parentId: null },
+                    {
+                        parent: {
+                            status: { not: "HIDDEN" },
+                            ...(viewerId
+                                ? { user: blockedUserFilter(viewerId) }
+                                : {}),
+                        },
+                    },
+                ],
+                ...(viewerId ? { user: blockedUserFilter(viewerId) } : {}),
+            },
+            select: commentSelect(viewerId),
+        });
+
+        return row ? mapComment(row) : null;
+    }
+
     public async createComment(
         userId: string,
         chapterId: string,
         parentId: string | undefined,
         content: string,
     ): Promise<CommentView> {
-        const row = await prisma.comment.create({
-            data: { userId, chapterId, ...(parentId ? { parentId } : {}), content },
-            select: commentSelect,
+        const row = await prisma.$transaction(async (transaction) => {
+            const chapter = await transaction.chapter.findUniqueOrThrow({
+                where: { id: chapterId },
+                select: { storyId: true },
+            });
+            const created = await transaction.comment.create({
+                data: { userId, chapterId, ...(parentId ? { parentId } : {}), content },
+                select: commentSelect(userId),
+            });
+
+            await reconcileStoryCommentCount(transaction, chapter.storyId);
+            return created;
         });
         return mapComment(row);
     }
@@ -132,16 +202,27 @@ export class InteractionRepository implements InteractionStore {
             data: { content },
         });
         if (result.count !== 1) return null;
-        const row = await findCommentRow(commentId);
+        const row = await findCommentRow(commentId, userId);
         return row ? mapComment(row) : null;
     }
 
     public async deleteOwnComment(userId: string, commentId: string): Promise<boolean> {
-        const result = await prisma.comment.updateMany({
-            where: { id: commentId, userId, status: "ACTIVE" },
-            data: { status: "DELETED", content: "[deleted]" },
+        return prisma.$transaction(async (transaction) => {
+            const comment = await transaction.comment.findFirst({
+                where: { id: commentId, userId, status: "ACTIVE" },
+                select: { chapter: { select: { storyId: true } } },
+            });
+            if (!comment) return false;
+
+            const result = await transaction.comment.updateMany({
+                where: { id: commentId, userId, status: "ACTIVE" },
+                data: { status: "DELETED", content: "[deleted]" },
+            });
+            if (result.count !== 1) return false;
+
+            await reconcileStoryCommentCount(transaction, comment.chapter.storyId);
+            return true;
         });
-        return result.count === 1;
     }
 
     public async listComments(
@@ -150,6 +231,9 @@ export class InteractionRepository implements InteractionStore {
         limit: number,
         viewerId?: string,
     ) {
+        const decodedCursor = cursor
+            ? cursorCodec.decode(cursor, commentCursorSchema)
+            : null;
         const rows: CommentRow[] = await prisma.comment.findMany({
             where: {
                 chapterId,
@@ -157,19 +241,28 @@ export class InteractionRepository implements InteractionStore {
                 status: { not: "HIDDEN" },
                 ...(viewerId
                     ? {
-                          user: {
-                              blocksCreated: { none: { blockedId: viewerId } },
-                              blocksReceived: { none: { blockerId: viewerId } },
-                          },
+                          user: blockedUserFilter(viewerId),
+                      }
+                    : {}),
+                ...(decodedCursor
+                    ? {
+                          OR: [
+                              { createdAt: { lt: new Date(decodedCursor.at) } },
+                              {
+                                  createdAt: new Date(decodedCursor.at),
+                                  id: { lt: decodedCursor.id },
+                              },
+                          ],
                       }
                     : {}),
             },
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             take: limit + 1,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-            select: commentSelect,
+            select: commentSelect(viewerId),
         });
-        const page = buildCursorPage(rows, limit, (row) => row.id);
+        const page = buildCursorPage(rows, limit, (row) =>
+            cursorCodec.encode({ at: row.createdAt.toISOString(), id: row.id }),
+        );
         return { comments: page.items.map(mapComment), pagination: page.pagination };
     }
 
@@ -180,6 +273,9 @@ export class InteractionRepository implements InteractionStore {
         limit: number,
         viewerId?: string,
     ) {
+        const decodedCursor = cursor
+            ? cursorCodec.decode(cursor, commentCursorSchema)
+            : null;
         const rows: CommentRow[] = await prisma.comment.findMany({
             where: {
                 chapterId,
@@ -187,19 +283,28 @@ export class InteractionRepository implements InteractionStore {
                 status: { not: "HIDDEN" },
                 ...(viewerId
                     ? {
-                          user: {
-                              blocksCreated: { none: { blockedId: viewerId } },
-                              blocksReceived: { none: { blockerId: viewerId } },
-                          },
+                          user: blockedUserFilter(viewerId),
+                      }
+                    : {}),
+                ...(decodedCursor
+                    ? {
+                          OR: [
+                              { createdAt: { gt: new Date(decodedCursor.at) } },
+                              {
+                                  createdAt: new Date(decodedCursor.at),
+                                  id: { gt: decodedCursor.id },
+                              },
+                          ],
                       }
                     : {}),
             },
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
             take: limit + 1,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-            select: commentSelect,
+            select: commentSelect(viewerId),
         });
-        const page = buildCursorPage(rows, limit, (row) => row.id);
+        const page = buildCursorPage(rows, limit, (row) =>
+            cursorCodec.encode({ at: row.createdAt.toISOString(), id: row.id }),
+        );
         return { comments: page.items.map(mapComment), pagination: page.pagination };
     }
 }

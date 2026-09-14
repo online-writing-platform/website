@@ -2,6 +2,7 @@ import { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../db/index.js";
 import { isPrismaErrorCode } from "../../utils/prisma-error.js";
 import { isAtLeastAge, chapterContentHash, shouldCreateDraftRevision } from "./stories.policy.js";
+import { reconcileStoryCommentCount } from "./story-comment-stats.js";
 import type { ChapterView, CreateChapterInput, UpdateChapterInput } from "./stories.types.js";
 interface ChapterRow {
     id: string;
@@ -225,21 +226,27 @@ export class ChaptersRepository {
         chapterId: string,
         deletedAt: Date,
     ): Promise<boolean> {
-        const result = await prisma.chapter.updateMany({
-            where: {
-                id: chapterId,
-                storyId,
-                deletedAt: null,
-                story: { authorId, deletedAt: null },
-            },
-            data: {
-                deletedAt,
-                status: "DRAFT",
-                publishedAt: null,
-            },
-        });
+        return prisma.$transaction(async (transaction) => {
+            const result = await transaction.chapter.updateMany({
+                where: {
+                    id: chapterId,
+                    storyId,
+                    deletedAt: null,
+                    story: { authorId, deletedAt: null },
+                },
+                data: {
+                    deletedAt,
+                    status: "DRAFT",
+                    publishedAt: null,
+                },
+            });
 
-        return result.count === 1;
+            if (result.count === 1) {
+                await reconcileStoryCommentCount(transaction, storyId);
+            }
+
+            return result.count === 1;
+        });
     }
 
     public async publishChapter(
@@ -299,6 +306,8 @@ export class ChaptersRepository {
                 },
             });
 
+            await reconcileStoryCommentCount(transaction, storyId);
+
             return mapChapter(row);
         });
     }
@@ -308,29 +317,32 @@ export class ChaptersRepository {
         storyId: string,
         chapterId: string,
     ): Promise<ChapterView | null> {
-        const updated = await prisma.chapter.updateMany({
-            where: {
-                id: chapterId,
-                storyId,
-                deletedAt: null,
-                story: { authorId, deletedAt: null },
-            },
-            data: {
-                status: "DRAFT",
-                publishedAt: null,
-            },
+        return prisma.$transaction(async (transaction) => {
+            const updated = await transaction.chapter.updateMany({
+                where: {
+                    id: chapterId,
+                    storyId,
+                    deletedAt: null,
+                    story: { authorId, deletedAt: null },
+                },
+                data: {
+                    status: "DRAFT",
+                    publishedAt: null,
+                },
+            });
+
+            if (updated.count !== 1) {
+                return null;
+            }
+
+            const row: ChapterRow | null = await transaction.chapter.findUnique({
+                where: { id: chapterId },
+                select: chapterContentSelect,
+            });
+            await reconcileStoryCommentCount(transaction, storyId);
+
+            return row ? mapChapter(row) : null;
         });
-
-        if (updated.count !== 1) {
-            return null;
-        }
-
-        const row: ChapterRow | null = await prisma.chapter.findUnique({
-            where: { id: chapterId },
-            select: chapterContentSelect,
-        });
-
-        return row ? mapChapter(row) : null;
     }
 
     public async reorderChapters(

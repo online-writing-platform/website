@@ -155,7 +155,22 @@ export class DiscoveryRepository implements DiscoveryStore {
                     },
                     select: {
                         _count: {
-                            select: { votes: true, comments: true },
+                            select: {
+                                votes: true,
+                                comments: {
+                                    where: {
+                                        status: "ACTIVE",
+                                        OR: [
+                                            { parentId: null },
+                                            {
+                                                parent: {
+                                                    status: { not: "HIDDEN" },
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
                         },
                     },
                 },

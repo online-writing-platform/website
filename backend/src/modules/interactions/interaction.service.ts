@@ -154,6 +154,19 @@ export class InteractionService {
         commentId: string,
         content: string,
     ) {
+        const existing = await this.store.findComment(commentId);
+        if (
+            !existing ||
+            existing.userId !== userId ||
+            existing.status !== "ACTIVE"
+        ) {
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
+        }
+        await this.requireChapter(existing.chapterId, userId);
+
         const updated = await this.store.updateOwnComment(
             userId,
             commentId,
@@ -191,6 +204,28 @@ export class InteractionService {
         return this.store.listComments(chapterId, cursor, limit, viewerId);
     }
 
+    public async getComment(
+        chapterId: string,
+        commentId: string,
+        viewerId?: string,
+    ) {
+        await this.requireChapter(chapterId, viewerId);
+        const comment = await this.store.getVisibleComment(
+            chapterId,
+            commentId,
+            viewerId,
+        );
+
+        if (!comment) {
+            throw AppError.notFound(
+                "The comment was not found.",
+                "COMMENT_NOT_FOUND",
+            );
+        }
+
+        return comment;
+    }
+
     public async listReplies(
         chapterId: string,
         parentId: string,
@@ -200,7 +235,12 @@ export class InteractionService {
     ) {
         await this.requireChapter(chapterId, viewerId);
         const parent = await this.store.findComment(parentId);
-        if (!parent || parent.chapterId !== chapterId || parent.parentId !== null) {
+        if (
+            !parent ||
+            parent.chapterId !== chapterId ||
+            parent.parentId !== null ||
+            parent.status === "HIDDEN"
+        ) {
             throw AppError.notFound(
                 "The comment was not found.",
                 "COMMENT_NOT_FOUND",

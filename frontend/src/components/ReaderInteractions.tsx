@@ -1,289 +1,284 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LoaderCircle, MessageCircle, ThumbsUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link, useLocation } from "react-router-dom";
 
+import CommentComposer from "../features/comments/components/CommentComposer";
+import CommentThread from "../features/comments/components/CommentThread";
+import { parseCommentDeepLink } from "../features/comments/deep-link";
+import useChapterComments from "../features/comments/hooks/useChapterComments";
+import useChapterVote from "../features/comments/hooks/useChapterVote";
 import useAuth from "../hooks/useAuth";
-import { apiRequest } from "../lib/api";
+import useInterfaceLocale from "../hooks/useInterfaceLocale";
 import { getErrorMessage } from "../lib/error-message";
 
-interface CommentAuthor {
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-}
-
-interface Comment {
-  id: string;
-  parentId: string | null;
-  content: string;
-  status: "ACTIVE" | "HIDDEN" | "DELETED";
-  createdAt: string;
-  updatedAt: string;
-  replyCount: number;
-  author: CommentAuthor | null;
-}
-
-interface CommentPageResponse {
-  data: {
-    comments: Comment[];
-
-    pagination: {
-      hasMore: boolean;
-      nextCursor: string | null;
-    };
-  };
-}
-
-interface VoteResponse {
-  data: {
-    votes: number;
-    voted?: boolean;
-  };
-}
+import "../features/comments/comments.css";
 
 interface ReaderInteractionsProps {
   chapterId: string;
-
-  /*
-   * برای سازگاری با ReaderPage باقی مانده است.
-   * جهت کامنت‌ها عمداً از زبان رابط سایت گرفته می‌شود.
-   */
-  contentLanguage?: string;
 }
 
 export default function ReaderInteractions({
   chapterId,
 }: ReaderInteractionsProps) {
-  const { t, i18n } = useTranslation();
-  const { status, request } = useAuth();
+  const { t } = useTranslation();
+  const { status, user, request } = useAuth();
+  const { direction, language, locale } = useInterfaceLocale();
+  const location = useLocation();
+  const handledDeepLinkRef = useRef("");
+  const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
+  const [deepLinkAttempt, setDeepLinkAttempt] = useState(0);
+  const [expandedThreadIds, setExpandedThreadIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [votes, setVotes] = useState(0);
-  const [voted, setVoted] = useState(false);
-  const [comment, setComment] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const interfaceLocale = i18n.resolvedLanguage?.startsWith("en")
-    ? "en-US"
-    : "fa-IR";
-
-  const interfaceDirection = i18n.dir();
-
-  const load = useCallback(async (): Promise<void> => {
-    const loadPublic = <T,>(path: string) =>
-      status === "authenticated" ? request<T>(path) : apiRequest<T>(path);
-
-    const [voteResult, commentResult] = await Promise.all([
-      loadPublic<VoteResponse>(`/api/v1/chapters/${chapterId}/votes`),
-
-      loadPublic<CommentPageResponse>(
-        `/api/v1/chapters/${chapterId}/comments?limit=30`,
-      ),
-    ]);
-
-    setVotes(voteResult.data.votes);
-    setComments(commentResult.data.comments);
-
-    if (status === "authenticated") {
-      const state = await request<VoteResponse>(
-        `/api/v1/chapters/${chapterId}/vote`,
-      );
-
-      setVoted(Boolean(state.data.voted));
-      setVotes(state.data.votes);
-    } else {
-      setVoted(false);
-    }
-  }, [chapterId, request, status]);
+  const {
+    comments,
+    hasMore,
+    replyPages,
+    loadingInitial,
+    loadingMore,
+    loadError,
+    mutationError,
+    pendingKeys,
+    loadFirstPage,
+    loadMoreComments,
+    loadReplies,
+    createComment,
+    updateComment,
+    removeComment,
+    revealComment,
+  } = useChapterComments({ chapterId, status, request, pageSize: 20 });
+  const {
+    votes,
+    voted,
+    busy: voteBusy,
+    error: voteError,
+    toggle: toggleVote,
+  } = useChapterVote({ chapterId, status, request });
 
   useEffect(() => {
-    const loadTimer = window.setTimeout(() => {
-      void load().catch((cause) => {
-        setError(getErrorMessage(cause));
+    const deepLink = parseCommentDeepLink(location.hash);
+    const deepLinkKey = `${chapterId}:${location.hash}`;
+
+    if (
+      !deepLink ||
+      loadingInitial ||
+      handledDeepLinkRef.current === deepLinkKey
+    ) {
+      return;
+    }
+
+    handledDeepLinkRef.current = deepLinkKey;
+    let active = true;
+    let clearHighlightTimer: number | undefined;
+    let scrollTimer: number | undefined;
+
+    void revealComment(deepLink.commentId)
+      .then((rootId) => {
+        if (!active) return;
+
+        if (rootId !== deepLink.commentId) {
+          setExpandedThreadIds((current) => new Set(current).add(rootId));
+        }
+        setHighlightedId(deepLink.commentId);
+        setDeepLinkError(null);
+
+        scrollTimer = window.setTimeout(() => {
+          const target = document.getElementById(
+            `comment-${deepLink.commentId}`,
+          );
+          target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+          target?.focus({ preventScroll: true });
+        }, 50);
+        clearHighlightTimer = window.setTimeout(() => {
+          setHighlightedId(null);
+        }, 4000);
+      })
+      .catch((cause) => {
+        if (active) setDeepLinkError(getErrorMessage(cause));
       });
-    }, 0);
 
     return () => {
-      window.clearTimeout(loadTimer);
+      active = false;
+      if (scrollTimer !== undefined) window.clearTimeout(scrollTimer);
+      if (clearHighlightTimer !== undefined) {
+        window.clearTimeout(clearHighlightTimer);
+      }
     };
-  }, [load]);
+  }, [chapterId, deepLinkAttempt, loadingInitial, location.hash, revealComment]);
 
-  async function toggleVote(): Promise<void> {
-    if (status !== "authenticated" || busy) {
-      return;
-    }
+  const toggleReplies = useCallback(
+    async (commentId: string): Promise<void> => {
+      const expanded = expandedThreadIds.has(commentId);
 
-    setBusy(true);
-    setError(null);
+      setExpandedThreadIds((current) => {
+        const next = new Set(current);
 
-    try {
-      const response = await request<VoteResponse>(
-        `/api/v1/chapters/${chapterId}/vote`,
-        {
-          method: voted ? "DELETE" : "POST",
-        },
-      );
+        if (expanded) next.delete(commentId);
+        else next.add(commentId);
 
-      setVotes(response.data.votes);
-      setVoted(Boolean(response.data.voted));
-    } catch (cause) {
-      setError(getErrorMessage(cause));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function submitComment(
-    event: FormEvent<HTMLFormElement>,
-  ): Promise<void> {
-    event.preventDefault();
-
-    const content = comment.trim();
-
-    if (!content || busy) {
-      return;
-    }
-
-    setBusy(true);
-    setError(null);
-
-    try {
-      await request(`/api/v1/chapters/${chapterId}/comments`, {
-        method: "POST",
-        body: JSON.stringify({
-          content,
-        }),
+        return next;
       });
 
-      setComment("");
-      await load();
-    } catch (cause) {
-      setError(getErrorMessage(cause));
-    } finally {
-      setBusy(false);
-    }
-  }
+      if (!expanded) await loadReplies(commentId);
+    },
+    [expandedThreadIds, loadReplies],
+  );
+
+  const visibleLoadError = deepLinkError ?? loadError;
 
   return (
     <section
-      className="reader-interactions"
+      className="chapter-discussion"
       aria-labelledby="discussion-title"
-      dir={interfaceDirection}
-      lang={i18n.resolvedLanguage?.startsWith("en") ? "en" : "fa"}
+      dir={direction}
+      lang={language}
     >
-      <div className="reader-interactions__summary">
+      <header className="chapter-discussion__header">
+        <div>
+          <span className="chapter-discussion__eyebrow">
+            <MessageCircle aria-hidden="true" />
+            {t("reader.interactions.eyebrow")}
+          </span>
+          <h2 id="discussion-title">{t("reader.interactions.title")}</h2>
+          <p>{t("reader.interactions.description")}</p>
+        </div>
+
         {status === "authenticated" ? (
           <button
-            className="button button--secondary"
+            className={`chapter-discussion__vote${
+              voted ? " chapter-discussion__vote--active" : ""
+            }`}
             type="button"
             aria-pressed={voted}
-            disabled={busy}
+            disabled={voteBusy}
             onClick={() => void toggleVote()}
           >
-            {voted
-              ? t("reader.interactions.removeVote")
-              : t("reader.interactions.vote")}
-            {" · "}
-            {votes.toLocaleString(interfaceLocale)}
+            {voteBusy ? (
+              <LoaderCircle className="is-spinning" aria-hidden="true" />
+            ) : (
+              <ThumbsUp aria-hidden="true" />
+            )}
+            <span>
+              {voted
+                ? t("reader.interactions.removeVote")
+                : t("reader.interactions.vote")}
+            </span>
+            <strong>{votes.toLocaleString(locale)}</strong>
           </button>
         ) : (
-          <span>
+          <span className="chapter-discussion__vote-count">
+            <ThumbsUp aria-hidden="true" />
             {t("reader.interactions.voteCount", {
-              value: votes.toLocaleString(interfaceLocale),
               count: votes,
+              value: votes.toLocaleString(locale),
             })}
           </span>
         )}
-      </div>
+      </header>
 
-      <h2 id="discussion-title">{t("reader.interactions.title")}</h2>
-
-      {error ? (
-        <p className="status-message status-message--error" role="alert">
-          {error}
+      {voteError ? (
+        <p className="chapter-discussion__error" role="alert">
+          {voteError}
         </p>
       ) : null}
 
       {status === "authenticated" ? (
-        <form
-          className="comment-form"
-          onSubmit={(event) => void submitComment(event)}
-        >
-          <label htmlFor="chapter-comment">
-            {t("reader.interactions.yourComment")}
-          </label>
-
-          <textarea
-            id="chapter-comment"
-            value={comment}
-            maxLength={2000}
-            rows={4}
-            dir={interfaceDirection}
-            onChange={(event) => setComment(event.target.value)}
-          />
-
-          <button
-            className="button"
-            type="submit"
-            disabled={busy || !comment.trim()}
-          >
-            {busy
-              ? t("reader.interactions.submitting")
-              : t("reader.interactions.submit")}
-          </button>
-        </form>
+        <CommentComposer
+          label={t("reader.interactions.yourComment")}
+          placeholder={t("reader.interactions.commentPlaceholder")}
+          submitLabel={t("reader.interactions.submit")}
+          submittingLabel={t("reader.interactions.submitting")}
+          onSubmit={(content) => createComment(content)}
+        />
       ) : (
-        <p className="reader-interactions__login-message">
+        <p className="chapter-discussion__login-message">
           {t("reader.interactions.loginPrefix")}{" "}
           <Link to="/login">{t("reader.interactions.loginLink")}</Link>
           {t("reader.interactions.loginSuffix")}
         </p>
       )}
 
-      <div className="comment-list">
-        {comments.length === 0 ? (
-          <p className="empty-state">{t("reader.interactions.empty")}</p>
+      {visibleLoadError ? (
+        <div className="chapter-discussion__error" role="alert">
+          <p>{visibleLoadError}</p>
+          <button
+            className="button button--secondary"
+            type="button"
+            onClick={() => {
+              if (deepLinkError) {
+                handledDeepLinkRef.current = "";
+                setDeepLinkError(null);
+                setDeepLinkAttempt((value) => value + 1);
+              } else {
+                void loadFirstPage();
+              }
+            }}
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      ) : null}
+
+      {mutationError ? (
+        <p className="chapter-discussion__error" role="alert">
+          {mutationError}
+        </p>
+      ) : null}
+
+      <div className="chapter-discussion__list" aria-live="polite">
+        {loadingInitial ? (
+          <p className="chapter-discussion__status">
+            <LoaderCircle className="is-spinning" aria-hidden="true" />
+            {t("reader.interactions.loadingComments")}
+          </p>
+        ) : comments.length === 0 ? (
+          <div className="chapter-discussion__empty">
+            <MessageCircle aria-hidden="true" />
+            <h3>{t("reader.interactions.empty")}</h3>
+            <p>{t("reader.interactions.emptyDescription")}</p>
+          </div>
         ) : (
           comments.map((item) => (
-            <article className="comment" key={item.id} dir={interfaceDirection}>
-              <header>
-                {item.author ? (
-                  <Link
-                    to={`/users/${encodeURIComponent(item.author.username)}`}
-                  >
-                    <strong>{item.author.displayName}</strong>
-
-                    <span dir="ltr">@{item.author.username}</span>
-                  </Link>
-                ) : (
-                  <strong>{t("reader.interactions.deletedUser")}</strong>
-                )}
-
-                <time dateTime={item.createdAt}>
-                  {new Date(item.createdAt).toLocaleDateString(interfaceLocale)}
-                </time>
-              </header>
-
-              <p dir={interfaceDirection}>
-                {item.status === "ACTIVE"
-                  ? item.content
-                  : t("reader.interactions.unavailableComment")}
-              </p>
-
-              {item.replyCount > 0 ? (
-                <small>
-                  {t("reader.interactions.replyCount", {
-                    count: item.replyCount,
-
-                    value: item.replyCount.toLocaleString(interfaceLocale),
-                  })}
-                </small>
-              ) : null}
-            </article>
+            <CommentThread
+              key={item.id}
+              item={item}
+              replies={replyPages[item.id]}
+              expanded={expandedThreadIds.has(item.id)}
+              highlightedId={highlightedId}
+              locale={locale}
+              direction={direction}
+              currentUserId={user?.id ?? null}
+              authenticated={status === "authenticated"}
+              pendingKeys={pendingKeys}
+              onToggle={() => toggleReplies(item.id)}
+              onRetryReplies={() => loadReplies(item.id)}
+              onCreateReply={(content) => createComment(content, item.id)}
+              onUpdate={updateComment}
+              onDelete={removeComment}
+              onLoadMoreReplies={() => loadReplies(item.id, true)}
+            />
           ))
         )}
       </div>
+
+      {hasMore ? (
+        <button
+          className="chapter-discussion__load-more button button--secondary"
+          type="button"
+          disabled={loadingMore}
+          onClick={() => void loadMoreComments()}
+        >
+          {loadingMore ? (
+            <LoaderCircle className="is-spinning" aria-hidden="true" />
+          ) : null}
+          {loadingMore
+            ? t("reader.interactions.loadingMore")
+            : t("reader.interactions.loadMoreComments")}
+        </button>
+      ) : null}
     </section>
   );
 }

@@ -149,7 +149,19 @@ export class AnalyticsRepository implements AnalyticsStore {
                             select: {
                                 readSignals: true,
                                 votes: true,
-                                comments: true,
+                                comments: {
+                                    where: {
+                                        status: "ACTIVE",
+                                        OR: [
+                                            { parentId: null },
+                                            {
+                                                parent: {
+                                                    status: { not: "HIDDEN" },
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
                             },
                         },
                     },

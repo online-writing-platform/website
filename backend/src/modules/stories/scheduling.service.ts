@@ -1,5 +1,6 @@
 import { prisma } from "../../db/index.js";
 import AppError from "../../errors/app-error.js";
+import { reconcileStoryCommentCount } from "./story-comment-stats.js";
 
 function requireFuture(date: Date): void {
     if (date.getTime() < Date.now() + 60_000) {
@@ -76,6 +77,7 @@ export class SchedulingService {
                 data: { status: "SCHEDULED", scheduledAt, version: { increment: 1 } },
                 select: { id: true, status: true, scheduledAt: true, version: true },
             });
+            await reconcileStoryCommentCount(transaction, storyId);
             await transaction.job.upsert({
                 where: { dedupeKey: `publish-chapter:${chapterId}:${scheduledAt.toISOString()}` },
                 create: {

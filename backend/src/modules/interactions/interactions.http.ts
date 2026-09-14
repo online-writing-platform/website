@@ -97,6 +97,18 @@ export async function listComments(request: Request<ChapterParams>, response: Re
     response.status(200).json({ data });
 }
 
+export async function getComment(
+    request: Request<ChapterCommentParams>,
+    response: Response,
+): Promise<void> {
+    const comment = await interactionServices.service.getComment(
+        request.params.chapterId,
+        request.params.commentId,
+        request.auth?.userId,
+    );
+    response.status(200).json({ data: { comment } });
+}
+
 export async function listReplies(request: Request<ChapterCommentParams>, response: Response): Promise<void> {
     const query = getValidatedQuery<InteractionListQuery>(request);
     const data = await interactionServices.service.listReplies(
@@ -129,6 +141,12 @@ chapterRouter.get(
     validateParams(chapterCommentParamsSchema),
     validateQuery(interactionListQuerySchema),
     listReplies,
+);
+chapterRouter.get(
+    "/:chapterId/comments/:commentId",
+    optionalAuthenticate,
+    validateParams(chapterCommentParamsSchema),
+    getComment,
 );
 chapterRouter.post(
     "/:chapterId/comments",

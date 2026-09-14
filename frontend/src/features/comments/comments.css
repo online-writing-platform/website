@@ -1,0 +1,569 @@
+.chapter-discussion {
+  --discussion-surface: var(--reader-surface, var(--surface));
+  --discussion-surface-hover: var(--reader-surface-soft, var(--surface-hover));
+  --discussion-text: var(--reader-text, var(--text));
+  --discussion-secondary: var(--reader-secondary, var(--text-secondary));
+  --discussion-border: var(--reader-border, var(--border));
+  --discussion-primary: var(--reader-primary, var(--primary));
+  --discussion-primary-hover: var(--reader-primary-hover, var(--primary-hover));
+  --discussion-primary-soft: var(--reader-primary-soft, var(--primary-soft));
+
+  padding-block: clamp(1.5rem, 4vw, 2.5rem);
+  border-block-start: 1px solid var(--discussion-border);
+  color: var(--discussion-text);
+  text-align: start;
+}
+
+.chapter-discussion__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-block-end: 1.25rem;
+}
+
+.chapter-discussion__header h2 {
+  margin: 0.2rem 0 0;
+  color: var(--discussion-text);
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  line-height: 1.45;
+}
+
+.chapter-discussion__header p {
+  max-width: 38rem;
+  margin: 0.35rem 0 0;
+  color: var(--discussion-secondary);
+  font-size: 0.9rem;
+}
+
+.chapter-discussion__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--discussion-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.chapter-discussion__eyebrow svg,
+.chapter-discussion__vote svg,
+.chapter-discussion__vote-count svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.chapter-discussion__vote,
+.chapter-discussion__vote-count {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--discussion-border);
+  border-radius: 999px;
+  background: var(--discussion-surface);
+  color: var(--discussion-secondary);
+  font-size: 0.8rem;
+}
+
+button.chapter-discussion__vote {
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+button.chapter-discussion__vote:hover:not(:disabled) {
+  border-color: var(--discussion-primary);
+  color: var(--discussion-primary);
+  transform: translateY(-1px);
+}
+
+.chapter-discussion__vote--active {
+  border-color: color-mix(in srgb, var(--discussion-primary) 45%, var(--discussion-border));
+  background: var(--discussion-primary-soft);
+  color: var(--discussion-primary);
+}
+
+.chapter-discussion__vote strong {
+  min-width: 1.2rem;
+  color: inherit;
+  text-align: center;
+}
+
+.comment-composer {
+  display: grid;
+  gap: 0.65rem;
+  margin-block: 1rem 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--discussion-border);
+  border-radius: calc(var(--radius) * 1.25);
+  background: var(--discussion-surface);
+  box-shadow: 0 0.4rem 1.4rem rgb(24 24 27 / 5%);
+}
+
+.comment-composer--compact {
+  margin-block: 0 1rem;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+
+.comment-composer label {
+  color: var(--discussion-text);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.comment-composer textarea {
+  width: 100%;
+  min-height: 7rem;
+  resize: vertical;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--discussion-border);
+  border-radius: var(--radius);
+  outline: none;
+  background: var(--discussion-surface-hover);
+  color: var(--discussion-text);
+  line-height: 1.8;
+  text-align: start;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.comment-composer--compact textarea {
+  min-height: 5.5rem;
+  background: var(--discussion-surface);
+}
+
+.comment-composer textarea:focus {
+  border-color: var(--discussion-primary);
+  background: var(--discussion-surface);
+  box-shadow: 0 0 0 3px var(--discussion-primary-soft);
+}
+
+.comment-composer__footer,
+.comment-composer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.comment-composer__footer {
+  justify-content: space-between;
+}
+
+.comment-composer__footer small {
+  color: var(--discussion-secondary);
+  direction: ltr;
+  font-size: 0.72rem;
+}
+
+.comment-composer .button {
+  min-height: 2.3rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.chapter-discussion__login-message,
+.chapter-discussion__status,
+.comment-thread__status {
+  padding: 1rem;
+  border: 1px dashed var(--discussion-border);
+  border-radius: var(--radius);
+  color: var(--discussion-secondary);
+  text-align: center;
+}
+
+.chapter-discussion__login-message a {
+  color: var(--discussion-primary);
+  font-weight: 800;
+}
+
+.chapter-discussion__error,
+.comment-thread__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, var(--discussion-border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 7%, var(--discussion-surface));
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
+.chapter-discussion__error p,
+.comment-thread__error p {
+  margin: 0;
+}
+
+.chapter-discussion__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.chapter-discussion__status,
+.comment-thread__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.chapter-discussion__status svg,
+.comment-thread__status svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.chapter-discussion__empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: clamp(1.5rem, 5vw, 2.5rem) 1rem;
+  border: 1px dashed var(--discussion-border);
+  border-radius: calc(var(--radius) * 1.25);
+  background: color-mix(in srgb, var(--discussion-surface) 80%, transparent);
+  text-align: center;
+}
+
+.chapter-discussion__empty > svg {
+  width: 2rem;
+  height: 2rem;
+  margin-block-end: 0.35rem;
+  color: var(--discussion-primary);
+}
+
+.chapter-discussion__empty h3,
+.chapter-discussion__empty p {
+  margin: 0;
+}
+
+.chapter-discussion__empty h3 {
+  font-size: 1rem;
+}
+
+.chapter-discussion__empty p {
+  color: var(--discussion-secondary);
+  font-size: 0.82rem;
+}
+
+.comment-thread {
+  min-width: 0;
+}
+
+.chapter-comment {
+  scroll-margin-block: 6rem;
+  padding: 1rem;
+  border: 1px solid var(--discussion-border);
+  border-radius: calc(var(--radius) * 1.15);
+  outline: none;
+  background: var(--discussion-surface);
+  color: var(--discussion-text);
+  text-align: start;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease;
+}
+
+.chapter-comment--reply {
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--discussion-surface) 82%, var(--discussion-surface-hover));
+}
+
+.chapter-comment--highlighted {
+  border-color: var(--discussion-primary);
+  background: color-mix(in srgb, var(--discussion-primary-soft) 50%, var(--discussion-surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--discussion-primary) 15%, transparent);
+  animation: comment-highlight 1.2s ease-out;
+}
+
+.chapter-comment__header,
+.chapter-comment__author-link,
+.chapter-comment__anonymous,
+.chapter-comment__actions,
+.chapter-comment__date,
+.chapter-comment__delete-confirmation > div {
+  display: flex;
+  align-items: center;
+}
+
+.chapter-comment__header {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chapter-comment__author-link,
+.chapter-comment__anonymous {
+  min-width: 0;
+  gap: 0.65rem;
+}
+
+.chapter-comment__author-link:hover strong {
+  color: var(--discussion-primary);
+}
+
+.chapter-comment__avatar {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--discussion-border);
+  border-radius: 50%;
+  background: var(--discussion-primary-soft);
+  color: var(--discussion-primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.chapter-comment__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chapter-comment__identity {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.chapter-comment__identity strong {
+  overflow: hidden;
+  color: var(--discussion-text);
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.chapter-comment__identity bdi,
+.chapter-comment__date,
+.chapter-comment__date small {
+  color: var(--discussion-secondary);
+  font-size: 0.7rem;
+}
+
+.chapter-comment__date {
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  text-align: end;
+}
+
+.chapter-comment__date small::after {
+  margin-inline-start: 0.4rem;
+  content: "•";
+}
+
+.chapter-comment__content {
+  margin: 0.85rem 0 0.65rem;
+  color: var(--discussion-text);
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  text-align: start;
+  white-space: pre-wrap;
+}
+
+.chapter-comment__actions {
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-block-start: 0.25rem;
+}
+
+.chapter-comment__action,
+.chapter-comment__actions .report-control > .button {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--discussion-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.chapter-comment__action svg,
+.chapter-comment__actions .report-control > .button svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.chapter-comment__action:hover:not(:disabled),
+.chapter-comment__actions .report-control > .button:hover:not(:disabled) {
+  background: var(--discussion-surface-hover);
+  color: var(--discussion-primary);
+}
+
+.chapter-comment__action--danger:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.chapter-comment__actions .report-control {
+  margin: 0;
+}
+
+.chapter-comment__actions .report-form {
+  width: 100%;
+  max-width: none;
+  flex: 1 0 100%;
+  margin-block: 0.5rem 0;
+  padding: 0.8rem;
+  border: 1px solid var(--discussion-border);
+  background: var(--discussion-surface-hover);
+}
+
+.chapter-comment__actions .report-form textarea,
+.chapter-comment__actions .report-form select {
+  width: 100%;
+}
+
+.chapter-comment__delete-confirmation {
+  margin-block-start: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--discussion-border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 6%, var(--discussion-surface));
+}
+
+.chapter-comment__delete-confirmation p {
+  margin: 0 0 0.65rem;
+  color: var(--discussion-text);
+  font-size: 0.8rem;
+}
+
+.chapter-comment__delete-confirmation > div {
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.chapter-comment__delete-confirmation .button {
+  min-height: 2.1rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+}
+
+.comment-thread__toggle {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.4rem;
+  margin-block-start: 0.35rem;
+  margin-inline-start: 0.85rem;
+  padding: 0.35rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--discussion-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.comment-thread__toggle:hover {
+  background: var(--discussion-primary-soft);
+}
+
+.comment-thread__toggle svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.comment-thread__toggle svg:last-child {
+  opacity: 0.7;
+}
+
+.comment-thread__replies {
+  display: grid;
+  gap: 0.7rem;
+  margin-block-start: 0.4rem;
+  margin-inline-start: clamp(0.6rem, 4vw, 2.25rem);
+  padding-block: 0.5rem;
+  padding-inline-start: clamp(0.65rem, 2vw, 1rem);
+  border-inline-start: 2px solid var(--discussion-primary-soft);
+}
+
+.comment-thread__load-more,
+.chapter-discussion__load-more {
+  justify-self: center;
+  min-height: 2.35rem;
+  margin-block-start: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.chapter-discussion__load-more {
+  display: flex;
+  margin: 1.25rem auto 0;
+}
+
+@keyframes comment-highlight {
+  0% {
+    transform: translateY(4px);
+  }
+  45% {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .chapter-discussion__header {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .chapter-discussion__vote,
+  .chapter-discussion__vote-count {
+    justify-self: start;
+  }
+
+  .comment-composer__footer {
+    align-items: flex-end;
+  }
+
+  .comment-composer__actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .chapter-comment__header {
+    align-items: flex-start;
+  }
+
+  .chapter-comment__date {
+    display: grid;
+    gap: 0;
+  }
+
+  .chapter-comment__date small::after {
+    content: none;
+  }
+
+  .comment-thread__replies {
+    margin-inline-start: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-comment--highlighted {
+    animation: none;
+  }
+
+  button.chapter-discussion__vote,
+  .chapter-comment {
+    transition: none;
+  }
+}

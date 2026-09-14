@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 
+import { createCommentDeepLink } from "../comments/deep-link";
 import type { NotificationItem } from "./types";
 
 function stringData(item: NotificationItem, key: string): string | null {
@@ -49,9 +50,22 @@ export function getNotificationTarget(item: NotificationItem): string {
   const chapterId = stringData(item, "chapterId");
 
   if (storySlug && chapterId) {
-    return `/stories/${encodeURIComponent(
+    const chapterPath = `/stories/${encodeURIComponent(
       storySlug,
     )}/chapters/${encodeURIComponent(chapterId)}`;
+    const commentId = stringData(item, "commentId");
+
+    if (
+      commentId &&
+      (item.type === "COMMENT" || item.type === "COMMENT_REPLY")
+    ) {
+      return `${chapterPath}${createCommentDeepLink(
+        commentId,
+        stringData(item, "parentId"),
+      )}`;
+    }
+
+    return chapterPath;
   }
 
   if (item.type === "SECURITY") {

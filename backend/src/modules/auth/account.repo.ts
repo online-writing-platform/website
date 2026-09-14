@@ -1,5 +1,6 @@
 import { prisma } from "../../db/index.js";
 import { isPrismaErrorCode } from "../../utils/prisma-error.js";
+import { reconcileStoryCommentCount } from "../stories/story-comment-stats.js";
 import type { AccountSecurityUserRecord, EmailChangeRecord } from "./auth.types.js";
 import { IdentityAlreadyExistsError } from "./auth.types.js";
 
@@ -211,13 +212,36 @@ export class AccountRepository {
                 },
             });
 
+            const affectedCommentStories = await transaction.comment.findMany({
+                where: { userId, status: "ACTIVE" },
+                distinct: ["chapterId"],
+                select: { chapter: { select: { storyId: true } } },
+            });
+
             await transaction.comment.updateMany({
                 where: { userId },
+                data: { content: "[deleted]" },
+            });
+
+            // Keep moderator-hidden comments hidden while anonymizing all others.
+            await transaction.comment.updateMany({
+                where: { userId, status: "ACTIVE" },
                 data: {
                     status: "DELETED",
-                    content: "[deleted]",
                 },
             });
+
+            const affectedStoryIds = [
+                ...new Set(
+                    affectedCommentStories.map(
+                        (comment) => comment.chapter.storyId,
+                    ),
+                ),
+            ].sort();
+
+            for (const storyId of affectedStoryIds) {
+                await reconcileStoryCommentCount(transaction, storyId);
+            }
 
             await transaction.follow.deleteMany({
                 where: {

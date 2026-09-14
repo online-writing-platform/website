@@ -40,6 +40,11 @@ export interface InteractionStore {
         parentId: string | null;
         status: "ACTIVE" | "HIDDEN" | "DELETED";
     } | null>;
+    getVisibleComment(
+        chapterId: string,
+        commentId: string,
+        viewerId?: string,
+    ): Promise<CommentView | null>;
     createComment(
         userId: string,
         chapterId: string,

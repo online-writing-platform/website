@@ -9,6 +9,10 @@
       "en": "Switch language to English"
     }
   },
+  "common": {
+    "cancel": "Cancel",
+    "retry": "Try again"
+  },
   "auth": {
     "common": {
       "showPassword": "Show password",
@@ -141,6 +145,16 @@
     "ACCOUNT_STATE_CHANGED": "Your account state has changed. Please sign in again.",
     "INACTIVE_ACCOUNT": "This account is not active.",
     "USER_NOT_FOUND": "The requested user was not found.",
+    "INVALID_CURSOR": "This result page is no longer valid. Reload the list and try again.",
+    "CHAPTER_NOT_FOUND": "This chapter is unavailable.",
+    "COMMENT_NOT_FOUND": "This comment was not found or is no longer available.",
+    "INVALID_PARENT_COMMENT": "The comment you are replying to is not valid.",
+    "COMMENT_NESTING_LIMIT_REACHED": "Replies can only be posted under a top-level comment.",
+    "INTERACTION_BLOCKED": "This interaction is unavailable because of a block relationship.",
+    "SOCIAL_WRITE_RATE_LIMIT_EXCEEDED": "You have made too many interactions. Please try again later.",
+    "REPORT_TARGET_NOT_FOUND": "The content you tried to report is unavailable.",
+    "REPORT_ALREADY_EXISTS": "You already have an active report for this content.",
+    "REPORT_RATE_LIMIT_EXCEEDED": "You have submitted too many reports. Please try again later.",
     "IMAGE_REQUIRED": "Choose an image to upload.",
     "EMPTY_UPLOAD": "The selected image is empty.",
     "UPLOAD_TOO_LARGE": "The selected image is larger than 5 MB.",
@@ -263,20 +277,48 @@
       "next": "Next chapter"
     },
     "interactions": {
+      "eyebrow": "Reader discussion",
       "vote": "Vote",
       "removeVote": "Remove vote",
       "voteCount": "{{value}} votes",
       "title": "Discussion about this chapter",
+      "description": "Share your thoughts and join the conversation with other readers.",
       "yourComment": "Your comment",
+      "commentPlaceholder": "What did you think about this chapter?",
       "submit": "Post comment",
       "submitting": "Posting…",
       "loginPrefix": "To vote or write a comment,",
       "loginLink": "log in",
       "loginSuffix": ".",
       "empty": "No comments have been posted yet.",
+      "emptyDescription": "Be the first reader to start a conversation about this chapter.",
+      "loadingComments": "Loading comments…",
+      "loadingMore": "Loading…",
+      "loadMoreComments": "Load more comments",
       "deletedUser": "Deleted user",
+      "unavailableUser": "Unavailable user",
       "unavailableComment": "This comment is unavailable.",
-      "replyCount": "{{value}} replies"
+      "edited": "Edited",
+      "reply": "Reply",
+      "edit": "Edit",
+      "delete": "Delete",
+      "editLabel": "Edit comment",
+      "saveEdit": "Save changes",
+      "savingEdit": "Saving…",
+      "deleteConfirmation": "Delete this comment? Existing replies will remain in the conversation.",
+      "confirmDelete": "Yes, delete",
+      "deleting": "Deleting…",
+      "replyCount": "{{value}} replies",
+      "showReplies": "Show replies ({{value}})",
+      "hideReplies": "Hide replies",
+      "repliesLabel": "Replies to this comment",
+      "yourReply": "Your reply",
+      "replyPlaceholder": "Write your reply…",
+      "submitReply": "Post reply",
+      "submittingReply": "Posting…",
+      "loadingReplies": "Loading replies…",
+      "loadMoreReplies": "Load more replies",
+      "noReplies": "No replies have been posted yet."
     }
   },
   "report": {

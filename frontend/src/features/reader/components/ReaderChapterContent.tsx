@@ -106,7 +106,7 @@ export default function ReaderChapterContent({
         <ReportForm targetType="STORY" targetId={story.id} />
       </section>
       <div className="reader__discussion">
-        <ReaderInteractions chapterId={chapter.id} contentLanguage={story.language} />
+        <ReaderInteractions key={chapter.id} chapterId={chapter.id} />
       </div>
     </>
   );

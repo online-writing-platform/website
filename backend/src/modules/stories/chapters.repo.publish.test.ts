@@ -51,6 +51,8 @@ void test("manual chapter publish emits CHAPTER_PUBLISHED outbox event", async (
     };
 
     const transaction = {
+        $queryRaw: () => Promise.resolve([]),
+
         chapter: {
             findFirst: () =>
                 Promise.resolve({
@@ -58,6 +60,14 @@ void test("manual chapter publish emits CHAPTER_PUBLISHED outbox event", async (
                 }),
 
             update: () => Promise.resolve(chapterRow),
+        },
+
+        comment: {
+            count: () => Promise.resolve(0),
+        },
+
+        storyStats: {
+            upsert: () => Promise.resolve({}),
         },
 
         outboxMessage: {

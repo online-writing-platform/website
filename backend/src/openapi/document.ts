@@ -14,6 +14,11 @@ import {
 } from "../modules/stories/stories.schema.js";
 import { progressSchema } from "../modules/reading/reading.schema.js";
 import { searchQuerySchema } from "../modules/discovery/search/search.schema.js";
+import {
+    createCommentSchema,
+    interactionListQuerySchema,
+    updateCommentSchema,
+} from "../modules/interactions/interaction.schema.js";
 
 extendZodWithOpenApi(z);
 
@@ -24,6 +29,40 @@ const errorSchema = z.object({
         message: z.string(),
         details: z.unknown().optional(),
         requestId: z.string(),
+    }),
+});
+const commentParams = z.object({
+    chapterId: z.string().uuid(),
+    commentId: z.string().uuid(),
+});
+const commentSchema = z.object({
+    id: z.string().uuid(),
+    chapterId: z.string().uuid(),
+    parentId: z.string().uuid().nullable(),
+    content: z.string(),
+    status: z.enum(["ACTIVE", "HIDDEN", "DELETED"]),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    replyCount: z.number().int().nonnegative(),
+    author: z
+        .object({
+            id: z.string().uuid(),
+            username: z.string(),
+            displayName: z.string(),
+            avatarUrl: z.string().url().nullable(),
+        })
+        .nullable(),
+});
+const commentResponseSchema = z.object({
+    data: z.object({ comment: commentSchema }),
+});
+const commentPageResponseSchema = z.object({
+    data: z.object({
+        comments: z.array(commentSchema),
+        pagination: z.object({
+            hasMore: z.boolean(),
+            nextCursor: z.string().nullable(),
+        }),
     }),
 });
 
@@ -89,6 +128,75 @@ registry.registerPath({
     summary: "Search public stories, users, and tags",
     request: { query: searchQuerySchema },
     responses: { 200: jsonResponse("Search results", z.object({ data: z.unknown() })) },
+});
+registry.registerPath({
+    method: "get",
+    path: "/api/v1/chapters/{chapterId}/comments",
+    summary: "List top-level chapter comments",
+    request: {
+        params: z.object({ chapterId: z.string().uuid() }),
+        query: interactionListQuerySchema,
+    },
+    responses: {
+        200: jsonResponse("Comment page", commentPageResponseSchema),
+        404: jsonResponse("Chapter not found", errorSchema),
+    },
+});
+registry.registerPath({
+    method: "get",
+    path: "/api/v1/chapters/{chapterId}/comments/{commentId}",
+    summary: "Get one visible chapter comment",
+    request: { params: commentParams },
+    responses: {
+        200: jsonResponse("Comment", commentResponseSchema),
+        404: jsonResponse("Comment not found", errorSchema),
+    },
+});
+registry.registerPath({
+    method: "get",
+    path: "/api/v1/chapters/{chapterId}/comments/{commentId}/replies",
+    summary: "List replies to a top-level comment",
+    request: { params: commentParams, query: interactionListQuerySchema },
+    responses: {
+        200: jsonResponse("Reply page", commentPageResponseSchema),
+        404: jsonResponse("Comment not found", errorSchema),
+    },
+});
+registry.registerPath({
+    method: "post",
+    path: "/api/v1/chapters/{chapterId}/comments",
+    summary: "Create a comment or one-level reply",
+    request: {
+        params: z.object({ chapterId: z.string().uuid() }),
+        body: { content: { "application/json": { schema: createCommentSchema } } },
+    },
+    responses: {
+        201: jsonResponse("Created", commentResponseSchema),
+        422: jsonResponse("Validation failure", errorSchema),
+    },
+});
+registry.registerPath({
+    method: "patch",
+    path: "/api/v1/comments/{commentId}",
+    summary: "Edit an owned active comment",
+    request: {
+        params: z.object({ commentId: z.string().uuid() }),
+        body: { content: { "application/json": { schema: updateCommentSchema } } },
+    },
+    responses: {
+        200: jsonResponse("Updated", commentResponseSchema),
+        404: jsonResponse("Comment not found", errorSchema),
+    },
+});
+registry.registerPath({
+    method: "delete",
+    path: "/api/v1/comments/{commentId}",
+    summary: "Soft-delete an owned active comment",
+    request: { params: z.object({ commentId: z.string().uuid() }) },
+    responses: {
+        204: { description: "Deleted" },
+        404: jsonResponse("Comment not found", errorSchema),
+    },
 });
 
 export function createOpenApiDocument() {
