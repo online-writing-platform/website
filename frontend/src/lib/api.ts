@@ -37,7 +37,15 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type");
 
   if (contentType?.includes("application/json")) {
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      throw new ApiError(
+        response.status,
+        "INVALID_SERVER_RESPONSE",
+        "The server returned an invalid response.",
+      );
+    }
   }
 
   const text = await response.text();

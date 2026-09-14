@@ -39,9 +39,11 @@ export default function ReaderInteractions({
     replyPages,
     loadingInitial,
     loadingMore,
-    loadError,
-    mutationError,
+    initialLoadError,
+    loadMoreError,
+    mutationErrors,
     pendingKeys,
+    clearMutationError,
     loadFirstPage,
     loadMoreComments,
     loadReplies,
@@ -53,6 +55,7 @@ export default function ReaderInteractions({
   const {
     votes,
     voted,
+    loading: voteLoading,
     busy: voteBusy,
     error: voteError,
     toggle: toggleVote,
@@ -127,7 +130,7 @@ export default function ReaderInteractions({
     [expandedThreadIds, loadReplies],
   );
 
-  const visibleLoadError = deepLinkError ?? loadError;
+  const visibleLoadError = deepLinkError ?? initialLoadError;
 
   return (
     <section
@@ -153,10 +156,10 @@ export default function ReaderInteractions({
             }`}
             type="button"
             aria-pressed={voted}
-            disabled={voteBusy}
+            disabled={voteBusy || voteLoading}
             onClick={() => void toggleVote()}
           >
-            {voteBusy ? (
+            {voteBusy || voteLoading ? (
               <LoaderCircle className="is-spinning" aria-hidden="true" />
             ) : (
               <ThumbsUp aria-hidden="true" />
@@ -166,15 +169,29 @@ export default function ReaderInteractions({
                 ? t("reader.interactions.removeVote")
                 : t("reader.interactions.vote")}
             </span>
-            <strong>{votes.toLocaleString(locale)}</strong>
+            <strong>{votes === null ? "—" : votes.toLocaleString(locale)}</strong>
           </button>
         ) : (
           <span className="chapter-discussion__vote-count">
-            <ThumbsUp aria-hidden="true" />
-            {t("reader.interactions.voteCount", {
-              count: votes,
-              value: votes.toLocaleString(locale),
-            })}
+            {voteLoading ? (
+              <>
+                <LoaderCircle className="is-spinning" aria-hidden="true" />
+                {t("reader.interactions.loadingVotes")}
+              </>
+            ) : votes === null ? (
+              <>
+                <ThumbsUp aria-hidden="true" />
+                {t("reader.interactions.voteCountUnavailable")}
+              </>
+            ) : (
+              <>
+                <ThumbsUp aria-hidden="true" />
+                {t("reader.interactions.voteCount", {
+                  count: votes,
+                  value: votes.toLocaleString(locale),
+                })}
+              </>
+            )}
           </span>
         )}
       </header>
@@ -191,6 +208,8 @@ export default function ReaderInteractions({
           placeholder={t("reader.interactions.commentPlaceholder")}
           submitLabel={t("reader.interactions.submit")}
           submittingLabel={t("reader.interactions.submitting")}
+          error={mutationErrors["create:root"]}
+          onClearError={() => clearMutationError("create:root")}
           onSubmit={(content) => createComment(content)}
         />
       ) : (
@@ -222,19 +241,13 @@ export default function ReaderInteractions({
         </div>
       ) : null}
 
-      {mutationError ? (
-        <p className="chapter-discussion__error" role="alert">
-          {mutationError}
-        </p>
-      ) : null}
-
       <div className="chapter-discussion__list" aria-live="polite">
         {loadingInitial ? (
           <p className="chapter-discussion__status">
             <LoaderCircle className="is-spinning" aria-hidden="true" />
             {t("reader.interactions.loadingComments")}
           </p>
-        ) : comments.length === 0 ? (
+        ) : comments.length === 0 && !visibleLoadError ? (
           <div className="chapter-discussion__empty">
             <MessageCircle aria-hidden="true" />
             <h3>{t("reader.interactions.empty")}</h3>
@@ -253,8 +266,10 @@ export default function ReaderInteractions({
               currentUserId={user?.id ?? null}
               authenticated={status === "authenticated"}
               pendingKeys={pendingKeys}
+              mutationErrors={mutationErrors}
               onToggle={() => toggleReplies(item.id)}
               onRetryReplies={() => loadReplies(item.id)}
+              onClearMutationError={clearMutationError}
               onCreateReply={(content) => createComment(content, item.id)}
               onUpdate={updateComment}
               onDelete={removeComment}
@@ -264,7 +279,18 @@ export default function ReaderInteractions({
         )}
       </div>
 
-      {hasMore ? (
+      {hasMore && loadMoreError ? (
+        <div className="chapter-discussion__error" role="alert">
+          <p>{loadMoreError}</p>
+          <button
+            className="button button--secondary"
+            type="button"
+            onClick={() => void loadMoreComments()}
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      ) : hasMore ? (
         <button
           className="chapter-discussion__load-more button button--secondary"
           type="button"

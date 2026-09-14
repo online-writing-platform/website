@@ -12,6 +12,8 @@ interface CommentComposerProps {
   compact?: boolean;
   autoFocus?: boolean;
   cancelLabel?: string;
+  error?: string | null;
+  onClearError?(): void;
   onCancel?(): void;
   onSubmit(content: string): Promise<boolean>;
 }
@@ -25,10 +27,13 @@ export default function CommentComposer({
   compact = false,
   autoFocus = false,
   cancelLabel,
+  error,
+  onClearError,
   onCancel,
   onSubmit,
 }: CommentComposerProps) {
   const fieldId = useId();
+  const errorId = `${fieldId}-error`;
   const { locale } = useInterfaceLocale();
   const [content, setContent] = useState(initialValue);
   const [submitting, setSubmitting] = useState(false);
@@ -62,8 +67,19 @@ export default function CommentComposer({
         placeholder={placeholder}
         autoFocus={autoFocus}
         disabled={submitting}
-        onChange={(event) => setContent(event.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        onChange={(event) => {
+          setContent(event.target.value);
+          if (error) onClearError?.();
+        }}
       />
+
+      {error ? (
+        <p id={errorId} className="comment-composer__error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <div className="comment-composer__footer">
         <small aria-live="polite">
@@ -76,7 +92,10 @@ export default function CommentComposer({
               className="button button--quiet"
               type="button"
               disabled={submitting}
-              onClick={onCancel}
+              onClick={() => {
+                onClearError?.();
+                onCancel();
+              }}
             >
               <X aria-hidden="true" />
               {cancelLabel}

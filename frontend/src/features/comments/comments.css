@@ -148,6 +148,22 @@ button.chapter-discussion__vote:hover:not(:disabled) {
   box-shadow: 0 0 0 3px var(--discussion-primary-soft);
 }
 
+.comment-composer textarea[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.comment-composer__error,
+.chapter-comment__mutation-error {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, var(--discussion-border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 7%, var(--discussion-surface));
+  color: var(--danger);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
 .comment-composer__footer,
 .comment-composer__actions {
   display: flex;
@@ -445,6 +461,11 @@ button.chapter-discussion__vote:hover:not(:disabled) {
   margin: 0 0 0.65rem;
   color: var(--discussion-text);
   font-size: 0.8rem;
+}
+
+.chapter-comment__delete-confirmation .chapter-comment__mutation-error {
+  margin-block-end: 0.65rem;
+  color: var(--danger);
 }
 
 .chapter-comment__delete-confirmation > div {

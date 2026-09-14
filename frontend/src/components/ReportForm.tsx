@@ -21,6 +21,11 @@ interface ReportFormProps {
   targetId: string;
 }
 
+interface ReportFeedback {
+  tone: "success" | "error";
+  text: string;
+}
+
 const REPORT_REASONS: Reason[] = [
   "SPAM",
   "HARASSMENT",
@@ -39,7 +44,7 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<Reason>("SPAM");
   const [details, setDetails] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<ReportFeedback | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (status !== "authenticated") {
@@ -54,7 +59,7 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
     }
 
     setBusy(true);
-    setMessage(null);
+    setFeedback(null);
 
     try {
       await request("/api/v1/reports", {
@@ -72,10 +77,13 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
         }),
       });
 
-      setMessage(t("report.messages.submitted"));
+      setFeedback({
+        tone: "success",
+        text: t("report.messages.submitted"),
+      });
       setDetails("");
     } catch (cause) {
-      setMessage(getErrorMessage(cause));
+      setFeedback({ tone: "error", text: getErrorMessage(cause) });
     } finally {
       setBusy(false);
     }
@@ -102,7 +110,10 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
 
             <select
               value={reason}
-              onChange={(event) => setReason(event.target.value as Reason)}
+              onChange={(event) => {
+                setReason(event.target.value as Reason);
+                if (feedback?.tone === "error") setFeedback(null);
+              }}
             >
               {REPORT_REASONS.map((reportReason) => (
                 <option key={reportReason} value={reportReason}>
@@ -120,7 +131,10 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
               maxLength={2000}
               rows={3}
               placeholder={t("report.fields.detailsPlaceholder")}
-              onChange={(event) => setDetails(event.target.value)}
+              onChange={(event) => {
+                setDetails(event.target.value);
+                if (feedback?.tone === "error") setFeedback(null);
+              }}
             />
           </label>
 
@@ -132,7 +146,14 @@ export default function ReportForm({ targetType, targetId }: ReportFormProps) {
             {busy ? t("report.actions.submitting") : t("report.actions.submit")}
           </button>
 
-          {message ? <p aria-live="polite">{message}</p> : null}
+          {feedback ? (
+            <p
+              className={`report-form__message report-form__message--${feedback.tone}`}
+              role={feedback.tone === "error" ? "alert" : "status"}
+            >
+              {feedback.text}
+            </p>
+          ) : null}
         </form>
       ) : null}
     </div>

@@ -16,8 +16,10 @@ interface CommentThreadProps {
   currentUserId: string | null;
   authenticated: boolean;
   pendingKeys: Set<string>;
+  mutationErrors: Record<string, string>;
   onToggle(): Promise<void>;
   onRetryReplies(): Promise<void>;
+  onClearMutationError(key: string): void;
   onCreateReply(content: string): Promise<boolean>;
   onUpdate(commentId: string, content: string): Promise<boolean>;
   onDelete(commentId: string): Promise<boolean>;
@@ -34,8 +36,10 @@ export default function CommentThread({
   currentUserId,
   authenticated,
   pendingKeys,
+  mutationErrors,
   onToggle,
   onRetryReplies,
+  onClearMutationError,
   onCreateReply,
   onUpdate,
   onDelete,
@@ -68,8 +72,16 @@ export default function CommentThread({
         highlighted={highlightedId === item.id}
         updating={pendingKeys.has(`update:${item.id}`)}
         deleting={pendingKeys.has(`delete:${item.id}`)}
+        updateError={mutationErrors[`update:${item.id}`]}
+        deleteError={mutationErrors[`delete:${item.id}`]}
         onReply={
           item.status === "ACTIVE" ? openReplyComposer : undefined
+        }
+        onClearUpdateError={() =>
+          onClearMutationError(`update:${item.id}`)
+        }
+        onClearDeleteError={() =>
+          onClearMutationError(`delete:${item.id}`)
         }
         onUpdate={onUpdate}
         onDelete={onDelete}
@@ -113,6 +125,10 @@ export default function CommentThread({
               submitLabel={t("reader.interactions.submitReply")}
               submittingLabel={t("reader.interactions.submittingReply")}
               cancelLabel={t("common.cancel")}
+              error={mutationErrors[`reply:${item.id}`]}
+              onClearError={() =>
+                onClearMutationError(`reply:${item.id}`)
+              }
               onCancel={() => setReplying(false)}
               onSubmit={submitReply}
             />
@@ -123,9 +139,9 @@ export default function CommentThread({
               <LoaderCircle className="is-spinning" aria-hidden="true" />
               {t("reader.interactions.loadingReplies")}
             </p>
-          ) : replies?.error ? (
+          ) : replies?.initialError ? (
             <div className="comment-thread__error" role="alert">
-              <p>{replies.error}</p>
+              <p>{replies.initialError}</p>
               <button
                 className="button button--secondary"
                 type="button"
@@ -151,13 +167,34 @@ export default function CommentThread({
                 highlighted={highlightedId === reply.id}
                 updating={pendingKeys.has(`update:${reply.id}`)}
                 deleting={pendingKeys.has(`delete:${reply.id}`)}
+                updateError={mutationErrors[`update:${reply.id}`]}
+                deleteError={mutationErrors[`delete:${reply.id}`]}
+                onClearUpdateError={() =>
+                  onClearMutationError(`update:${reply.id}`)
+                }
+                onClearDeleteError={() =>
+                  onClearMutationError(`delete:${reply.id}`)
+                }
                 onUpdate={onUpdate}
                 onDelete={onDelete}
               />
             ))
           )}
 
-          {replies?.hasMore ? (
+          {replies?.loadMoreError ? (
+            <div className="comment-thread__error" role="alert">
+              <p>{replies.loadMoreError}</p>
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => void onLoadMoreReplies()}
+              >
+                {t("common.retry")}
+              </button>
+            </div>
+          ) : null}
+
+          {replies?.hasMore && !replies.loadMoreError ? (
             <button
               className="comment-thread__load-more button button--secondary"
               type="button"

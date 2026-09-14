@@ -29,7 +29,8 @@ export interface ReplyPage extends CommentPage {
   loaded: boolean;
   loadingInitial: boolean;
   loadingMore: boolean;
-  error: string | null;
+  initialError: string | null;
+  loadMoreError: string | null;
 }
 
 export interface CommentPageResponse {

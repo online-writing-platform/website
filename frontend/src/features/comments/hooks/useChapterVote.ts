@@ -24,8 +24,9 @@ export default function useChapterVote({
   request,
 }: UseChapterVoteOptions) {
   const requestSequenceRef = useRef(0);
-  const [votes, setVotes] = useState(0);
+  const [votes, setVotes] = useState<number | null>(null);
   const [voted, setVoted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +35,9 @@ export default function useChapterVote({
     requestSequenceRef.current = sequence;
     const timer = window.setTimeout(() => {
       setError(null);
+      setLoading(true);
+      setVotes(null);
+      setVoted(false);
       const encodedChapterId = encodeURIComponent(chapterId);
       const responsePromise =
         status === "authenticated"
@@ -56,6 +60,11 @@ export default function useChapterVote({
           if (sequence === requestSequenceRef.current) {
             setError(getErrorMessage(cause));
           }
+        })
+        .finally(() => {
+          if (sequence === requestSequenceRef.current) {
+            setLoading(false);
+          }
         });
     }, 0);
 
@@ -66,7 +75,7 @@ export default function useChapterVote({
   }, [chapterId, request, status]);
 
   const toggle = useCallback(async (): Promise<void> => {
-    if (status !== "authenticated" || busy) return;
+    if (status !== "authenticated" || busy || loading) return;
 
     setBusy(true);
     setError(null);
@@ -83,7 +92,7 @@ export default function useChapterVote({
     } finally {
       setBusy(false);
     }
-  }, [busy, chapterId, request, status, voted]);
+  }, [busy, chapterId, loading, request, status, voted]);
 
-  return { votes, voted, busy, error, toggle };
+  return { votes, voted, loading, busy, error, toggle };
 }

@@ -21,7 +21,8 @@ const EMPTY_REPLY_PAGE: ReplyPage = {
   loaded: false,
   loadingInitial: false,
   loadingMore: false,
-  error: null,
+  initialError: null,
+  loadMoreError: null,
 };
 
 function mergeComments(
@@ -73,8 +74,11 @@ export default function useChapterComments({
   const [replyPages, setReplyPages] = useState<Record<string, ReplyPage>>({});
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [mutationErrors, setMutationErrors] = useState<Record<string, string>>(
+    {},
+  );
   const [pendingKeys, setPendingKeys] = useState<Set<string>>(() => new Set());
 
   const readRequest: CommentRequester =
@@ -91,11 +95,29 @@ export default function useChapterComments({
     });
   }, []);
 
+  const clearMutationError = useCallback((key: string): void => {
+    setMutationErrors((current) => {
+      if (!(key in current)) return current;
+
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
+  const setMutationFailure = useCallback((key: string, cause: unknown): void => {
+    setMutationErrors((current) => ({
+      ...current,
+      [key]: getErrorMessage(cause),
+    }));
+  }, []);
+
   const loadFirstPage = useCallback(async (): Promise<void> => {
     const sequence = requestSequenceRef.current + 1;
     requestSequenceRef.current = sequence;
     setLoadingInitial(true);
-    setLoadError(null);
+    setInitialLoadError(null);
+    setLoadMoreError(null);
 
     try {
       const response = await getChapterComments(readRequest, chapterId, {
@@ -113,7 +135,7 @@ export default function useChapterComments({
         setComments([]);
         setHasMore(false);
         setNextCursor(null);
-        setLoadError(getErrorMessage(cause));
+        setInitialLoadError(getErrorMessage(cause));
       }
     } finally {
       if (sequence === requestSequenceRef.current) {
@@ -137,7 +159,7 @@ export default function useChapterComments({
     if (!hasMore || !nextCursor || loadingMore) return;
 
     setLoadingMore(true);
-    setLoadError(null);
+    setLoadMoreError(null);
 
     try {
       const response = await getChapterComments(readRequest, chapterId, {
@@ -150,7 +172,7 @@ export default function useChapterComments({
       setHasMore(response.data.pagination.hasMore);
       setNextCursor(response.data.pagination.nextCursor);
     } catch (cause) {
-      setLoadError(getErrorMessage(cause));
+      setLoadMoreError(getErrorMessage(cause));
     } finally {
       setLoadingMore(false);
     }
@@ -175,7 +197,12 @@ export default function useChapterComments({
           ...(current[parentId] ?? EMPTY_REPLY_PAGE),
           loadingInitial: !append,
           loadingMore: append,
-          error: null,
+          initialError: append
+            ? (current[parentId] ?? EMPTY_REPLY_PAGE).initialError
+            : null,
+          loadMoreError: append
+            ? null
+            : (current[parentId] ?? EMPTY_REPLY_PAGE).loadMoreError,
         },
       }));
 
@@ -201,21 +228,28 @@ export default function useChapterComments({
               loaded: true,
               loadingInitial: false,
               loadingMore: false,
-              error: null,
+              initialError: null,
+              loadMoreError: null,
             },
           };
         });
       } catch (cause) {
-        setReplyPages((current) => ({
-          ...current,
-          [parentId]: {
-            ...(current[parentId] ?? EMPTY_REPLY_PAGE),
-            loaded: false,
-            loadingInitial: false,
-            loadingMore: false,
-            error: getErrorMessage(cause),
-          },
-        }));
+        setReplyPages((current) => {
+          const previous = current[parentId] ?? EMPTY_REPLY_PAGE;
+          const message = getErrorMessage(cause);
+
+          return {
+            ...current,
+            [parentId]: {
+              ...previous,
+              loaded: append ? previous.loaded : false,
+              loadingInitial: false,
+              loadingMore: false,
+              initialError: append ? previous.initialError : message,
+              loadMoreError: append ? message : previous.loadMoreError,
+            },
+          };
+        });
       }
     },
     [chapterId, pageSize, readRequest, replyPages],
@@ -229,7 +263,7 @@ export default function useChapterComments({
       if (pendingKeys.has(key)) return false;
 
       setPending(key, true);
-      setMutationError(null);
+      clearMutationError(key);
 
       try {
         const response = await createChapterComment(
@@ -250,7 +284,8 @@ export default function useChapterComments({
                 ...page,
                 items: mergeComments(page.items, [created], "asc"),
                 loaded: true,
-                error: null,
+                initialError: null,
+                loadMoreError: null,
               },
             };
           });
@@ -267,13 +302,21 @@ export default function useChapterComments({
 
         return true;
       } catch (cause) {
-        setMutationError(getErrorMessage(cause));
+        setMutationFailure(key, cause);
         return false;
       } finally {
         setPending(key, false);
       }
     },
-    [chapterId, pendingKeys, request, setPending, status],
+    [
+      chapterId,
+      clearMutationError,
+      pendingKeys,
+      request,
+      setMutationFailure,
+      setPending,
+      status,
+    ],
   );
 
   const updateComment = useCallback(
@@ -282,7 +325,7 @@ export default function useChapterComments({
       if (status !== "authenticated" || pendingKeys.has(key)) return false;
 
       setPending(key, true);
-      setMutationError(null);
+      clearMutationError(key);
 
       try {
         const response = await updateChapterComment(request, commentId, content);
@@ -298,13 +341,20 @@ export default function useChapterComments({
         );
         return true;
       } catch (cause) {
-        setMutationError(getErrorMessage(cause));
+        setMutationFailure(key, cause);
         return false;
       } finally {
         setPending(key, false);
       }
     },
-    [pendingKeys, request, setPending, status],
+    [
+      clearMutationError,
+      pendingKeys,
+      request,
+      setMutationFailure,
+      setPending,
+      status,
+    ],
   );
 
   const removeComment = useCallback(
@@ -313,7 +363,7 @@ export default function useChapterComments({
       if (status !== "authenticated" || pendingKeys.has(key)) return false;
 
       setPending(key, true);
-      setMutationError(null);
+      clearMutationError(key);
 
       try {
         await deleteChapterComment(request, commentId);
@@ -339,13 +389,20 @@ export default function useChapterComments({
         );
         return true;
       } catch (cause) {
-        setMutationError(getErrorMessage(cause));
+        setMutationFailure(key, cause);
         return false;
       } finally {
         setPending(key, false);
       }
     },
-    [pendingKeys, request, setPending, status],
+    [
+      clearMutationError,
+      pendingKeys,
+      request,
+      setMutationFailure,
+      setPending,
+      status,
+    ],
   );
 
   const revealComment = useCallback(
@@ -381,7 +438,8 @@ export default function useChapterComments({
           loaded: true,
           loadingInitial: false,
           loadingMore: false,
-          error: null,
+          initialError: null,
+          loadMoreError: null,
         },
       }));
 
@@ -396,9 +454,11 @@ export default function useChapterComments({
     replyPages,
     loadingInitial,
     loadingMore,
-    loadError,
-    mutationError,
+    initialLoadError,
+    loadMoreError,
+    mutationErrors,
     pendingKeys,
+    clearMutationError,
     loadFirstPage,
     loadMoreComments,
     loadReplies,
