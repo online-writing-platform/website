@@ -2,6 +2,8 @@ import { ImageIcon, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
+import "./TodaySpotlight.css";
+
 type TodaySpotlightProps = {
   imageSrc?: string;
   imageAlt?: string;
@@ -54,17 +56,27 @@ export function TodaySpotlight({
   }).format(date);
 
   const todayLabel = language === "fa" ? "امروز" : "Today";
+
+  const birthdayLabel = language === "fa" ? "زادروز امروز" : "Born on this day";
+
   const imagePlaceholder =
     language === "fa" ? "جایگاه تصویر امروز" : "Today's image";
-  const resolvedImageAlt = imageAlt ?? imagePlaceholder;
+
+  const resolvedImageAlt = imageAlt ?? personName ?? imagePlaceholder;
 
   const accessibleDate =
     language === "fa"
       ? `${todayLabel}، ${weekday} ${day} ${month} ${year}`
       : `${todayLabel}, ${weekday}, ${month} ${day}, ${year}`;
 
+  const rootClassName = ["today-spotlight", className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <motion.section
+      className={rootClassName}
+      aria-label={accessibleDate}
       initial={
         shouldReduceMotion
           ? undefined
@@ -81,163 +93,77 @@ export function TodaySpotlight({
         duration: 0.55,
         ease: [0.22, 1, 0.36, 1],
       }}
-      aria-label={accessibleDate}
-      className={[
-        "mx-auto w-[calc(100%-2rem)] max-w-[78rem] py-12 md:py-16",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
     >
-      <div
-        className="relative isolate overflow-visible rounded-[2rem] border border-[var(--border)] px-6 py-8 shadow-[var(--shadow)] md:px-10 md:py-10 lg:px-14"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--surface) 0%, var(--primary-soft) 62%, var(--accent-soft) 100%)",
-        }}
-      >
-        {/* Decorative background */}
+      <div className="today-spotlight__card">
         <div
+          className="today-spotlight__glow today-spotlight__glow--primary"
           aria-hidden="true"
-          className="pointer-events-none absolute -start-20 -top-24 -z-10 h-56 w-56 rounded-full blur-3xl"
-          style={{
-            backgroundColor: "var(--primary)",
-            opacity: 0.09,
-          }}
         />
 
         <div
+          className="today-spotlight__glow today-spotlight__glow--accent"
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-20 end-[28%] -z-10 h-44 w-44 rounded-full blur-3xl"
-          style={{
-            backgroundColor: "var(--accent)",
-            opacity: 0.1,
-          }}
         />
 
-        <div className="relative grid items-center gap-10 md:min-h-[280px] md:grid-cols-[minmax(0,1fr)_minmax(260px,0.78fr)] md:gap-12">
-          {/* Date */}
-          <div className="relative z-10 max-w-xl">
-            <div className="flex items-center gap-3">
+        <div className="today-spotlight__layout">
+          <div className="today-spotlight__content">
+            <div className="today-spotlight__eyebrow">
               <span
+                className="today-spotlight__eyebrow-dot"
                 aria-hidden="true"
-                className="h-2.5 w-2.5 rounded-full"
-                style={{
-                  backgroundColor: "var(--accent)",
-                }}
               />
 
-              <span
-                className="text-xs font-semibold uppercase tracking-[0.24em]"
-                style={{
-                  color: "var(--primary)",
-                }}
-              >
+              <span className="today-spotlight__eyebrow-text">
                 {todayLabel}
               </span>
 
               <span
+                className="today-spotlight__eyebrow-line"
                 aria-hidden="true"
-                className="h-px flex-1 opacity-70"
-                style={{
-                  backgroundColor: "var(--border)",
-                }}
               />
             </div>
 
-            <div className="mt-8 flex items-end gap-5 md:mt-10">
-              <span
-                className="block font-semibold leading-[0.72] tracking-[-0.075em]"
-                style={{
-                  color: "var(--foreground)",
-                  fontSize: "clamp(5.2rem, 12vw, 9rem)",
-                }}
-              >
-                {day}
-              </span>
+            <div className="today-spotlight__date">
+              <span className="today-spotlight__day">{day}</span>
 
-              <div className="pb-1 md:pb-2">
-                <p
-                  className="m-0 text-2xl font-semibold leading-tight md:text-3xl"
-                  style={{
-                    color: "var(--foreground)",
-                  }}
-                >
-                  {month}
-                </p>
+              <div className="today-spotlight__month-year">
+                <p className="today-spotlight__month">{month}</p>
 
-                <p
-                  className="m-0 mt-1 text-sm font-medium md:text-base"
-                  style={{
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {year}
-                </p>
+                <p className="today-spotlight__year">{year}</p>
               </div>
             </div>
 
-            <div className="mt-8 flex items-center gap-4">
+            <div className="today-spotlight__weekday">
               <span
+                className="today-spotlight__weekday-line"
                 aria-hidden="true"
-                className="h-px w-12"
-                style={{
-                  backgroundColor: "var(--primary)",
-                }}
               />
 
-              <p
-                className="m-0 text-lg font-medium md:text-xl"
-                style={{
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {weekday}
-                {personName ? (
-                  <div className="mt-8">
-                    <div
-                      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
-                      style={{
-                        backgroundColor: "var(--accent-soft)",
-                        color: "var(--accent)",
-                      }}
-                    >
-                      <Sparkles className="h-3.5 w-3.5" />
-
-                      <span>
-                        {language === "fa"
-                          ? "زادروز امروز"
-                          : "Born on this day"}
-                      </span>
-                    </div>
-
-                    <h2
-                      className="m-0 mt-3 text-2xl font-bold md:text-3xl"
-                      style={{
-                        color: "var(--foreground)",
-                      }}
-                    >
-                      {personName}
-                    </h2>
-
-                    {personMeta ? (
-                      <p
-                        className="m-0 mt-1 text-sm"
-                        style={{
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {personMeta}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </p>
+              <p>{weekday}</p>
             </div>
+
+            {personName ? (
+              <div className="today-spotlight__person">
+                <div className="today-spotlight__birthday-badge">
+                  <Sparkles
+                    className="today-spotlight__birthday-icon"
+                    aria-hidden="true"
+                  />
+
+                  <span>{birthdayLabel}</span>
+                </div>
+
+                <h2 className="today-spotlight__person-name">{personName}</h2>
+
+                {personMeta ? (
+                  <p className="today-spotlight__person-meta">{personMeta}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
-          {/* Image */}
           <motion.div
+            className="today-spotlight__visual"
             whileHover={
               shouldReduceMotion
                 ? undefined
@@ -249,84 +175,34 @@ export function TodaySpotlight({
             transition={{
               duration: 0.25,
             }}
-            className="relative z-20 mx-auto w-full max-w-[350px] md:-mb-10 md:-mt-20 md:justify-self-end"
           >
-            <div
-              aria-hidden="true"
-              className="absolute inset-3 -z-10 rounded-[2.4rem] blur-2xl"
-              style={{
-                backgroundColor: "var(--primary)",
-                opacity: 0.16,
-              }}
-            />
+            <div className="today-spotlight__image-shadow" aria-hidden="true" />
 
-            <div
-              className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border-[8px] bg-[var(--surface-hover)]"
-              style={{
-                borderColor: "var(--surface)",
-                boxShadow: "0 24px 65px rgb(24 24 27 / 20%)",
-              }}
-            >
+            <div className="today-spotlight__image-frame">
               {imageSrc ? (
                 <>
                   <img
                     src={imageSrc}
                     alt={resolvedImageAlt}
-                    className="h-full w-full object-cover"
+                    className="today-spotlight__image"
                   />
 
                   <div
+                    className="today-spotlight__image-overlay"
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(to top, rgb(0 0 0 / 18%) 0%, transparent 38%)",
-                    }}
                   />
                 </>
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-8 text-center">
-                  <div
-                    className="flex h-16 w-16 items-center justify-center rounded-2xl"
-                    style={{
-                      backgroundColor: "var(--primary-soft)",
-                      color: "var(--primary)",
-                    }}
-                  >
-                    <ImageIcon className="h-7 w-7" aria-hidden="true" />
+                <div className="today-spotlight__image-placeholder">
+                  <div className="today-spotlight__placeholder-icon">
+                    <ImageIcon aria-hidden="true" />
                   </div>
 
-                  <span
-                    className="text-sm font-medium"
-                    style={{
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    {imagePlaceholder}
-                  </span>
+                  <span>{imagePlaceholder}</span>
                 </div>
               )}
 
-              <div
-                aria-hidden="true"
-                className="absolute end-4 top-4 h-3 w-3 rounded-full border-2"
-                style={{
-                  backgroundColor: "var(--accent)",
-                  borderColor: "var(--surface)",
-                }}
-              />
-            </div>
-
-            <div
-              aria-hidden="true"
-              className="absolute -bottom-4 -start-4 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg"
-              style={{
-                backgroundColor: "var(--surface)",
-                borderColor: "var(--border)",
-                color: "var(--accent)",
-              }}
-            >
-              <Sparkles className="h-6 w-6" />
+              <span className="today-spotlight__image-dot" aria-hidden="true" />
             </div>
           </motion.div>
         </div>
