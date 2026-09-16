@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 import fa from "./locales/fa/translation.json";
 import en from "./locales/en/translation.json";
+import { additionalErrorTranslations } from "./error-translations";
 
 const supportedLanguages = ["fa", "en"] as const;
 
@@ -21,18 +22,32 @@ function syncDocumentLanguage(language?: string): void {
 }
 i18n.on("languageChanged", syncDocumentLanguage);
 
+const resources = {
+  fa: {
+    translation: {
+      ...fa,
+      errors: {
+        ...fa.errors,
+        ...additionalErrorTranslations.fa,
+      },
+    },
+  },
+  en: {
+    translation: {
+      ...en,
+      errors: {
+        ...en.errors,
+        ...additionalErrorTranslations.en,
+      },
+    },
+  },
+} as const;
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: {
-      fa: {
-        translation: fa,
-      },
-      en: {
-        translation: en,
-      },
-    },
+    resources,
 
     fallbackLng: "fa",
     supportedLngs: supportedLanguages,
