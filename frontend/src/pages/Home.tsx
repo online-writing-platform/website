@@ -5,6 +5,9 @@ import { GenreSection } from "../components/GenreSection";
 import StoryShelf from "../components/StoryShelf";
 import { HeroSection } from "@/components/HeroSection";
 
+import { TodaySpotlight } from "@/components/TodaySpotlight";
+import { useTodayBirthday } from "@/hooks/useTodayBirthday";
+import { getAuthorImagePath, getBirthYear } from "@/lib/birthday-feature";
 import useAuth from "../hooks/useAuth";
 import { apiRequest } from "../lib/api";
 import { getErrorMessage } from "../lib/error-message";
@@ -18,6 +21,11 @@ import "./Home.css";
 
 function Home() {
   const { i18n, t } = useTranslation();
+
+  const { today, featuredAuthor } = useTodayBirthday();
+
+  const isEnglish =
+    i18n.resolvedLanguage?.toLowerCase().startsWith("en") ?? false;
   const { status, request } = useAuth();
 
   const [data, setData] = useState<DiscoveryResponse["data"] | null>(null);
@@ -126,6 +134,28 @@ function Home() {
             stories={localizedData.recent}
             emptyMessage={languageEmptyMessage}
           />
+
+          {featuredAuthor ? (
+            <TodaySpotlight
+              date={today}
+              imageSrc={getAuthorImagePath(featuredAuthor)}
+              imageAlt={
+                isEnglish ? featuredAuthor.name.en : featuredAuthor.name.fa
+              }
+              personName={
+                isEnglish ? featuredAuthor.name.en : featuredAuthor.name.fa
+              }
+              personMeta={
+                isEnglish
+                  ? `Born ${getBirthYear(featuredAuthor)}`
+                  : `زادهٔ ${new Intl.NumberFormat("fa-IR").format(
+                      getBirthYear(featuredAuthor),
+                    )}`
+              }
+            />
+          ) : (
+            <TodaySpotlight date={today} />
+          )}
         </>
       ) : null}
     </main>
